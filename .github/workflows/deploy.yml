@@ -1,0 +1,96 @@
+name: Deploy to Server
+
+# Manually trigger from the GitHub Actions UI (or via `gh workflow run deploy.yml`).
+# Runs on a self-hosted runner installed on your target server — see
+# docs/Deployment_all_en.md for one-time runner setup.
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to perform'
+        required: true
+        default: 'up'
+        type: choice
+        options:
+          - up          # pull latest images + (re)create containers
+          - restart     # restart existing containers without pulling
+          - logs        # show recent logs
+          - status      # show container status
+          - down        # stop and remove containers (volumes kept)
+
+env:
+  # Persistent directory on the server that holds docker-compose_all.yml,
+  # data/.config.yaml, models/SenseVoiceSmall/model.pt, and the mysql volume.
+  # Change this to wherever you set up your xiaozhi-server directory.
+  DEPLOY_DIR: /opt/xiaozhi-server
+  COMPOSE_FILE: docker-compose_all.yml
+
+jobs:
+  deploy:
+    name: ${{ inputs.action }} on self-hosted runner
+    # Requires a self-hosted runner labeled "xiaozhi". Register it with:
+    #   ./config.sh --url https://github.com/OWNER/REPO --token <TOKEN> --labels xiaozhi
+    runs-on: [self-hosted, xiaozhi]
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify deploy directory exists
+        run: |
+          if [ ! -d "${DEPLOY_DIR}" ]; then
+            echo "::error::DEPLOY_DIR ${DEPLOY_DIR} does not exist."
+            echo "Create it and populate data/.config.yaml and models/SenseVoiceSmall/model.pt first."
+            echo "See docs/Deployment_all_en.md."
+            exit 1
+          fi
+          if [ ! -f "${DEPLOY_DIR}/data/.config.yaml" ]; then
+            echo "::warning::${DEPLOY_DIR}/data/.config.yaml is missing — the server container will fail to start."
+          fi
+          if [ ! -f "${DEPLOY_DIR}/models/SenseVoiceSmall/model.pt" ]; then
+            echo "::warning::SenseVoiceSmall model.pt is missing — ASR will not work."
+          fi
+
+      - name: Sync compose file from repo
+        run: |
+          cp "main/xiaozhi-server/${COMPOSE_FILE}" "${DEPLOY_DIR}/${COMPOSE_FILE}"
+          echo "Synced ${COMPOSE_FILE} to ${DEPLOY_DIR}"
+
+      - name: Pull latest images
+        if: inputs.action == 'up'
+        working-directory: ${{ env.DEPLOY_DIR }}
+        run: docker compose -f "${COMPOSE_FILE}" pull
+
+      - name: Bring stack up
+        if: inputs.action == 'up'
+        working-directory: ${{ env.DEPLOY_DIR }}
+        run: docker compose -f "${COMPOSE_FILE}" up -d
+
+      - name: Restart containers
+        if: inputs.action == 'restart'
+        working-directory: ${{ env.DEPLOY_DIR }}
+        run: docker compose -f "${COMPOSE_FILE}" restart
+
+      - name: Stop and remove containers
+        if: inputs.action == 'down'
+        working-directory: ${{ env.DEPLOY_DIR }}
+        run: docker compose -f "${COMPOSE_FILE}" down
+
+      - name: Show recent logs
+        if: inputs.action == 'logs'
+        working-directory: ${{ env.DEPLOY_DIR }}
+        run: docker compose -f "${COMPOSE_FILE}" logs --tail=200
+
+      - name: Show container status
+        if: always() && inputs.action != 'logs'
+        working-directory: ${{ env.DEPLOY_DIR }}
+        run: |
+          docker compose -f "${COMPOSE_FILE}" ps
+          echo ""
+          echo "=== Last 20 lines from xiaozhi-esp32-server ==="
+          docker logs --tail=20 xiaozhi-esp32-server 2>&1 || true
+          echo ""
+          echo "=== Last 20 lines from xiaozhi-esp32-server-web ==="
+          docker logs --tail=20 xiaozhi-esp32-server-web 2>&1 || true
