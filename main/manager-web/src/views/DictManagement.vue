@@ -15,10 +15,10 @@
             </div>
         </div>
 
-        <!-- 主体内容 -->
+        <!-- Main content -->
         <div class="main-wrapper">
             <div class="content-panel">
-                <!-- 左侧字典类型列表 -->
+                <!-- Left dictionary type list -->
                 <div class="dict-type-panel">
                     <div class="dict-type-header">
                         <el-button type="success" size="mini" @click="showAddDictTypeDialog">{{ $t('dictManagement.addDictType') }}</el-button>
@@ -28,7 +28,7 @@
                         </el-button>
                     </div>
                     <el-table ref="dictTypeTable" :data="dictTypeList" style="width: 100%" v-loading="dictTypeLoading"
-                        element-loading-text="拼命加载中" element-loading-spinner="el-icon-loading"
+                        element-loading-text="Loading..." element-loading-spinner="el-icon-loading"
                         element-loading-background="rgba(255, 255, 255, 0.7)" @row-click="handleDictTypeRowClick"
                         @selection-change="handleDictTypeSelectionChange" :row-class-name="tableRowClassName"
                         class="dict-type-table" :header-cell-class-name="headerCellClassName">
@@ -42,11 +42,11 @@
                     </el-table>
                 </div>
 
-                <!-- 右侧字典数据列表 -->
+                <!-- Right dictionary data list -->
                 <div class="content-area">
                     <el-card class="dict-data-card" shadow="never">
                         <el-table ref="dictDataTable" :data="dictDataList" style="width: 100%"
-                            v-loading="dictDataLoading" element-loading-text="拼命加载中"
+                            v-loading="dictDataLoading" element-loading-text="Loading..."
                             element-loading-spinner="el-icon-loading"
                             element-loading-background="rgba(255, 255, 255, 0.7)" class="transparent-table"
                             header-row-class-name="table-header">
@@ -111,11 +111,11 @@
             </div>
         </div>
 
-        <!-- 使用字典类型编辑弹框组件 -->
+        <!-- Dictionary type edit dialog component -->
         <DictTypeDialog :visible.sync="dictTypeDialogVisible" :title="dictTypeDialogTitle" :dictTypeData="dictTypeForm"
             @save="saveDictType" />
 
-        <!-- 使用字典数据编辑弹框组件 -->
+        <!-- Dictionary data edit dialog component -->
         <DictDataDialog :visible.sync="dictDataDialogVisible" :title="dictDataDialogTitle" :dictData="dictDataForm"
             :dictTypeId="selectedDictType?.id" @save="saveDictData" />
         <el-footer style="flex-shrink:unset;">
@@ -140,25 +140,25 @@ export default {
     },
     data() {
         return {
-            // 字典类型相关
+            // Dictionary type related
             dictTypeList: [],
             dictTypeLoading: false,
             selectedDictType: null,
-            selectedDictTypes: [],  // 恢复多选数组
+            selectedDictTypes: [],  // Restore multi-select array
             dictTypeDialogVisible: false,
-            dictTypeDialogTitle: '新增字典类型',
+            dictTypeDialogTitle: 'Add Dictionary Type',
             dictTypeForm: {
                 id: null,
                 dictName: '',
                 dictType: ''
             },
 
-            // 字典数据相关
+            // Dictionary data related
             dictDataList: [],
             dictDataLoading: false,
             isAllDictDataSelected: false,
             dictDataDialogVisible: false,
-            dictDataDialogTitle: '新增字典数据',
+            dictDataDialogTitle: 'Add Dictionary Data',
             dictDataForm: {
                 id: null,
                 dictTypeId: null,
@@ -167,7 +167,7 @@ export default {
                 sort: 0
             },
             search: '',
-            // 添加分页相关数据
+            // Pagination related data
             pageSizeOptions: [10, 20, 50, 100],
             currentPage: 1,
             pageSize: 10,
@@ -178,7 +178,7 @@ export default {
         this.loadDictTypeList()
     },
     methods: {
-        // 字典类型相关方法
+        // Dictionary type related methods
         loadDictTypeList() {
             this.dictTypeLoading = true
             dictApi.getDictTypeList({
@@ -255,7 +255,7 @@ export default {
             })
         },
 
-        // 字典数据相关方法
+        // Dictionary data related methods
         loadDictDataList(dictTypeId) {
             if (!dictTypeId) return
             this.dictDataLoading = true
@@ -351,20 +351,20 @@ export default {
         },
         handleSearch() {
             if (!this.selectedDictType) {
-                this.$message.warning('请先选择字典类型')
+                this.$message.warning('Please select a dictionary type first')
                 return
             }
             this.currentPage = 1
             this.loadDictDataList(this.selectedDictType.id)
         },
-        // 添加分页相关方法
+        // Pagination related methods
         handlePageSizeChange(val) {
             this.pageSize = val;
             this.currentPage = 1;
             this.loadDictDataList(this.selectedDictType?.id);
         },
         
-        // 更新选择列表头翻译文本
+        // Update the translated text of the selection column header
         updateSelectionHeaderText() {
             const thElement = document.querySelector(`.el-table__header th:nth-child(1) .cell`);
             if (thElement) {
@@ -391,16 +391,16 @@ export default {
             this.currentPage = page;
             this.loadDictDataList(this.selectedDictType?.id);
         },
-        // 表头单元格样式类名，用于选择列
+        // Header cell class name, used for the selection column
         headerCellClassName({ columnIndex }) {
             if (columnIndex === 0) {
                 return 'custom-selection-header';
             }
             return '';
         },
-        // 单元格样式类名，用于设置选择列表头的翻译文本
+        // Cell class name, used to set the translated text of the selection column header
         selectionCellClassName({ row, column, rowIndex, columnIndex }) {
-            // 只对表头行设置data-content
+            // Only set data-content for the header row
             if (rowIndex === undefined) {
                 setTimeout(() => {
                     this.updateSelectionHeaderText();
@@ -411,14 +411,14 @@ export default {
     },
     
     mounted() {
-        // 在组件挂载后确保表头翻译文本正确显示
+        // Ensure the header translated text displays correctly after the component is mounted
         setTimeout(() => {
             this.updateSelectionHeaderText();
         }, 100);
     },
     
     updated() {
-        // 在组件更新后重新设置表头翻译文本
+        // Re-set the header translated text after the component updates
         this.updateSelectionHeaderText();
     },
     
@@ -461,7 +461,7 @@ export default {
 }
 
 .main-wrapper {
-    // 顶部 63px 底部 35px 查询72px
+    // Top 63px, bottom 35px, search bar 72px
     height: calc(100vh - 63px - 35px - 72px);
     margin: 0 22px;
     border-radius: 15px;

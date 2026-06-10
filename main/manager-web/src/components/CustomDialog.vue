@@ -79,11 +79,11 @@ export default {
     },
     cancelText: {
       type: String,
-      default: "取消"
+      default: "Cancel"
     },
     confirmText: {
       type: String,
-      default: "确认保存"
+      default: "Save"
     }
   },
   data() {

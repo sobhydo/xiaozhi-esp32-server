@@ -160,7 +160,7 @@ export default {
       loading: false,
       userApi: null,
       firmwareTypes: [],
-      mqttServiceAvailable: false, // MQTT服务是否可用
+      mqttServiceAvailable: false, // Whether the MQTT service is available
     };
   },
   computed: {
@@ -181,7 +181,7 @@ export default {
     pageCount() {
       return Math.ceil(this.filteredDeviceList.length / this.pageSize);
     },
-    // 计算当前页是否全选
+    // Determine whether all items on the current page are selected
     isCurrentPageAllSelected() {
       return this.paginatedDeviceList.length > 0 &&
         this.paginatedDeviceList.every(device => device.selected);
@@ -313,14 +313,14 @@ export default {
         row._submitting = false;
       });
     },
-    // 备注输入框：失焦时提交
+    // Remark input: submit on blur
     onRemarkBlur(row) {
       row.isEdit = false;
       setTimeout(() => {
         this.submitRemark(row);
-      }, 100); // 延迟 100ms，避开 enter+blur 同时触发的窗口
+      }, 100); // Delay 100ms to avoid the window where enter+blur fire simultaneously
     },
-    // 备注输入框：按回车时提交
+    // Remark input: submit on Enter key
     onRemarkEnter(row) {
       row.isEdit = false;
       this.submitRemark(row);
@@ -389,7 +389,7 @@ export default {
               otaSwitch: device.autoUpdate === 1,
               rawBindTime: new Date(device.createDate).getTime(),
               selected: false,
-              // 初始设置为离线状态
+              // Initially set to offline status
               deviceStatus: 'offline'
             };
           })
@@ -397,7 +397,7 @@ export default {
           this.activeSearchKeyword = "";
           this.searchKeyword = "";
 
-          // 获取设备列表后，立即获取设备状态
+          // After fetching the device list, immediately fetch device status
           this.fetchDeviceStatus(agentId);
         } else {
           this.$message.error(data.msg || this.$t('device.getListFailed'));
@@ -405,47 +405,47 @@ export default {
       });
     },
 
-    // 获取设备状态
+    // Fetch device status
     fetchDeviceStatus(agentId) {
-      // 开启表格等待状态，处理动态加载表头导致鼠标所在行的hover事件无法移除的问题
+      // Enable the table loading state to handle the issue where dynamically loaded headers prevent the hover event from being removed on the row under the cursor
       this.loading = true;
       Api.device.getDeviceStatus(agentId, ({ data }) => {
         this.loading = false;
         if (data.code === 0) {
           try {
-            // 解析后端返回的设备状态JSON
+            // Parse the device status JSON returned by the backend
             const statusData = JSON.parse(data.data);
 
-            // 直接使用解析后的数据作为设备状态映射（不需要devices字段包装）
+            // Use the parsed data directly as the device status map (no devices field wrapper needed)
             if (statusData && typeof statusData === 'object') {
-              // 成功获取到设备状态
+              // Successfully retrieved device status
               this.mqttServiceAvailable = true;
-              // 更新设备状态
+              // Update device status
               this.updateDeviceStatusFromResponse(statusData);
             } else {
-              // 数据格式不正确，MQTT服务不可用
+              // Invalid data format, MQTT service unavailable
               this.mqttServiceAvailable = false;
             }
           } catch (error) {
-            // JSON解析失败，MQTT服务不可用
+            // JSON parsing failed, MQTT service unavailable
             this.mqttServiceAvailable = false;
           }
         } else {
-          // 接口调用失败，MQTT服务不可用
+          // API call failed, MQTT service unavailable
           this.mqttServiceAvailable = false;
         }
       });
     },
 
-    // 根据API响应更新设备状态
+    // Update device status based on the API response
     updateDeviceStatusFromResponse(deviceStatusMap) {
       this.deviceList.forEach(device => {
-        // 构建设备的MQTT客户端ID
+        // Build the device's MQTT client ID
         const macAddress = device.macAddress ? device.macAddress.replace(/:/g, '_') : 'unknown';
         const groupId = device.model ? device.model.replace(/:/g, '_') : 'GID_default';
         const mqttClientId = `${groupId}@@@${macAddress}@@@${macAddress}`;
 
-        // 从状态映射中获取设备状态
+        // Get the device status from the status map
         if (deviceStatusMap[mqttClientId]) {
           const statusInfo = deviceStatusMap[mqttClientId];
 
@@ -462,7 +462,7 @@ export default {
 
           device.deviceStatus = isOnline ? 'online' : 'offline';
         } else {
-          // 如果没有找到对应的状态信息，默认为离线
+          // If no matching status info is found, default to offline
           device.deviceStatus = 'offline';
         }
       });
@@ -492,7 +492,7 @@ export default {
         this.$message.error(msg || this.$t('message.error'))
       })
     },
-    // 判断是否可以生成表情、主题、字体bin文件
+    // Determine whether emoji, theme, and font bin files can be generated
     isGenerate(row) {
       const version = row.firmwareVersion.replace(/\./g, '');
       return Number(version) >= 200;
@@ -503,7 +503,7 @@ export default {
       if (isNaN(ts)) return '-';
       const date = new Date(ts);
       if (isNaN(date.getTime())) return '-';
-      return date.toLocaleString();  // 自动适配本地时区
+      return date.toLocaleString();  // Automatically adapts to the local time zone
     },
   }
 };
