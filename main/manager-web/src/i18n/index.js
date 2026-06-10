@@ -7,6 +7,14 @@ import de from './de';
 import vi from './vi';
 import ptBR from './pt_BR';
 
+// Element UI built-in component locales (pagination, date pickers, etc.)
+import elementZhCN from 'element-ui/lib/locale/lang/zh-CN';
+import elementZhTW from 'element-ui/lib/locale/lang/zh-TW';
+import elementEn from 'element-ui/lib/locale/lang/en';
+import elementDe from 'element-ui/lib/locale/lang/de';
+import elementVi from 'element-ui/lib/locale/lang/vi';
+import elementPtBR from 'element-ui/lib/locale/lang/pt-br';
+
 Vue.use(VueI18n);
 
 // 从本地存储获取语言设置，如果没有则使用浏览器语言或默认语言
@@ -36,14 +44,14 @@ const getDefaultLanguage = () => {
 
 const i18n = new VueI18n({
   locale: getDefaultLanguage(),
-  fallbackLocale: 'zh_CN',
+  fallbackLocale: 'en',
   messages: {
-    'zh_CN': zhCN,
-    'zh_TW': zhTW,
-    'en': en,
-    'de': de,
-    'vi': vi,
-    'pt_BR': ptBR
+    'zh_CN': { ...zhCN, ...elementZhCN },
+    'zh_TW': { ...zhTW, ...elementZhTW },
+    'en': { ...en, ...elementEn },
+    'de': { ...de, ...elementDe },
+    'vi': { ...vi, ...elementVi },
+    'pt_BR': { ...ptBR, ...elementPtBR }
   }
 });
 

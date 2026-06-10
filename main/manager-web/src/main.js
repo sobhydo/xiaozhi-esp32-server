@@ -13,7 +13,11 @@ import featureManager from './utils/featureManager';
 // Create an event bus for inter-component communication
 Vue.prototype.$eventBus = new Vue();
 
-Vue.use(ElementUI);
+// Make Element UI's built-in component text (pagination, date pickers, etc.)
+// follow the app's selected language via vue-i18n
+Vue.use(ElementUI, {
+  i18n: (key, value) => i18n.t(key, value)
+});
 
 Vue.config.productionTip = false
 
