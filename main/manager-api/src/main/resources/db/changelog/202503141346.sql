@@ -41,7 +41,7 @@ DROP TABLE IF EXISTS `ai_tts_voice`;
 CREATE TABLE `ai_tts_voice` (
     `id` VARCHAR(32) NOT NULL COMMENT 'Primary key',
     `tts_model_id` VARCHAR(32) COMMENT 'Associated TTS model primary key',
-    `name` VARCHAR(20) COMMENT 'Voice name',
+    `name` VARCHAR(64) COMMENT 'Voice name',
     `tts_voice` VARCHAR(50) COMMENT 'Voice code',
     `languages` VARCHAR(50) COMMENT 'Language',
     `voice_demo` VARCHAR(500) DEFAULT NULL COMMENT 'Voice demo',
