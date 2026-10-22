@@ -122,7 +122,7 @@ export default {
       pendingProviderType: null,
       pendingModelData: null,
       dynamicCallInfoFields: [],
-      fieldJsonMap: {}, // 用于存储JSON字段的字符串形式
+      fieldJsonMap: {}, // Stores the string form of JSON fields
       sensitive_keys: [
         "api_key",
         "personal_access_token",
@@ -132,7 +132,7 @@ export default {
         "access_key_secret",
         "secret_key",
       ],
-      originalValues: {}, // 存储原始值，用于失焦时恢复
+      originalValues: {}, // Stores original values for restoring on blur
       form: {
         id: "",
         modelType: "",
@@ -188,7 +188,7 @@ export default {
     },
     handleClose() {
       this.saving = false;
-      // 处理关闭弹窗闪动问题
+      // Fix flicker when closing the dialog
       setTimeout(() => {
         this.resetForm();
       }, 200)
@@ -224,7 +224,7 @@ export default {
               model.modelCode =
                 this.modelData.modelCode + this.$t("modelConfigDialog.copySuffix");
 
-              // 处理敏感字段
+              // Handle sensitive fields
               if (model.configJson) {
                 Object.keys(model.configJson).forEach((key) => {
                   if (this.isSensitiveField(key) && model.configJson[key]) {
@@ -247,9 +247,9 @@ export default {
       }
     },
     handleSave() {
-      this.saving = true; // 开始保存加载
+      this.saving = true; // Start save loading
 
-      // 处理所有JSON字段
+      // Process all JSON fields
       Object.keys(this.fieldJsonMap).forEach((key) => {
         const parsed = this.validateJson(this.fieldJsonMap[key]);
         if (parsed !== null) {
@@ -273,11 +273,11 @@ export default {
         provideCode: this.form.configJson.type,
         formData,
         done: () => {
-          this.saving = false; // 保存完成后回调
+          this.saving = false; // Callback after save completes
         },
       });
 
-      // 如果父组件不处理done回调，3秒后自动关闭加载状态
+      // If the parent does not handle the done callback, clear the loading state after 3 seconds
       setTimeout(() => {
         this.saving = false;
       }, 3000);
@@ -313,7 +313,7 @@ export default {
                 : f.type === "password"
                   ? "password"
                   : "text",
-            placeholder: `请输入${f.key}`,
+            placeholder: `Please enter ${f.key}`,
           }));
 
           if (this.pendingModelData && this.pendingProviderType === providerCode) {
@@ -330,7 +330,7 @@ export default {
         if (!configJson.hasOwnProperty(field.prop)) {
           configJson[field.prop] = "";
         } else if (field.type === "json-textarea") {
-          // 兼容已保存为 JSON 字符串的字典，避免再次序列化后无法编辑。
+          // Support dicts saved as JSON strings, so they stay editable instead of being serialized again.
           if (typeof configJson[field.prop] === "string") {
             try {
               const parsed = JSON.parse(configJson[field.prop]);
@@ -338,7 +338,7 @@ export default {
                 configJson[field.prop] = parsed;
               }
             } catch {
-              // 保留非法值的显示，由现有校验提示用户修正。
+              // Keep showing invalid values; existing validation prompts the user to fix them.
             }
           }
           this.$set(
@@ -378,13 +378,13 @@ export default {
           return parsed;
         }
         this.$message.error({
-          message: '必须输入字典格式（如 {"key":"value"}），保存则使用原数据',
+          message: 'Must be a dictionary (e.g. {"key":"value"}); saving will keep the original data',
           showClose: true,
         });
         return null;
       } catch (e) {
         this.$message.error({
-          message: 'JSON格式错误（如 {"key":"value"}），保存则使用原数据',
+          message: 'Invalid JSON format (e.g. {"key":"value"}); saving will keep the original data',
           showClose: true,
         });
         return null;
@@ -401,15 +401,15 @@ export default {
       return typeof value === "object" ? value : {};
     },
 
-    // 检测字段是否为敏感字段
+    // Check whether a field is sensitive
     isSensitiveField(fieldName) {
-      // 将字段名转换为小写进行比较
+      // Compare using the lowercased field name
       const lowerFieldName = fieldName.toLowerCase();
-      // 精确匹配keyMap中定义的7个敏感词
+      // Exact match against the 7 sensitive keys defined in keyMap
       return this.sensitive_keys.includes(lowerFieldName);
     },
 
-    // 获取敏感字段对应的中文名称
+    // Get the Chinese name for a sensitive field (kept in Chinese: the server detects unset keys by this Chinese placeholder)
     getSensitiveFieldName(fieldName) {
       const keyMap = {
         api_key: "API密钥",
@@ -429,45 +429,45 @@ export default {
       return "敏感信息";
     },
 
-    // 处理input聚焦事件
+    // Handle input focus
     handleInputFocus(field, value) {
-      // 如果值包含星号，清空显示
+      // If the value contains asterisks, clear the display
       if (value && value.includes("*")) {
-        // 存储原始值，用于失焦时恢复
+        // Stores original values for restoring on blur
         this.$set(this.originalValues, field, this.form.configJson[field]);
         this.$set(this.form.configJson, field, "");
       }
     },
 
-    // 处理input失焦事件
+    // Handle input blur
     handleInputBlur(field) {
-      // 检查是否为敏感字段
+      // Check whether it is a sensitive field
       if (this.isSensitiveField(field)) {
-        // 如果值为空，恢复掩码值
+        // If empty, restore the masked value
         if (!this.form.configJson[field] || this.form.configJson[field].trim() === "") {
-          // 如果有原始值，则恢复原始值；否则设置为掩码提示
+          // Restore the original value if there is one; otherwise set the mask placeholder
           if (this.originalValues[field]) {
             this.$set(this.form.configJson, field, this.originalValues[field]);
           } else {
             const sensitiveName = this.getSensitiveFieldName(field);
             this.$set(this.form.configJson, field, `你的${sensitiveName}`);
           }
-          // 清除临时存储的原始值
+          // Clear the temporarily stored original value
           this.$delete(this.originalValues, field);
         }
       }
     },
 
-    // 处理JSON字段的聚焦事件
+    // Handle JSON field focus
     handleJsonInputFocus(field, value) {
       if (value && value.includes("*")) {
         this.$set(this.fieldJsonMap, field, "");
       }
     },
 
-    // 处理JSON字段的失焦事件
+    // Handle JSON field blur
     handleJsonInputBlur(field) {
-      // JSON字段不做特殊处理，因为它们通常不包含简单的敏感信息
+      // No special handling for JSON fields, as they usually do not contain simple sensitive values
     },
   },
 };

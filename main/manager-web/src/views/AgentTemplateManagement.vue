@@ -68,7 +68,7 @@
       </div>
     </div>
 
-    <!-- 新增/编辑模板弹窗 -->
+    <!-- Add/edit template dialog -->
     <CustomDialog
       :title="dialogTitle"
       :visible.sync="dialogVisible"
@@ -158,10 +158,10 @@ export default {
       },
       formRules: {
         agentName: [
-          { required: true, message: "请输入助手昵称", trigger: "blur" }
+          { required: true, message: "Please enter the assistant nickname", trigger: "blur" }
         ],
         systemPrompt: [
-          { required: true, message: "请输入角色介绍", trigger: "blur" }
+          { required: true, message: "Please enter the role introduction", trigger: "blur" }
         ]
       },
       originalForm: null

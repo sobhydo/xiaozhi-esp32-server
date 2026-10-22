@@ -10,7 +10,7 @@
     @confirm="confirm"
   >
     <div class="dialog-content">
-      <!-- 模型信息部分 -->
+      <!-- Model info section -->
       <div class="section-header">
         <div class="section-title">{{ $t('modelConfigDialog.modelInfo') }}</div>
         <div class="switch-group">
@@ -165,7 +165,7 @@ export default {
             label: f.label,
             prop: f.key,
             type: f.type === 'dict' ? 'json-textarea' : f.type === 'password' ? 'password' : 'text',
-            placeholder: `请输入${f.key}`
+            placeholder: `Please enter ${f.key}`
           }))
         }))
         this.providersLoaded = true
@@ -194,7 +194,7 @@ export default {
     confirm() {
       this.saving = true;
 
-      // 校验模型ID不能为纯文字或空格
+      // Validate that the model ID is not letters only or whitespace
       if (this.formData.id && !this.validateModelId(this.formData.id)) {
         this.$message.error(this.$t('modelConfigDialog.invalidModelId'));
         this.saving = false;
@@ -207,7 +207,7 @@ export default {
         return;
       }
 
-      // dict 字段必须解析为 JSON 对象再提交，否则会以字符串入库
+      // dict fields must be parsed into a JSON object before submit, otherwise they are stored as strings
       for (const field of this.providerFields) {
         if (field.type !== 'json-textarea') continue;
         const raw = this.formData.configJson[field.prop];
@@ -219,7 +219,7 @@ export default {
           }
           this.formData.configJson[field.prop] = parsed;
         } catch (e) {
-          this.$message.error('必须输入字典格式（如 {"key":"value"}）');
+          this.$message.error('Must be a dictionary (e.g. {"key":"value"})');
           this.saving = false;
           return;
         }
@@ -266,39 +266,39 @@ export default {
         isDefault: true,
         configJson: {}
       };
-      // 重置加载状态
+      // Reset loading state
       this.providers = [];
       this.providersLoaded = false;
-      // 重置字段配置
+      // Reset field configuration
       this.providerFields = [];
       this.currentProvider = null;
     },
     
-    // 校验模型ID：不能为纯文字或空格
+    // Validate model ID: must not be letters only or whitespace
     validateModelId(modelId) {
       if (!modelId || typeof modelId !== 'string') {
         return false;
       }
       
-      // 去除首尾空格
+      // Trim leading/trailing whitespace
       const trimmedId = modelId.trim();
       
-      // 检查是否为空或纯空格
+      // Check for empty or whitespace-only
       if (trimmedId === '') {
         return false;
       }
       
-      // 检查是否只包含字母（纯文字）
+      // Check whether it contains only letters
       if (/^[a-zA-Z]+$/.test(trimmedId)) {
         return false;
       }
       
-      // 检查是否包含空格
+      // Check whether it contains whitespace
       if (/\s/.test(trimmedId)) {
         return false;
       }
       
-      // 允许字母、数字、下划线、连字符
+      // Allow letters, digits, underscores and hyphens
       if (!/^[a-zA-Z0-9_-]+$/.test(trimmedId)) {
         return false;
       }
