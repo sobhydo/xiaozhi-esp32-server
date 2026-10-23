@@ -1717,4 +1717,5 @@ export default {
   'common.noData': '暫無資料',
   'chatHistory.playAudio': '播放音訊',
   'chatHistory.expandToolResult': '展開工具結果',
+  'console.basedOn': '基於 {name} {version}',
 }

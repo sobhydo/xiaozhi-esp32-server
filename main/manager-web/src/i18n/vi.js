@@ -1717,4 +1717,5 @@ export default {
   'common.noData': 'Không có dữ liệu',
   'chatHistory.playAudio': 'Phát âm thanh',
   'chatHistory.expandToolResult': 'Hiện kết quả công cụ',
+  'console.basedOn': 'Dựa trên {name} {version}',
 }

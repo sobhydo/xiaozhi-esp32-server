@@ -408,7 +408,7 @@ export default {
   'login.mobilePlaceholder': 'Please enter mobile number',
   'login.password': 'Password',
   'login.passwordPlaceholder': 'Please enter password',
-  'login.captchaPlaceholder': 'Please enter verification code',
+  'login.captchaPlaceholder': 'Enter the code',
   'login.loginButton': 'Login',
   'login.login': 'Login',
   'login.register': 'Register',
@@ -1697,7 +1697,7 @@ export default {
   'console.closeMenu': 'Close menu',
   'login.subtitle': 'Manage your agents, devices and models.',
   'console.authHeadline': 'One console for every voice assistant on your network.',
-  'console.authDescription': 'Configure agents, bind ESP32 devices, and choose the models behind each conversation.',
+  'console.authDescription': 'Configure agents, bind AI devices, and choose the models behind each conversation.',
   'console.agentsDescription': 'Each agent combines a role, models and a voice. Devices bind to an agent.',
   'console.devicesDescription': 'Devices bound to this agent. Restart a device after changing its configuration.',
   'console.modelsDescription': 'Configured providers for each stage of the voice pipeline.',
@@ -1717,4 +1717,5 @@ export default {
   'common.noData': 'No data',
   'chatHistory.playAudio': 'Play audio',
   'chatHistory.expandToolResult': 'Show tool result',
+  'console.basedOn': 'Based on {name} {version}',
 }

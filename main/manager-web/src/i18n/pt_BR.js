@@ -1717,4 +1717,5 @@ export default {
   'common.noData': 'Sem dados',
   'chatHistory.playAudio': 'Reproduzir áudio',
   'chatHistory.expandToolResult': 'Mostrar resultado da ferramenta',
+  'console.basedOn': 'Baseado em {name} {version}',
 }

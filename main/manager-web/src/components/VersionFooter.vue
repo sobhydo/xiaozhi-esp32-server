@@ -1,7 +1,7 @@
 <template>
   <div class="copyright version-footer">
     <div class="footer-content">
-      <span>{{ year }} {{ name }} {{ version }}</span>
+      <span>{{ year }} XIOT · {{ $t('console.basedOn', { name: name || 'xiaozhi-esp32-server', version }) }}</span>
       <template v-if="beianGaNum !== 'null'">
         <span v-if="beianIcpNum !== 'null' || name" class="sep" aria-hidden="true">·</span>
         <a :href="'http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=' + beianGaNum" target="_blank"
