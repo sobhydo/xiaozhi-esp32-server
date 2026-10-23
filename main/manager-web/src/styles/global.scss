@@ -22,12 +22,14 @@ select:-webkit-autofill:focus {
 }
 
 .is-light {
-  border: 1px solid #e4e7ed !important;
-  color: #595959;
-  font-size: 14px;
-  background: #fafcfe !important;
+  border: 1px solid #e4e4e7 !important;
+  color: #3f3f46;
+  font-size: 13px;
+  background: #ffffff !important;
+  border-radius: 10px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 8px 24px rgba(0, 0, 0, 0.08);
   .popper__arrow {
-    border-top-color: #e4e7ed !important;
+    border-top-color: #e4e4e7 !important;
    }
 }
 
@@ -36,11 +38,11 @@ select:-webkit-autofill:focus {
     width: 6px;
   }
   &::-webkit-scrollbar-thumb {
-    background: #a1c9fd;
+    background: #d4d4d8;
     border-radius: 3px;
   }
   &::-webkit-scrollbar-track {
-    background: #f0f3fe;
+    background: transparent;
     border-radius: 3px;
   }
 }
@@ -52,7 +54,7 @@ select:-webkit-autofill:focus {
 
 /* Global dialog overlay */
 .v-modal {
-  background: rgba(15, 23, 42, 0.55) !important;
+  background: rgba(11, 11, 12, 0.5) !important;
   backdrop-filter: blur(2px);
 }
 

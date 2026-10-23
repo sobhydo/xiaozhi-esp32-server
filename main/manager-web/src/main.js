@@ -1,5 +1,9 @@
-import 'element-ui/lib/theme-chalk/index.css';
+import './styles/element-theme.scss';
 import 'normalize.css/normalize.css'; // A modern alternative to CSS resets
+import '@fontsource/inter/400.css';
+import '@fontsource/inter/500.css';
+import '@fontsource/inter/600.css';
+import '@fontsource/inter/700.css';
 import Vue from 'vue';
 import ElementUI from 'element-ui';
 import App from './App.vue';
@@ -8,6 +12,7 @@ import store from './store';
 import i18n from './i18n';
 import locale from 'element-ui/lib/locale'
 import './styles/global.scss';
+import './styles/console.scss';
 import { register as registerServiceWorker } from './registerServiceWorker';
 import featureManager from './utils/featureManager';
 

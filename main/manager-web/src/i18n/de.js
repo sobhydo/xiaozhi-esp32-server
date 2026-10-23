@@ -1684,4 +1684,15 @@ export default {
   // Header navigation
   'header.addressBook': 'Adressbuch',
 
+  // X Agent Console layout
+  'console.productName': 'Agent Console',
+  'console.mainNavigation': 'Hauptnavigation',
+  'console.administration': 'Verwaltung',
+  'console.systemSettings': 'Systemeinstellungen',
+  'console.superAdmin': 'Super-Admin',
+  'console.member': 'Mitglied',
+  'console.language': 'Sprache',
+  'console.accountMenu': 'Kontomenü',
+  'console.openMenu': 'Menü öffnen',
+  'console.closeMenu': 'Menü schließen',
 }

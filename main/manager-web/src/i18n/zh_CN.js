@@ -1684,4 +1684,15 @@ export default {
   'addressBookManagement.monthsAgo': '{months}个月前',
   'addressBookManagement.yearsAgo': '{years}年前',
 
+  // X Agent Console 布局
+  'console.productName': 'Agent Console',
+  'console.mainNavigation': '主导航',
+  'console.administration': '系统管理',
+  'console.systemSettings': '系统设置',
+  'console.superAdmin': '超级管理员',
+  'console.member': '普通用户',
+  'console.language': '语言',
+  'console.accountMenu': '账户菜单',
+  'console.openMenu': '打开菜单',
+  'console.closeMenu': '关闭菜单',
 }

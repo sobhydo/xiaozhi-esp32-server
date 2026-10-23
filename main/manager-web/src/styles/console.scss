@@ -1,0 +1,211 @@
+// X Agent Console: global base, app shell and Element UI refinements.
+// Loaded after global.scss so it wins over the legacy defaults.
+@import "./tokens.scss";
+
+html,
+body {
+  background: var(--x-canvas);
+}
+
+body {
+  margin: 0;
+  font-family: var(--x-font);
+  color: var(--x-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#app {
+  font-family: var(--x-font);
+  color: var(--x-text);
+}
+
+::selection {
+  background: var(--x-selected);
+  color: var(--x-ink);
+}
+
+code,
+kbd,
+pre,
+samp {
+  font-family: var(--x-font-mono);
+}
+
+// Room for the fixed sidebar rendered by HeaderBar
+body.x-has-sidenav #app {
+  padding-left: var(--x-sidebar-width);
+}
+
+@media (max-width: 900px) {
+  body.x-has-sidenav #app {
+    padding-left: 0;
+    padding-top: var(--x-topbar-height);
+  }
+}
+
+// Scrollbars
+* {
+  scrollbar-color: var(--x-border-control) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--x-border-control);
+  border-radius: var(--x-radius-pill);
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+// ---------- Element UI refinements ----------
+
+.el-button {
+  border-radius: var(--x-radius-pill);
+  font-weight: 500;
+}
+
+.el-button--default:not(.is-disabled):hover,
+.el-button--default:not(.is-disabled):focus {
+  background: var(--x-surface-raised);
+  border-color: var(--x-text-disabled);
+  color: var(--x-ink);
+}
+
+.el-button--primary:not(.is-plain):not(.is-disabled):hover,
+.el-button--primary:not(.is-plain):not(.is-disabled):focus {
+  background: var(--x-ink-hover);
+  border-color: var(--x-ink-hover);
+}
+
+.el-button--primary:not(.is-plain):not(.is-disabled):active {
+  background: var(--x-ink-pressed);
+  border-color: var(--x-ink-pressed);
+}
+
+.el-button--text {
+  border-radius: var(--x-radius-control);
+}
+
+.el-button.is-circle {
+  border-radius: 50%;
+}
+
+.el-input__inner,
+.el-textarea__inner {
+  color: var(--x-text);
+}
+
+.el-input__inner:focus,
+.el-textarea__inner:focus,
+.el-input.is-focus .el-input__inner,
+.el-select .el-input.is-focus .el-input__inner {
+  border-color: var(--x-ink);
+  box-shadow: 0 0 0 4px var(--x-focus-ring);
+}
+
+.el-form-item__label {
+  color: var(--x-text);
+  font-weight: 500;
+}
+
+.el-card {
+  border-radius: var(--x-radius-card);
+  border-color: var(--x-border);
+  color: var(--x-text);
+}
+
+.el-card.is-always-shadow,
+.el-card.is-hover-shadow:hover {
+  box-shadow: none;
+}
+
+.el-dialog {
+  border-radius: var(--x-radius-card);
+  box-shadow: var(--x-shadow-raised);
+  overflow: hidden;
+}
+
+.el-dialog__title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--x-text);
+}
+
+.el-message-box {
+  border-radius: var(--x-radius-card);
+  border: 0;
+  box-shadow: var(--x-shadow-raised);
+}
+
+.el-message-box__title {
+  font-weight: 600;
+}
+
+.el-table {
+  color: var(--x-text);
+}
+
+.el-table th.el-table__cell {
+  background: var(--x-surface-raised);
+  color: var(--x-text-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.el-table--enable-row-hover .el-table__body tr:hover > td.el-table__cell {
+  background: var(--x-surface-raised);
+}
+
+.el-tag {
+  border-radius: var(--x-radius-pill);
+}
+
+.el-pagination.is-background .el-pager li:not(.disabled).active {
+  background: var(--x-ink);
+  color: var(--x-on-ink);
+}
+
+.el-dropdown-menu,
+.el-select-dropdown,
+.el-cascader__dropdown,
+.el-popover,
+.el-picker-panel {
+  border-radius: 12px;
+  border-color: var(--x-border);
+  box-shadow: var(--x-shadow-raised);
+}
+
+.el-dropdown-menu__item:not(.is-disabled):hover,
+.el-dropdown-menu__item:focus {
+  background: var(--x-canvas);
+  color: var(--x-ink);
+}
+
+.el-select-dropdown__item.selected {
+  color: var(--x-ink);
+  font-weight: 600;
+}
+
+body .el-message {
+  top: 24px !important;
+  border-radius: 12px;
+}
+
+.el-tooltip__popper.is-dark {
+  background: var(--x-ink);
+}
+
+.el-loading-spinner .path {
+  stroke: var(--x-ink);
+}
+
+.el-loading-spinner .el-loading-text,
+.el-loading-spinner i {
+  color: var(--x-ink);
+}

@@ -1,348 +1,257 @@
 <template>
-  <el-header class="header">
-    <div class="header-container">
-      <!-- Left side -->
-      <div class="header-left" @click="handleRouter('home')">
-        <img loading="lazy" alt="" src="@/assets/xiaozhi-logo.png" class="logo-img" />
-        <img loading="lazy" alt="" :src="xiaozhiAiIcon" class="brand-img" />
+  <div class="x-shell">
+    <!-- Top bar, small screens only -->
+    <header class="x-topbar">
+      <router-link to="/home" class="x-brand x-brand--compact">
+        <span class="x-brand__tile"><XMark :size="18" /></span>
+        <span class="x-brand__name">{{ $t("console.productName") }}</span>
+      </router-link>
+      <button
+        type="button"
+        class="x-icon-btn"
+        :aria-label="mobileOpen ? $t('console.closeMenu') : $t('console.openMenu')"
+        :aria-expanded="mobileOpen ? 'true' : 'false'"
+        @click="mobileOpen = !mobileOpen"
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <path v-if="mobileOpen" d="M6 6l12 12M18 6 6 18" />
+          <path v-else d="M4 7h16M4 12h16M4 17h16" />
+        </svg>
+      </button>
+    </header>
+
+    <div v-if="mobileOpen" class="x-scrim" @click="mobileOpen = false"></div>
+
+    <nav class="x-sidenav" :class="{ 'is-open': mobileOpen }" :aria-label="$t('console.mainNavigation')">
+      <router-link to="/home" class="x-brand">
+        <span class="x-brand__tile"><XMark :size="20" /></span>
+        <span class="x-brand__name">{{ $t("console.productName") }}</span>
+      </router-link>
+
+      <div class="x-nav">
+        <router-link
+          v-for="item in primaryItems"
+          :key="item.key"
+          :to="item.path"
+          class="x-nav__item"
+          :class="{ 'is-active': isActive(item) }"
+          :aria-current="isActive(item) ? 'page' : null"
+        >
+          <svg class="x-nav__icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" v-html="icons[item.icon]"></svg>
+          <span>{{ $t(item.label) }}</span>
+        </router-link>
+
+        <template v-if="userInfo.superAdmin">
+          <div class="x-nav__section">{{ $t("console.administration") }}</div>
+          <router-link
+            v-for="item in adminItems"
+            :key="item.key"
+            :to="item.path"
+            class="x-nav__item"
+            :class="{ 'is-active': isActive(item) }"
+            :aria-current="isActive(item) ? 'page' : null"
+          >
+            <svg class="x-nav__icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" v-html="icons[item.icon]"></svg>
+            <span>{{ $t(item.label) }}</span>
+          </router-link>
+
+          <button
+            type="button"
+            class="x-nav__item x-nav__group"
+            :class="{ 'is-active': settingsActive && !settingsOpen }"
+            :aria-expanded="settingsOpen ? 'true' : 'false'"
+            @click="settingsOpen = !settingsOpen"
+          >
+            <svg class="x-nav__icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" v-html="icons.settings"></svg>
+            <span>{{ $t("console.systemSettings") }}</span>
+            <svg class="x-nav__chevron" :class="{ 'is-open': settingsOpen }" width="16" height="16" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="m6 9 6 6 6-6" />
+            </svg>
+          </button>
+          <div v-show="settingsOpen" class="x-nav__children">
+            <router-link
+              v-for="item in settingsItems"
+              :key="item.key"
+              :to="item.path"
+              class="x-nav__item x-nav__child"
+              :class="{ 'is-active': isActive(item) }"
+              :aria-current="isActive(item) ? 'page' : null"
+            >
+              {{ $t(item.label) }}
+            </router-link>
+          </div>
+        </template>
       </div>
 
-      <!-- Center navigation menu -->
-      <div class="header-center">
-        <div class="equipment-management" :class="{
-          'active-tab':
-            $route.path === '/home' ||
-            $route.path === '/role-config' ||
-            $route.path === '/device-management',
-        }" @click="handleRouter('home')">
-          <img loading="lazy" alt="" src="@/assets/header/robot.png" :style="{
-            filter:
-              $route.path === '/home' ||
-                $route.path === '/role-config' ||
-                $route.path === '/device-management'
-                ? 'brightness(0) invert(1)'
-                : 'None',
-          }" />
-          <span class="nav-text">{{ $t("header.smartManagement") }}</span>
-        </div>
-        <!-- Regular users see Voice Clone -->
-        <div v-if="!userInfo.superAdmin && featureStatus.voiceClone" class="equipment-management"
-          :class="{ 'active-tab': $route.path === '/voice-clone-management' }"
-          @click="handleRouter('voiceCloneManagement')">
-          <img loading="lazy" alt="" src="@/assets/header/voice.png" :style="{
-            filter:
-              $route.path === '/voice-clone-management'
-                ? 'brightness(0) invert(1)'
-                : 'None',
-          }" />
-          <span class="nav-text">{{ $t("header.voiceCloneManagement") }}</span>
-        </div>
-
-        <!-- Super admins see Voice Clone dropdown -->
-        <el-dropdown v-if="userInfo.superAdmin && featureStatus.voiceClone" trigger="click"
-          class="equipment-management more-dropdown" :class="{
-            'active-tab':
-              $route.path === '/voice-clone-management' ||
-              $route.path === '/voice-resource-management',
-          }" @visible-change="handleVoiceCloneDropdownVisibleChange">
-          <span class="el-dropdown-link">
-            <img loading="lazy" alt="" src="@/assets/header/voice.png" :style="{
-              filter:
-                $route.path === '/voice-clone-management' ||
-                  $route.path === '/voice-resource-management'
-                  ? 'brightness(0) invert(1)'
-                  : 'None',
-            }" />
-            <span class="nav-text">{{ $t("header.voiceCloneManagement") }}</span>
-            <i class="el-icon-arrow-down" :class="{ 'rotate-down': voiceCloneDropdownVisible }"></i>
-          </span>
-          <el-dropdown-menu slot="dropdown">
-            <el-dropdown-item @click.native="handleRouter('voiceCloneManagement')">
-              {{ $t("header.voiceCloneManagement") }}
-            </el-dropdown-item>
-            <el-dropdown-item @click.native="handleRouter('voiceResourceManagement')">
-              {{ $t("header.voiceResourceManagement") }}
-            </el-dropdown-item>
-          </el-dropdown-menu>
-        </el-dropdown>
-
-        <div v-if="userInfo.superAdmin" class="equipment-management"
-          :class="{ 'active-tab': $route.path === '/model-config' }" @click="handleRouter('modelConfig')">
-          <img loading="lazy" alt="" src="@/assets/header/model_config.png" :style="{
-            filter:
-              $route.path === '/model-config' ? 'brightness(0) invert(1)' : 'None',
-          }" />
-          <span class="nav-text">{{ $t("header.modelConfig") }}</span>
-        </div>
-        <div v-if="featureStatus.knowledgeBase" class="equipment-management"
-          :class="{ 'active-tab': $route.path === '/knowledge-base-management' || $route.path === '/knowledge-file-upload' }"
-          @click="handleRouter('knowledgeBaseManagement')">
-          <img loading="lazy" alt="" src="@/assets/header/knowledge_base.png" :style="{
-            filter:
-              $route.path === '/knowledge-base-management' || $route.path === '/knowledge-file-upload' ? 'brightness(0) invert(1)' : 'None',
-          }" />
-          <span class="nav-text">{{ $t("header.knowledgeBase") }}</span>
-        </div>
-        <div v-if="featureStatus.addressBook" class="equipment-management"
-          :class="{ 'active-tab': $route.path === '/address-book-management' }"
-          @click="handleRouter('addressBookManagement')">
-          <img loading="lazy" alt="" src="@/assets/header/address_book.png" :style="{
-            filter:
-              $route.path === '/address-book-management' ? 'brightness(0) invert(1)' : 'None',
-          }" />
-          <span class="nav-text">{{ $t("header.addressBook") }}</span>
-        </div>
-        <el-dropdown v-if="userInfo.superAdmin" trigger="click" class="equipment-management more-dropdown" :class="{
-          'active-tab':
-            $route.path === '/dict-management' ||
-            $route.path === '/params-management' ||
-            $route.path === '/provider-management' ||
-            $route.path === '/server-side-management' ||
-            $route.path === '/agent-template-management' ||
-            $route.path === '/ota-management' ||
-            $route.path === '/user-management' ||
-            $route.path === '/feature-management' ||
-            $route.path === '/replacement-word-management'
-        }" @visible-change="handleParamDropdownVisibleChange">
-          <span class="el-dropdown-link">
-            <img loading="lazy" alt="" src="@/assets/header/param_management.png" :style="{
-              filter:
-                $route.path === '/dict-management' ||
-                  $route.path === '/params-management' ||
-                  $route.path === '/provider-management' ||
-                  $route.path === '/server-side-management' ||
-                  $route.path === '/agent-template-management' ||
-                  $route.path === '/ota-management' ||
-                  $route.path === '/user-management' ||
-                  $route.path === '/feature-management' ||
-                  $route.path === '/replacement-word-management'
-                  ? 'brightness(0) invert(1)'
-                  : 'None',
-            }" />
-            <span class="nav-text">{{ $t("header.paramDictionary") }}</span>
-            <i class="el-icon-arrow-down" :class="{ 'rotate-down': paramDropdownVisible }"></i>
-          </span>
-          <el-dropdown-menu slot="dropdown">
-            <el-dropdown-item @click.native="handleRouter('paramManagement')">
-              {{ $t("header.paramManagement") }}
-            </el-dropdown-item>
-            <el-dropdown-item @click.native="handleRouter('userManagement')">
-              {{ $t("header.userManagement") }}
-            </el-dropdown-item>
-            <el-dropdown-item @click.native="handleRouter('otaManagement')">
-              {{ $t("header.otaManagement") }}
-            </el-dropdown-item>
-            <el-dropdown-item @click.native="handleRouter('dictManagement')">
-              {{ $t("header.dictManagement") }}
-            </el-dropdown-item>
-            <el-dropdown-item @click.native="handleRouter('providerManagement')">
-              {{ $t("header.providerManagement") }}
-            </el-dropdown-item>
-            <el-dropdown-item @click.native="handleRouter('agentTemplate')">
-              {{ $t("header.agentTemplate") }}
-            </el-dropdown-item>
-            <el-dropdown-item @click.native="handleRouter('replacementWordManagement')">
-              {{ $t("header.replacementWordManagement") }}
-            </el-dropdown-item>
-            <el-dropdown-item @click.native="handleRouter('serverSideManagement')">
-              {{ $t("header.serverSideManagement") }}
-            </el-dropdown-item>
-            <el-dropdown-item @click.native="handleRouter('featureManagement')">
-              {{ $t("header.featureManagement") }}
-            </el-dropdown-item>
-          </el-dropdown-menu>
-        </el-dropdown>
-      </div>
-
-      <!-- Right side -->
-      <div class="header-right">
-        <img loading="lazy" alt="" src="@/assets/home/avatar.png" class="avatar-img" @click="handleAvatarClick" />
-        <span class="el-user-dropdown" @click="handleAvatarClick">
-          {{ userInfo.username || "Loading..." }}
-          <i class="el-icon-arrow-down el-icon--right" :class="{ 'rotate-down': userMenuVisible }"></i>
+      <div class="x-account">
+        <span class="x-account__avatar" aria-hidden="true">{{ initials }}</span>
+        <span class="x-account__who">
+          <span class="x-account__name">{{ userInfo.username || "…" }}</span>
+          <span class="x-account__role">{{ userInfo.superAdmin ? $t("console.superAdmin") : $t("console.member") }}</span>
         </span>
-        <el-cascader :options="userMenuOptions" trigger="click" :props="cascaderProps"
-          style="width: 0px; overflow: hidden" :show-all-levels="false" @change="handleCascaderChange"
-          @visible-change="handleUserMenuVisibleChange" ref="userCascader">
-          <template slot-scope="{ data }">
-            <span>{{ data.label }}</span>
-          </template>
-        </el-cascader>
+        <el-dropdown trigger="click" placement="top-end" @command="handleCommand">
+          <button type="button" class="x-icon-btn" :aria-label="$t('console.accountMenu')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+              <circle cx="5" cy="12" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" />
+            </svg>
+          </button>
+          <el-dropdown-menu slot="dropdown" class="x-account-menu">
+            <li class="x-account-menu__label">{{ $t("console.language") }}</li>
+            <el-dropdown-item
+              v-for="lang in languages"
+              :key="lang.value"
+              :command="'lang:' + lang.value"
+              :class="{ 'is-current': currentLanguage === lang.value }"
+            >
+              {{ $t(lang.label) }}
+            </el-dropdown-item>
+            <el-dropdown-item command="password" divided>{{ $t("header.changePassword") }}</el-dropdown-item>
+            <el-dropdown-item command="logout">{{ $t("header.logout") }}</el-dropdown-item>
+          </el-dropdown-menu>
+        </el-dropdown>
       </div>
-    </div>
+    </nav>
 
-    <!-- Change password dialog -->
     <ChangePasswordDialog v-model="isChangePasswordDialogVisible" />
-  </el-header>
+  </div>
 </template>
 
 <script>
 import i18n, { changeLanguage } from "@/i18n";
-import featureManager from "@/utils/featureManager"; // Import feature manager utility
 import { mapActions, mapState } from "vuex";
-import ChangePasswordDialog from "./ChangePasswordDialog.vue"; // Import change password dialog component
+import ChangePasswordDialog from "./ChangePasswordDialog.vue";
+import XMark from "./XMark.vue";
+
+// Inner markup of 24x24 stroke icons used by the navigation
+const ICONS = {
+  agents: '<rect x="3" y="8" width="18" height="12" rx="2"/><path d="M12 8V4M9 14h.01M15 14h.01"/>',
+  voice: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>',
+  waveform: '<path d="M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4"/>',
+  models: '<path d="M12 3 3 8l9 5 9-5-9-5z"/><path d="m3 13 9 5 9-5"/>',
+  knowledge: '<path d="M4 5a2 2 0 0 1 2-2h14v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/>',
+  contacts: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+  users: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6.5 6.5 0 0 0-4-6"/>',
+  firmware: '<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>',
+  settings: '<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
+};
+
+// Mounted sidebars; the body class stays while at least one is mounted
+let mountedCount = 0;
 
 export default {
   name: "HeaderBar",
-  components: {
-    ChangePasswordDialog,
-  },
-  props: ["devices"], // Device list from parent component
+  components: { ChangePasswordDialog, XMark },
+  props: ["devices"], // Kept for compatibility with pages that pass it
   data() {
     return {
-      search: "",
-      isChangePasswordDialogVisible: false, // Controls change password dialog visibility
-      paramDropdownVisible: false,
-      voiceCloneDropdownVisible: false,
-      userMenuVisible: false, // User menu visibility
-      menuVisibleTimer: null, // Menu display timer, prevents rapid triggering
-      // Cascader config
-      cascaderProps: {
-        expandTrigger: "click",
-        value: "value",
-        label: "label",
-        children: "children",
-      },
-      // Navigation page config
-      routerPaths: {
-        home: "/home",
-        modelConfig: "/model-config",
-        knowledgeBaseManagement: "/knowledge-base-management",
-        addressBookManagement: "/address-book-management",
-        voiceCloneManagement: "/voice-clone-management",
-        voiceResourceManagement: "/voice-resource-management",
-        paramManagement: "/params-management",
-        userManagement: "/user-management",
-        otaManagement: "/ota-management",
-        dictManagement: "/dict-management",
-        providerManagement: "/provider-management",
-        agentTemplate: "/agent-template-management",
-        replacementWordManagement: "/replacement-word-management",
-        serverSideManagement: "/server-side-management",
-        featureManagement: "/feature-management",
-      }
+      icons: ICONS,
+      mobileOpen: false,
+      settingsOpen: false,
+      isChangePasswordDialogVisible: false,
+      languages: [
+        { value: "zh_CN", label: "language.zhCN" },
+        { value: "zh_TW", label: "language.zhTW" },
+        { value: "en", label: "language.en" },
+        { value: "de", label: "language.de" },
+        { value: "vi", label: "language.vi" },
+        { value: "pt_BR", label: "language.ptBR" },
+      ],
+      settingsItems: [
+        { key: "params", path: "/params-management", label: "header.paramManagement" },
+        { key: "dict", path: "/dict-management", label: "header.dictManagement" },
+        { key: "providers", path: "/provider-management", label: "header.providerManagement" },
+        { key: "templates", path: "/agent-template-management", label: "header.agentTemplate", match: ["/template-quick-config"] },
+        { key: "words", path: "/replacement-word-management", label: "header.replacementWordManagement" },
+        { key: "server", path: "/server-side-management", label: "header.serverSideManagement" },
+        { key: "features", path: "/feature-management", label: "header.featureManagement" },
+      ],
+      adminItems: [
+        { key: "users", path: "/user-management", label: "header.userManagement", icon: "users" },
+        { key: "ota", path: "/ota-management", label: "header.otaManagement", icon: "firmware" },
+      ],
     };
   },
   computed: {
     ...mapState({
       featureStatus: (state) => ({
-        voiceClone: state.pubConfig.systemWebMenu?.features?.voiceClone?.enabled, // Voice clone feature status
-        knowledgeBase: state.pubConfig.systemWebMenu?.features?.knowledgeBase?.enabled, // Knowledge base feature status
-        addressBook: state.pubConfig.systemWebMenu?.features?.addressBook?.enabled, // Address book feature status
+        voiceClone: state.pubConfig.systemWebMenu?.features?.voiceClone?.enabled,
+        knowledgeBase: state.pubConfig.systemWebMenu?.features?.knowledgeBase?.enabled,
+        addressBook: state.pubConfig.systemWebMenu?.features?.addressBook?.enabled,
       }),
       userInfo: (state) => state.userInfo,
     }),
-    // Get the current language
     currentLanguage() {
       return i18n.locale || "zh_CN";
     },
-    // Get display text for the current language
-    currentLanguageText() {
-      const currentLang = this.currentLanguage;
-      switch (currentLang) {
-        case "zh_CN":
-          return this.$t("language.zhCN");
-        case "zh_TW":
-          return this.$t("language.zhTW");
-        case "en":
-          return this.$t("language.en");
-        case "de":
-          return this.$t("language.de");
-        case "vi":
-          return this.$t("language.vi");
-        case "pt_BR":
-          return this.$t("language.ptBR");
-        default:
-          return this.$t("language.zhCN");
-      }
-    },
-    // Get the xiaozhi-ai icon for the current language
-    xiaozhiAiIcon() {
-      const currentLang = this.currentLanguage;
-      switch (currentLang) {
-        case "zh_CN":
-          return require("@/assets/xiaozhi-ai.png");
-        case "zh_TW":
-          return require("@/assets/xiaozhi-ai_zh_TW.png");
-        case "en":
-          return require("@/assets/xiaozhi-ai_en.png");
-        case "de":
-          return require("@/assets/xiaozhi-ai_de.png");
-        case "vi":
-          return require("@/assets/xiaozhi-ai_vi.png");
-        case "pt_BR":
-          return require("@/assets/xiaozhi-ai_en.png");
-        default:
-          return require("@/assets/xiaozhi-ai.png");
-      }
-    },
-    // User menu options
-    userMenuOptions() {
+    primaryItems() {
+      const admin = !!this.userInfo.superAdmin;
+      const f = this.featureStatus;
       return [
-        {
-          label: this.currentLanguageText,
-          value: "language",
-          children: [
-            {
-              label: this.$t("language.zhCN"),
-              value: "zh_CN",
-            },
-            {
-              label: this.$t("language.zhTW"),
-              value: "zh_TW",
-            },
-            {
-              label: this.$t("language.en"),
-              value: "en",
-            },
-            {
-              label: this.$t("language.de"),
-              value: "de",
-            },
-            {
-              label: this.$t("language.vi"),
-              value: "vi",
-            },
-            {
-              label: this.$t("language.ptBR"),
-              value: "pt_BR",
-            },
-          ],
-        },
-        {
-          label: this.$t("header.changePassword"),
-          value: "changePassword",
-        },
-        {
-          label: this.$t("header.logout"),
-          value: "logout",
-        },
-      ];
+        { key: "agents", path: "/home", label: "header.smartManagement", icon: "agents",
+          match: ["/role-config", "/device-management", "/voice-print"] },
+        f.voiceClone && { key: "voiceClone", path: "/voice-clone-management", label: "header.voiceCloneManagement", icon: "voice" },
+        f.voiceClone && admin && { key: "voiceResources", path: "/voice-resource-management", label: "header.voiceResourceManagement", icon: "waveform" },
+        admin && { key: "models", path: "/model-config", label: "header.modelConfig", icon: "models" },
+        f.knowledgeBase && { key: "knowledge", path: "/knowledge-base-management", label: "header.knowledgeBase", icon: "knowledge",
+          match: ["/knowledge-base"] },
+        f.addressBook && { key: "addressBook", path: "/address-book-management", label: "header.addressBook", icon: "contacts" },
+      ].filter(Boolean);
+    },
+    settingsActive() {
+      return this.settingsItems.some((item) => this.isActive(item));
+    },
+    initials() {
+      const name = (this.userInfo.username || "").trim();
+      return name ? name.slice(0, 2).toUpperCase() : "";
     },
   },
-  async mounted() {
-    // Wait for featureManager to initialize before loading feature status
-    await this.loadFeatureStatus();
+  watch: {
+    $route() {
+      this.mobileOpen = false;
+    },
+  },
+  created() {
+    this.settingsOpen = this.settingsActive;
+  },
+  mounted() {
+    mountedCount += 1;
+    document.body.classList.add("x-has-sidenav");
+  },
+  beforeDestroy() {
+    mountedCount -= 1;
+    if (mountedCount <= 0) {
+      mountedCount = 0;
+      document.body.classList.remove("x-has-sidenav");
+    }
   },
   methods: {
-    handleRouter(type) {
-      this.$router.push(this.routerPaths[type]);
+    isActive(item) {
+      const path = this.$route.path;
+      if (path === item.path) return true;
+      return (item.match || []).some((prefix) => path.startsWith(prefix));
     },
-    // Load feature status
-    async loadFeatureStatus() {
-      // Wait for featureManager to initialize
-      await featureManager.waitForInitialization();
+    handleCommand(command) {
+      if (command.startsWith("lang:")) {
+        this.switchLanguage(command.slice(5));
+      } else if (command === "password") {
+        this.isChangePasswordDialogVisible = true;
+      } else if (command === "logout") {
+        this.handleLogout();
+      }
     },
-    // Show change password dialog
-    showChangePasswordDialog() {
-      this.isChangePasswordDialogVisible = true;
-      // Reset user menu visibility after showing change password dialog
-      this.userMenuVisible = false;
+    switchLanguage(lang) {
+      changeLanguage(lang);
+      this.$message.success({
+        message: this.$t("message.success"),
+        showClose: true,
+      });
     },
-    // Log out
     async handleLogout() {
       try {
-        // Call the Vuex logout action
         await this.logout();
         this.$message.success({
           message: this.$t("message.success"),
@@ -356,296 +265,287 @@ export default {
         });
       }
     },
-    // Watch params/dictionary dropdown visibility
-    handleParamDropdownVisibleChange(visible) {
-      this.paramDropdownVisible = visible;
-    },
-
-    // Watch voice clone dropdown visibility
-    handleVoiceCloneDropdownVisibleChange(visible) {
-      this.voiceCloneDropdownVisible = visible;
-    },
-    // Add a key in data to force component re-render
-    // Handle Cascader selection change
-    handleCascaderChange(value) {
-      if (!value || value.length === 0) {
-        return;
-      }
-
-      const action = value[value.length - 1];
-
-      // Handle language switch
-      if (value.length === 2 && value[0] === "language") {
-        this.changeLanguage(action);
-      } else {
-        // Handle other actions
-        switch (action) {
-          case "changePassword":
-            this.showChangePasswordDialog();
-            break;
-          case "logout":
-            this.handleLogout();
-            break;
-        }
-      }
-
-      // Clear selection right after the action
-      setTimeout(() => {
-        this.completeResetCascader();
-      }, 300);
-    },
-
-    // Switch language
-    changeLanguage(lang) {
-      changeLanguage(lang);
-      this.$message.success({
-        message: this.$t("message.success"),
-        showClose: true,
-      });
-      // Reset user menu visibility after switching language
-      this.userMenuVisible = false;
-    },
-
-    // Fully reset the cascader
-    completeResetCascader() {
-      if (this.$refs.userCascader) {
-        try {
-          // Try every possible way to clear the selection
-          // 1. Try the component's clearValue method
-          if (this.$refs.userCascader.clearValue) {
-            this.$refs.userCascader.clearValue();
-          }
-
-          // 2. Clear internal properties directly
-          if (this.$refs.userCascader.$data) {
-            this.$refs.userCascader.$data.selectedPaths = [];
-            this.$refs.userCascader.$data.displayLabels = [];
-            this.$refs.userCascader.$data.inputValue = "";
-            this.$refs.userCascader.$data.checkedValue = [];
-            this.$refs.userCascader.$data.showAllLevels = false;
-          }
-
-          // 3. Clear selected state via DOM
-          const menuElement = this.$refs.userCascader.$refs.menu;
-          if (menuElement && menuElement.$el) {
-            const activeItems = menuElement.$el.querySelectorAll(
-              ".el-cascader-node.is-active"
-            );
-            activeItems.forEach((item) => item.classList.remove("is-active"));
-
-            const checkedItems = menuElement.$el.querySelectorAll(
-              ".el-cascader-node.is-checked"
-            );
-            checkedItems.forEach((item) => item.classList.remove("is-checked"));
-          }
-
-          console.log("Cascader values cleared");
-        } catch (error) {
-          console.error("Failed to clear selection:", error);
-        }
-      }
-    },
-
-    // Clicking the avatar toggles the cascader dropdown
-    handleAvatarClick() {
-      if (this.$refs.userCascader) {
-        // Toggle menu visibility
-        this.userMenuVisible = !this.userMenuVisible;
-
-        // Clear selection when menu closes
-        if (!this.userMenuVisible) {
-          this.completeResetCascader();
-        }
-
-        // Set menu visibility directly
-        try {
-          // Try toggleDropDownVisible
-          this.$refs.userCascader.toggleDropDownVisible(this.userMenuVisible);
-        } catch (error) {
-          // If toggle fails, set the property directly
-          if (this.$refs.userCascader.$refs.menu) {
-            this.$refs.userCascader.$refs.menu.showMenu(this.userMenuVisible);
-          } else {
-            console.error("Cannot access menu component");
-          }
-        }
-      }
-    },
-
-    // Handle user menu visibility change
-    handleUserMenuVisibleChange(visible) {
-      if (this.menuVisibleTimer) return;
-      this.menuVisibleTimer = setTimeout(() => {
-        this.userMenuVisible = visible;
-        clearTimeout(this.menuVisibleTimer);
-        this.menuVisibleTimer = null;
-      }, 100);
-
-      // Also clear selection when the menu closes
-      if (!visible) {
-        this.completeResetCascader();
-      }
-    },
-
-    // Map the Vuex logout action via mapActions
     ...mapActions(["logout"]),
   },
 };
 </script>
 
 <style lang="scss" scoped>
-.header {
-  background: linear-gradient(180deg, #dfeafe, #eff4ff);
-  height: 63px !important;
-  min-width: 900px;
-  overflow: visible;
-}
-
-.header-container {
+.x-sidenav {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1000;
+  width: var(--x-sidebar-width);
+  box-sizing: border-box;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  height: 100%;
-  padding: 0 10px;
+  flex-direction: column;
+  padding: 16px 12px 12px;
+  background: var(--x-surface);
+  border-right: 1px solid var(--x-border);
+  text-align: left;
+  font-size: 14px;
 }
 
-.header-left {
+.x-brand {
   display: flex;
   align-items: center;
   gap: 10px;
-  min-width: 130px;
-  cursor: pointer;
+  padding: 4px 10px 20px;
+  color: var(--x-text);
+  text-decoration: none;
+
+  .x-mark {
+    transition: transform 0.6s cubic-bezier(0.7, 0, 0.3, 1);
+  }
+
+  &:hover .x-mark {
+    transform: rotate(90deg);
+  }
 }
 
-.logo-img {
-  width: 42px;
-  height: 42px;
-}
-
-.brand-img {
-  height: 20px;
-}
-
-.header-center {
+.x-brand__tile {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
-  gap: 25px;
-  background: white;
-  border-radius: 30px;
-  box-shadow: 0 0 6px 0px #cfe1fb;
-  padding: 4px;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  justify-content: flex-end;
-}
-
-.equipment-management {
-  padding: 8px 16px;
-  border-radius: 30px;
-  display: flex;
   justify-content: center;
-  font-size: 16px;
-  font-weight: 500;
-  gap: 7px;
-  color: #6c79a8;
-  margin-left: 1px;
-  align-items: center;
-  transition: all 0.3s ease;
-  cursor: pointer;
-  flex-shrink: 0;
-  position: relative;
+  border: 1px solid var(--x-border);
+  border-radius: 8px;
+  background: var(--x-surface);
 }
 
-.equipment-management.active-tab {
-  color: #fff !important;
-  background: linear-gradient(90deg, #2983fe 0%, #5251fc 100%);
-  box-shadow: 0 1px 8px rgba(41, 131, 254, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
-  position: relative;
-  overflow: hidden;
-}
-
-.equipment-management.active-tab::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 50%;
-  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 100%);
-  pointer-events: none;
-}
-
-.equipment-management img {
-  width: 15px;
-  height: 13px;
-}
-
-.avatar-img {
-  width: 21px;
-  height: 21px;
-  flex-shrink: 0;
-  cursor: pointer;
-}
-
-.el-user-dropdown {
-  cursor: pointer;
-}
-
-/* Nav text style - supports wrapping for Chinese and English */
-.nav-text {
-  white-space: normal;
-  text-align: center;
-  line-height: 1.2;
-}
-
-.el-dropdown-link {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-}
-
-/* Responsive adjustments */
-@media (max-width: 1200px) {
-  .header-center {
-    gap: 14px;
-  }
-
-  .equipment-management {
-    min-width: 80px;
-    font-size: 10px;
-  }
-}
-
-.equipment-management.more-dropdown {
-  position: relative;
-}
-
-.equipment-management.more-dropdown .el-dropdown-menu {
-  position: absolute;
-  right: 0;
-  min-width: 120px;
-  margin-top: 5px;
-}
-
-.el-dropdown-menu__item {
-  min-width: 60px;
-  padding: 8px 20px;
-  font-size: 14px;
-  color: #606266;
+.x-brand__name {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
   white-space: nowrap;
 }
 
-/* Caret rotation style */
-.rotate-down {
-  transform: rotate(180deg);
-  transition: transform 0.3s ease;
+.x-nav {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.el-icon-arrow-down {
-  transition: transform 0.3s ease;
+.x-nav__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 40px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--x-radius-control);
+  background: transparent;
+  color: var(--x-text-secondary);
+  font: inherit;
+  font-weight: 500;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--x-canvas);
+    color: var(--x-text);
+  }
+
+  &.is-active {
+    background: var(--x-selected);
+    color: var(--x-text);
+    font-weight: 600;
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--x-focus-ring);
+  }
+}
+
+.x-nav__icon {
+  flex-shrink: 0;
+}
+
+.x-nav__chevron {
+  margin-left: auto;
+  transition: transform 0.2s ease;
+
+  &.is-open {
+    transform: rotate(180deg);
+  }
+}
+
+.x-nav__section {
+  padding: 20px 10px 6px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--x-text-muted);
+}
+
+.x-nav__children {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-left: 19px;
+  padding-left: 10px;
+  border-left: 1px solid var(--x-border);
+}
+
+.x-nav__child {
+  height: 34px;
+  font-size: 13px;
+}
+
+.x-account {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  padding: 12px 4px 0 10px;
+  border-top: 1px solid var(--x-border);
+}
+
+.x-account__avatar {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--x-border);
+  color: var(--x-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.x-account__who {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.x-account__name {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.x-account__role {
+  font-size: 12px;
+  color: var(--x-text-muted);
+}
+
+.x-icon-btn {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: var(--x-radius-control);
+  background: transparent;
+  color: var(--x-text-muted);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--x-canvas);
+    color: var(--x-text);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--x-focus-ring);
+  }
+}
+
+.x-topbar,
+.x-scrim {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .x-topbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1001;
+    height: var(--x-topbar-height);
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 12px 0 6px;
+    background: var(--x-surface);
+    border-bottom: 1px solid var(--x-border);
+  }
+
+  .x-brand--compact {
+    padding: 0 10px;
+  }
+
+  .x-sidenav {
+    top: var(--x-topbar-height);
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+    box-shadow: var(--x-shadow-raised);
+
+    &.is-open {
+      transform: none;
+    }
+
+    > .x-brand {
+      display: none;
+    }
+  }
+
+  .x-scrim {
+    display: block;
+    position: fixed;
+    inset: var(--x-topbar-height) 0 0 0;
+    z-index: 999;
+    background: rgba(11, 11, 12, 0.4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .x-brand .x-mark,
+  .x-sidenav,
+  .x-nav__chevron {
+    transition: none;
+  }
+}
+</style>
+
+<style lang="scss">
+.x-account-menu {
+  min-width: 200px;
+
+  .x-account-menu__label {
+    padding: 6px 20px 4px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--x-text-muted);
+    list-style: none;
+  }
+
+  .el-dropdown-menu__item.is-current {
+    font-weight: 600;
+    color: var(--x-ink);
+  }
 }
 </style>

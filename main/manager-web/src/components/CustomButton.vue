@@ -22,140 +22,77 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.custom-button--default {
+// default = secondary (outlined), confirm/add = primary (ink), delete = destructive
+.custom-button {
   width: fit-content;
-  background: #4998ff;
-  color: #ffffff;
-  border: none;
-  border-radius: 4px;
-  transition: all 0.3s ease;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: var(--x-radius-pill);
+  font-weight: 500;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 
   &.el-button--small {
-    padding: 9px 14px;
-    font-size: 12px;
+    height: 32px;
+    padding: 0 14px;
+    font-size: 13px;
   }
   &.el-button--medium {
-    padding: 12px 20px;
-  }
-
-  &:hover {
-    background: #62a4fc;
-    color: #ffffff;
-    border-color: transparent;
-    box-shadow: 0 2px 8px rgba(74, 124, 253, 0.2);
-    transform: translateY(-2px);
+    height: 38px;
+    padding: 0 18px;
   }
 
   &.is-disabled,
-  &.is-disabled:hover {
-    background: linear-gradient(to right, #f0f3fe, #f5f6fe);
-    color: rgba(74, 124, 253, 0.5);
-    border-color: transparent;
-    box-shadow: none;
-    transform: none;
+  &.is-disabled:hover,
+  &.is-disabled:focus {
+    background: var(--x-divider);
+    border-color: var(--x-divider);
+    color: var(--x-text-disabled);
     cursor: not-allowed;
   }
 }
 
-.custom-button--confirm {
-  width: fit-content;
-  background: linear-gradient(to right, #4a7cfd, #8154fc);
-  color: white;
-  border: none;
-  border-radius: 4px;
-  transition: all 0.3s ease;
+.custom-button--default {
+  background: var(--x-surface);
+  border: 1px solid var(--x-border-control);
+  color: var(--x-ink);
 
-  &.el-button--small {
-    padding: 9px 14px;
-    font-size: 12px;
+  &:hover,
+  &:focus {
+    background: var(--x-surface-raised);
+    border-color: var(--x-text-disabled);
+    color: var(--x-ink);
   }
-  &.el-button--medium {
-    padding: 12px 20px;
+}
+
+.custom-button--confirm,
+.custom-button--add {
+  background: var(--x-ink);
+  border: 1px solid var(--x-ink);
+  color: var(--x-on-ink);
+
+  &:hover,
+  &:focus {
+    background: var(--x-ink-hover);
+    border-color: var(--x-ink-hover);
+    color: var(--x-on-ink);
   }
 
-  &:hover {
-    color: white;
-    border-color: transparent;
-    box-shadow: 0 2px 8px rgba(74, 124, 253, 0.3);
-    transform: translateY(-2px);
-  }
-
-  &.is-disabled,
-  &.is-disabled:hover {
-    background: linear-gradient(to right, #a0b4fd, #b8a4fd);
-    color: rgba(255, 255, 255, 0.6);
-    border-color: transparent;
-    box-shadow: none;
-    transform: none;
-    cursor: not-allowed;
+  &:active {
+    background: var(--x-ink-pressed);
+    border-color: var(--x-ink-pressed);
   }
 }
 
 .custom-button--delete {
-  width: fit-content;
-  background: #ff6b6b;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  transition: all 0.3s ease;
+  background: var(--x-danger);
+  border: 1px solid var(--x-danger);
+  color: #ffffff;
 
-  &.el-button--small {
-    padding: 9px 14px;
-    font-size: 12px;
-  }
-  &.el-button--medium {
-    padding: 12px 20px;
-  }
-
-  &:hover {
-    color: white;
-    border-color: transparent;
-    box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
-    transform: translateY(-2px);
-  }
-
-  &.is-disabled,
-  &.is-disabled:hover {
-    background: linear-gradient(to right, #ffaaaa, #ffcaca);
-    color: rgba(255, 255, 255, 0.6);
-    border-color: transparent;
-    box-shadow: none;
-    transform: none;
-    cursor: not-allowed;
-  }
-}
-
-.custom-button--add {
-  width: fit-content;
-  background: #52c41a;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  transition: all 0.3s ease;
-
-  &.el-button--small {
-    padding: 9px 14px;
-    font-size: 12px;
-  }
-  &.el-button--medium {
-    padding: 12px 20px;
-  }
-
-  &:hover {
-    color: white;
-    border-color: transparent;
-    box-shadow: 0 2px 8px rgba(82, 196, 26, 0.3);
-    transform: translateY(-2px);
-  }
-
-  &.is-disabled,
-  &.is-disabled:hover {
-    background: linear-gradient(to right, #a0e89a, #c4f0c0);
-    color: rgba(255, 255, 255, 0.6);
-    border-color: transparent;
-    box-shadow: none;
-    transform: none;
-    cursor: not-allowed;
+  &:hover,
+  &:focus {
+    background: var(--x-danger-text);
+    border-color: var(--x-danger-text);
+    color: #ffffff;
   }
 }
 </style>

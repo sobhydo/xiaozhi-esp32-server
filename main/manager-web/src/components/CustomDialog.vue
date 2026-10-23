@@ -15,7 +15,6 @@
     <template slot="title">
       <slot name="title">
         <div class="dialog-title">
-          <img src="@/assets/knowledge-base/level.png" class="title-icon" />
           <span>{{ title }}</span>
         </div>
       </slot>
@@ -25,10 +24,7 @@
       <div v-if="footer" class="dialog-footer">
         <CustomButton @click="handleCancel">{{ cancelText }}</CustomButton>
         <CustomButton :loading="confirmLoading" type="confirm" @click="handleConfirm">
-          <span class="confirm-inner">
-            <img src="@/assets/knowledge-base/star.png" class="confirm-icon" />
-            {{ confirmText }}
-          </span>
+          <span class="confirm-inner">{{ confirmText }}</span>
         </CustomButton>
       </div>
     </template>
@@ -140,9 +136,9 @@ export default {
 <style lang="scss" scoped>
 /* Large and small sizes are distinguished by .custom-dialog--large */
 ::v-deep .el-dialog.custom-dialog {
-  border-radius: 10px;
+  border-radius: var(--x-radius-card);
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--x-shadow-raised);
   margin: 5vh auto !important;
   display: flex;
   flex-direction: column;
@@ -152,102 +148,85 @@ export default {
 ::v-deep .el-dialog__body {
   max-height: calc(100vh - 220px);
   overflow-y: auto;
-  padding: 20px;
+  padding: 20px 24px;
+  color: var(--x-text);
 }
 
 /* .v-modal styles are defined globally in global.scss */
 ::v-deep .el-dialog__header {
-  padding: 16px 20px 12px;
-  background: linear-gradient(135deg, #e2eeff, #edeafe);
+  padding: 18px 24px 16px;
+  background: var(--x-surface);
+  border-bottom: 1px solid var(--x-divider);
   text-align: left;
 }
 
 ::v-deep .el-dialog__title {
   font-size: 16px;
-  font-weight: 500;
-  color: #1a1a1a;
+  font-weight: 600;
+  color: var(--x-text);
 }
 
 ::v-deep .dialog-title {
-  font-size: 18px;
+  font-size: 16px;
   display: inline-flex;
   align-items: center;
   > span {
-    line-height: 18px;
-    font-weight: 500;
+    line-height: 24px;
+    font-weight: 600;
+    color: var(--x-text);
   }
 }
 
-::v-deep .title-icon {
-  width: 24px;
-  height: 24px;
-  margin-right: 8px;
-}
-
 ::v-deep .el-dialog__headerbtn {
-  top: 12px;
+  top: 14px;
   right: 16px;
   width: 32px;
   height: 32px;
   border: none;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  border-radius: var(--x-radius-control);
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
 
   .el-dialog__close {
-    font-size: 18px;
-    color: #666;
+    font-size: 16px;
+    color: var(--x-text-muted);
     position: static;
     transform: none;
   }
 
   &:hover {
-    background: #fff;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+    background: var(--x-canvas);
 
     .el-dialog__close {
-      color: #333;
+      color: var(--x-text);
     }
   }
 }
 
 ::v-deep .el-dialog__footer {
-  padding: 12px 20px 16px;
+  padding: 14px 24px 18px;
+  border-top: 1px solid var(--x-divider);
 }
 
 ::v-deep .dialog-footer {
   display: flex;
   justify-content: flex-end;
+  gap: 8px;
 
   .el-button {
-    padding: 10px 20px;
     display: flex;
     align-items: center;
   }
 
-  .el-button--primary {
-    background: linear-gradient(to right, #4a7cfd, #8154fc);
-    border: none;
-
-    &:hover,
-    &:focus {
-      background: linear-gradient(to right, #4a7cfd, #8154fc);
-      opacity: 0.85;
-    }
+  .el-button + .el-button {
+    margin-left: 0;
   }
 
   .confirm-inner {
     display: inline-flex;
     align-items: center;
-  }
-
-  .confirm-icon {
-    width: 16px;
-    height: 16px;
-    margin-right: 4px;
   }
 }
 
@@ -256,7 +235,7 @@ export default {
   margin: 10px auto !important;
   height: calc(100vh - 20px);
   max-height: calc(100vh - 20px);
-  border-radius: 10px;
+  border-radius: var(--x-radius-card);
 }
 
 ::v-deep .el-dialog.custom-dialog.custom-dialog--large.custom-dialog--fluid {

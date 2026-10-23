@@ -47,19 +47,24 @@ export default {
 
 <style lang="scss" scoped>
 ::v-deep .el-pagination {
+  color: var(--x-text-muted);
   .btn-next,
   .btn-prev,
   .el-pager li {
     background: transparent !important;
-    min-width: 36px !important;
+    min-width: 32px !important;
+    border-radius: var(--x-radius-control);
+    color: var(--x-text-secondary);
+    font-weight: 500;
+  }
+  .el-pager li:not(.disabled):not(.active):hover {
+    background: var(--x-canvas) !important;
+    color: var(--x-text);
   }
   .el-pager li:not(.disabled).active {
-    background: linear-gradient(135deg, #2a6dfe 0%, #6b8cff 50%, #2a6dfe 100%) !important;
-    border-radius: 6px;
-    box-shadow: 0 1px 3px rgba(45, 111, 254, 0.3);
-    color: #fff;
+    background: var(--x-ink) !important;
+    color: var(--x-on-ink);
     font-weight: 600;
-    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
   }
 }
 </style>

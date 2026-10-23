@@ -1,0 +1,57 @@
+// X Agent Console design tokens ("Pure Mono").
+// Ink is the only accent; hue appears only in status colors.
+:root {
+  // Action
+  --x-ink: #18181b;
+  --x-ink-hover: #3a3a3f;
+  --x-ink-pressed: #000000;
+  --x-selected: #ededf0;
+  --x-focus-ring: rgba(24, 24, 27, 0.12);
+  --x-on-ink: #ffffff;
+
+  // Text
+  --x-text: #18181b;
+  --x-text-secondary: #3f3f46;
+  --x-text-muted: #63636a;
+  --x-text-disabled: #a1a1aa;
+
+  // Surface & border
+  --x-canvas: #f4f4f6;
+  --x-surface: #ffffff;
+  --x-surface-raised: #fafafb;
+  --x-divider: #f0f0f2;
+  --x-border: #e4e4e7;
+  --x-border-control: #d4d4d8;
+
+  // Status
+  --x-success: #1e8e4e;
+  --x-success-bg: #ecf7f0;
+  --x-success-text: #166b3b;
+  --x-warning: #b45f06;
+  --x-warning-bg: #fdf4e7;
+  --x-warning-text: #8f4b05;
+  --x-danger: #d92d20;
+  --x-danger-bg: #fdeceb;
+  --x-danger-text: #b42318;
+
+  // Night (sign-in panel, splash)
+  --x-night: #0b0b0c;
+  --x-night-raised: #2a2a2e;
+  --x-night-text: #d4d4d8;
+  --x-night-muted: #8d8d94;
+
+  // Shape & depth
+  --x-radius-control: 10px;
+  --x-radius-card: 16px;
+  --x-radius-pill: 999px;
+  --x-shadow-raised: 0 1px 2px rgba(0, 0, 0, 0.06), 0 8px 24px rgba(0, 0, 0, 0.08);
+
+  // Type
+  --x-font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+  --x-font-mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+
+  // Layout
+  --x-sidebar-width: 240px;
+  --x-topbar-height: 56px;
+}

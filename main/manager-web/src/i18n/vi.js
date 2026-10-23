@@ -1684,4 +1684,15 @@ export default {
   // Header navigation
   'header.addressBook': 'Danh bạ',
 
+  // X Agent Console layout
+  'console.productName': 'Agent Console',
+  'console.mainNavigation': 'Điều hướng chính',
+  'console.administration': 'Quản trị',
+  'console.systemSettings': 'Cài đặt hệ thống',
+  'console.superAdmin': 'Quản trị viên cấp cao',
+  'console.member': 'Thành viên',
+  'console.language': 'Ngôn ngữ',
+  'console.accountMenu': 'Menu tài khoản',
+  'console.openMenu': 'Mở menu',
+  'console.closeMenu': 'Đóng menu',
 }

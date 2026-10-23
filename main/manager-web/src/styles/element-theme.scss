@@ -1,0 +1,29 @@
+// Element UI theme compiled from source with the X Agent Console palette.
+// Replaces 'element-ui/lib/theme-chalk/index.css'.
+$--color-primary: #18181b;
+$--color-success: #1e8e4e;
+$--color-warning: #b45f06;
+$--color-danger: #d92d20;
+$--color-info: #63636a;
+
+$--color-text-primary: #18181b;
+$--color-text-regular: #3f3f46;
+$--color-text-secondary: #63636a;
+$--color-text-placeholder: #a1a1aa;
+
+$--border-color-base: #d4d4d8;
+$--border-color-light: #e4e4e7;
+$--border-color-lighter: #f0f0f2;
+$--border-color-extra-light: #f4f4f6;
+$--border-color-hover: #a1a1aa;
+$--background-color-base: #f4f4f6;
+
+$--border-radius-base: 10px;
+$--border-radius-small: 8px;
+
+$--box-shadow-light: 0 1px 2px rgba(0, 0, 0, 0.06), 0 8px 24px rgba(0, 0, 0, 0.08);
+$--box-shadow-base: 0 1px 2px rgba(0, 0, 0, 0.06), 0 8px 24px rgba(0, 0, 0, 0.08);
+
+$--font-path: "~element-ui/lib/theme-chalk/fonts";
+
+@import "~element-ui/packages/theme-chalk/src/index";

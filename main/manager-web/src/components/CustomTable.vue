@@ -18,7 +18,7 @@
         <!-- Selection column -->
         <el-table-column
           v-if="showSelection"
-          width="55"
+          width="76"
           align="center"
           label="Select"
         >
@@ -228,56 +228,34 @@ export default {
   min-height: 0;
   .table-container {
     width: 100%;
-    box-shadow: 0 2px 12px rgba(74, 124, 253, 0.12);
-    border-radius: 6px;
+    border: 1px solid var(--x-border);
+    border-radius: var(--x-radius-card);
+    overflow: hidden;
+    background: var(--x-surface);
     .custom-table {
       width: 100%;
-      border: 1px solid #eef3fd;
-      border-bottom: none;
-      border-radius: 6px;
-      .el-table__body-wrapper {
-        overflow-y: auto;
-        &::-webkit-scrollbar {
-          width: 6px;
-        }
-        &::-webkit-scrollbar-thumb {
-          background: #a1c9fd;
-          border-radius: 3px;
-        }
-        &::-webkit-scrollbar-track {
-          background: #f0f3fe;
-          border-radius: 3px;
-        }
-      }
-      .el-table__header {
-        th {
-          color: #342f45;
-          background: #edf2fc !important;
-        }
-      }
     }
   }
 }
 :deep(.el-table) {
+  color: var(--x-text);
+  &::before {
+    display: none;
+  }
   .el-table__body-wrapper {
     overflow-y: auto;
-    &::-webkit-scrollbar {
-      width: 6px;
-    }
-    &::-webkit-scrollbar-thumb {
-      background: #a1c9fd;
-      border-radius: 3px;
-    }
-    &::-webkit-scrollbar-track {
-      background: #f0f3fe;
-      border-radius: 3px;
-    }
   }
   .el-table__header {
     th {
-      color: #342f45;
-      background: #edf2fc !important;
+      color: var(--x-text-muted);
+      background: var(--x-surface-raised) !important;
+      font-size: 12px;
+      font-weight: 500;
     }
+  }
+  td.el-table__cell,
+  th.el-table__cell.is-leaf {
+    border-bottom-color: var(--x-divider);
   }
 }
 .table-footer {
@@ -298,11 +276,11 @@ export default {
 }
 
 :deep(.el-loading-spinner .path) {
-  stroke: #6b8cff;
+  stroke: var(--x-ink);
 }
 
 :deep(.el-loading-text) {
-  color: #6b8cff !important;
+  color: var(--x-text-muted) !important;
   font-size: 14px;
   margin-top: 8px;
 }
