@@ -1695,4 +1695,11 @@ export default {
   'console.accountMenu': 'Account menu',
   'console.openMenu': 'Open menu',
   'console.closeMenu': 'Close menu',
+  'login.subtitle': 'Manage your agents, devices and models.',
+  'console.authHeadline': 'One console for every voice assistant on your network.',
+  'console.authDescription': 'Configure agents, bind ESP32 devices, and choose the models behind each conversation.',
+  'console.agentsDescription': 'Each agent combines a role, models and a voice. Devices bind to an agent.',
+  'console.devicesDescription': 'Devices bound to this agent. Restart a device after changing its configuration.',
+  'console.modelsDescription': 'Configured providers for each stage of the voice pipeline.',
+  'console.bindWithCode': 'Bind with code',
 }

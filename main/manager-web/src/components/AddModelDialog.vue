@@ -313,26 +313,35 @@ export default {
 @import '@/styles/global.scss';
 
 ::v-deep .el-dialog {
-  margin-top: 6vh !important;
+  max-width: calc(100vw - 32px);
 }
 ::v-deep .el-dialog__body {
-  max-height: 60vh;
   overflow-y: auto;
   @include scrollbar-style;
 }
 .add-model-dialog {
   .section-header {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
   }
 
   .section-title {
-    margin-bottom: 10px;
-    font-size: 20px;
-    font-weight: bold;
-    color: #3d4566;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--x-text);
     text-align: left;
+  }
+
+  .section-header .section-title {
+    margin-bottom: 0;
+  }
+
+  .section-title + .divider {
+    margin-top: 10px;
   }
 
   .switch-group {
@@ -344,6 +353,7 @@ export default {
   .switch-item {
     display: flex;
     align-items: center;
+    color: var(--x-text-secondary);
 
     span {
       margin-right: 8px;
@@ -352,61 +362,53 @@ export default {
 
   .divider {
     height: 1px;
-    background: #e9e9e9;
+    background: var(--x-divider);
     margin-bottom: 16px;
   }
 
   .form-row {
     display: flex;
-    gap: 20px;
+    flex-wrap: wrap;
+    column-gap: 20px;
     margin-bottom: 0;
-  }
 
-  .dialog-footer {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    padding: 16px 20px;
+    > .el-form-item {
+      min-width: 260px;
+    }
   }
+}
+
+.custom-form {
+  margin-bottom: 8px;
 }
 
 .custom-form .el-form-item {
-  margin-bottom: 10px;
+  margin-bottom: 14px;
 }
 
-.custom-switch .el-switch__core {
-  border-radius: 20px;
-  height: 23px;
-  background-color: #c0ccda;
-  width: 35px;
-  padding: 0 20px;
-}
+@media (max-width: 600px) {
+  .add-model-dialog {
+    .form-row > .el-form-item {
+      min-width: 100%;
+    }
 
-.custom-switch .el-switch__core:after {
-  width: 15px;
-  height: 15px;
-  background-color: white;
-  top: 3px;
-  left: 4px;
-  transition: all 0.3s;
-}
+    ::v-deep .el-form-item__label {
+      float: none;
+      display: block;
+      width: auto !important;
+      text-align: left;
+      line-height: 1.5;
+      padding-bottom: 6px;
+    }
 
-.custom-switch.is-checked .el-switch__core {
-  border-color: #b5bcf0;
-  background-color: #cfd7fa;
-  padding: 0 20px;
-}
+    ::v-deep .el-form-item__label-wrap {
+      float: none;
+      margin-left: 0 !important;
+    }
 
-.custom-switch.is-checked .el-switch__core:after {
-  left: 100%;
-  margin-left: -18px;
-  background-color: #1b47ee;
-}
-
-.custom-input-bg .el-input__inner {
-  height: 32px;
-}
-::v-deep .el-input__inner {
-  height: 32px;
+    ::v-deep .el-form-item__content {
+      margin-left: 0 !important;
+    }
+  }
 }
 </style>

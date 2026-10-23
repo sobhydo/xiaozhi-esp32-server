@@ -1695,4 +1695,11 @@ export default {
   'console.accountMenu': '帳戶選單',
   'console.openMenu': '開啟選單',
   'console.closeMenu': '關閉選單',
+  'login.subtitle': '管理您的智慧體、裝置和模型。',
+  'console.authHeadline': '一個控制台，管理網路中的每一個語音助理。',
+  'console.authDescription': '設定智慧體、綁定 ESP32 裝置，並為每次對話選擇模型。',
+  'console.agentsDescription': '每個智慧體包含角色、模型和音色，裝置綁定到智慧體。',
+  'console.devicesDescription': '綁定到此智慧體的裝置。修改設定後請重新啟動裝置。',
+  'console.modelsDescription': '為語音流程的每個環節設定服務提供者。',
+  'console.bindWithCode': '驗證碼綁定',
 }

@@ -2,456 +2,535 @@
   <div class="welcome">
     <HeaderBar />
 
-    <div class="operation-bar">
-      <h2 class="page-title">{{ $t("roleConfig.title") }}</h2>
-    </div>
+    <div class="role-page" v-loading="agentReloading">
+      <nav class="breadcrumb" :aria-label="$t('roleConfig.title')">
+        <button type="button" class="breadcrumb-link" @click="goToHome">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m15 18-6-6 6-6" />
+          </svg>
+          {{ $t("header.smartManagement") }}
+        </button>
+        <span class="breadcrumb-sep" aria-hidden="true">/</span>
+        <span class="breadcrumb-current">{{ $t("roleConfig.title") }}</span>
+      </nav>
 
-    <div class="main-wrapper" v-loading="agentReloading">
-      <div class="content-panel">
-        <div class="content-area">
-          <el-card class="config-card" shadow="never">
-            <div class="config-header">
-              <div class="header-left">
-                <div class="header-icon">
-                  <img loading="lazy" src="@/assets/home/setting-user.png" alt="" />
-                </div>
-                <span class="header-title">{{ form.agentName }}</span>
-                <span v-if="currentVersionNo" class="current-version-tag">
-                  {{ $t("roleConfig.currentVersion", { version: currentVersionNo }) }}
-                </span>
-              </div>
-              <div class="header-tags">
-                <el-tag
-                  v-for="tag in dynamicTags"
-                  :key="tag.id"
-                  class="custom-tag"
-                  closable
-                  :disable-transitions="false"
-                  @close="handleClose(tag.id)">
-                  {{tag.tagName}}
-                </el-tag>
-                <el-input
-                  class="input-new-tag"
-                  v-if="inputVisible"
-                  v-model="inputValue"
-                  ref="saveTagInput"
-                  size="small"
-                  maxLength="20"
-                  @keyup.enter.native="handleInputConfirm"
-                  @blur="handleInputConfirm"
+      <header class="page-header">
+        <div class="page-heading">
+          <h1 class="page-title">{{ form.agentName || $t("roleConfig.title") }}</h1>
+          <p class="page-desc">{{ $t("roleConfig.restartNotice") }}</p>
+        </div>
+        <div class="header-actions">
+          <span v-if="currentVersionNo" class="current-version-tag">
+            {{ $t("roleConfig.currentVersion", { version: currentVersionNo }) }}
+          </span>
+          <el-button class="history-btn" size="small" @click="showSnapshotDialog = true">
+            {{ $t("roleConfig.snapshotHistory") }}
+          </el-button>
+          <el-button class="reset-btn" size="small" @click="resetConfig">{{
+            $t("roleConfig.reset")
+          }}</el-button>
+          <el-button
+            type="primary"
+            size="small"
+            class="save-btn"
+            :disabled="configInteractionBlocked"
+            @click="saveConfig"
+          >
+            {{ $t("roleConfig.saveConfig") }}
+          </el-button>
+        </div>
+      </header>
+
+      <div class="header-tags">
+        <el-tag
+          v-for="tag in dynamicTags"
+          :key="tag.id"
+          class="custom-tag"
+          closable
+          :disable-transitions="false"
+          @close="handleClose(tag.id)">
+          {{tag.tagName}}
+        </el-tag>
+        <el-input
+          class="input-new-tag"
+          v-if="inputVisible"
+          v-model="inputValue"
+          ref="saveTagInput"
+          size="small"
+          maxLength="20"
+          :aria-label="$t('roleConfig.addTag')"
+          @keyup.enter.native="handleInputConfirm"
+          @blur="handleInputConfirm"
+        >
+        </el-input>
+        <el-button class="custom-tag-btn" v-else size="mini" @click="showInput">+ {{ $t("roleConfig.addTag") }}</el-button>
+      </div>
+
+      <el-form ref="form" :model="form" label-position="top" class="role-form">
+        <!-- Role -->
+        <section class="config-card">
+          <div class="card-head">
+            <h2 class="card-title">{{ $t("roleConfig.title") }}</h2>
+          </div>
+          <div class="card-body grid-2">
+            <el-form-item>
+              <template #label>
+                <el-tooltip :content="$t('roleConfig.tooltip.agentName')" placement="top" effect="light" popper-class="custom-tooltip">
+                  <span>{{ $t('roleConfig.agentName') }}</span>
+                </el-tooltip>
+              </template>
+              <el-input
+                v-model="form.agentName"
+                class="form-input"
+                maxlength="64"
+              />
+            </el-form-item>
+            <el-form-item
+              style="display: none"
+            >
+              <template #label>
+                <el-tooltip :content="$t('roleConfig.tooltip.languageCode')" placement="top" effect="light" popper-class="custom-tooltip">
+                  <span>{{ $t('roleConfig.languageCode') }}</span>
+                </el-tooltip>
+              </template>
+              <el-input
+                v-model="form.langCode"
+                :placeholder="$t('roleConfig.pleaseEnterLangCode')"
+                maxlength="10"
+                show-word-limit
+                class="form-input"
+              />
+            </el-form-item>
+            <el-form-item
+              style="display: none"
+            >
+              <template #label>
+                <el-tooltip :content="$t('roleConfig.tooltip.interactionLanguage')" placement="top" effect="light" popper-class="custom-tooltip">
+                  <span>{{ $t('roleConfig.interactionLanguage') }}</span>
+                </el-tooltip>
+              </template>
+              <el-input
+                v-model="form.language"
+                :placeholder="$t('roleConfig.pleaseEnterLangName')"
+                maxlength="10"
+                show-word-limit
+                class="form-input"
+              />
+            </el-form-item>
+            <el-form-item class="span-all">
+              <template #label>
+                <el-tooltip :content="$t('roleConfig.tooltip.roleTemplate')" placement="top" effect="light" popper-class="custom-tooltip">
+                  <span>{{ $t('roleConfig.roleTemplate') }}</span>
+                </el-tooltip>
+              </template>
+              <div class="template-container">
+                <button
+                  v-for="(template, index) in templates"
+                  :key="`template-${index}`"
+                  type="button"
+                  class="template-item"
+                  :class="{ 'template-loading': loadingTemplate }"
+                  @click="selectTemplate(template)"
                 >
-                </el-input>
-                <el-button class="custom-tag-btn" v-else size="small" @click="showInput">+ {{ $t("roleConfig.addTag") }}</el-button>
+                  {{ template.agentName }}
+                </button>
               </div>
-              <div class="header-actions">
-                <div class="hint-text">
-                  <img loading="lazy" src="@/assets/home/info.png" alt="" />
-                  <span>{{ $t("roleConfig.restartNotice") }}</span>
-                </div>
-                <el-button class="history-btn" @click="showSnapshotDialog = true">
-                  {{ $t("roleConfig.snapshotHistory") }}
-                </el-button>
-                <el-button
-                  type="primary"
-                  class="save-btn"
-                  :disabled="configInteractionBlocked"
-                  @click="saveConfig"
+            </el-form-item>
+            <el-form-item class="span-all">
+              <template #label>
+                <el-tooltip :content="$t('roleConfig.tooltip.roleIntroduction')" placement="top" effect="light" popper-class="custom-tooltip">
+                  <span>{{ $t('roleConfig.roleIntroduction') }}</span>
+                </el-tooltip>
+              </template>
+              <el-input
+                type="textarea"
+                rows="8"
+                resize="vertical"
+                :placeholder="$t('roleConfig.pleaseEnterContent')"
+                v-model="form.systemPrompt"
+                maxlength="2000"
+                show-word-limit
+                class="form-textarea"
+              />
+            </el-form-item>
+            <el-form-item class="span-all">
+              <template #label>
+                <el-tooltip :content="$t('roleConfig.tooltip.memoryHis')" placement="top" effect="light" popper-class="custom-tooltip">
+                  <span>{{ $t('roleConfig.memoryHis') }}</span>
+                </el-tooltip>
+              </template>
+              <el-input
+                type="textarea"
+                rows="4"
+                resize="vertical"
+                v-model="form.summaryMemory"
+                maxlength="2000"
+                show-word-limit
+                class="form-textarea"
+                :disabled="form.model.memModelId !== 'Memory_mem_local_short'"
+              />
+            </el-form-item>
+          </div>
+        </section>
+
+        <!-- Models -->
+        <section class="config-card">
+          <div class="card-head">
+            <h2 class="card-title">{{ $t("header.modelConfig") }}</h2>
+          </div>
+          <div class="card-body model-grid">
+            <el-form-item
+              v-if="featureStatus.vad"
+              class="model-item"
+            >
+              <template #label>
+                <el-tooltip :content="$t('roleConfig.tooltip.vad')" placement="top" effect="light" popper-class="custom-tooltip">
+                  <span>{{ $t('roleConfig.vad') }} <span class="model-code">· VAD</span></span>
+                </el-tooltip>
+              </template>
+              <el-select
+                v-model="form.model.vadModelId"
+                filterable
+                :placeholder="$t('roleConfig.pleaseSelect')"
+                class="form-select"
+                @change="handleModelChange('VAD', $event)"
+              >
+                <el-option
+                  v-for="(item, optionIndex) in modelOptions['VAD']"
+                  :key="`option-vad-${optionIndex}`"
+                  :label="item.label"
+                  :value="item.value"
+                />
+              </el-select>
+            </el-form-item>
+            <el-form-item
+              v-if="featureStatus.asr"
+              class="model-item"
+            >
+              <template #label>
+                <el-tooltip :content="$t('roleConfig.tooltip.asr')" placement="top" effect="light" popper-class="custom-tooltip">
+                  <span>{{ $t('roleConfig.asr') }} <span class="model-code">· ASR</span></span>
+                </el-tooltip>
+              </template>
+              <el-select
+                v-model="form.model.asrModelId"
+                filterable
+                :placeholder="$t('roleConfig.pleaseSelect')"
+                class="form-select"
+                @change="handleModelChange('ASR', $event)"
+              >
+                <el-option
+                  v-for="(item, optionIndex) in modelOptions['ASR']"
+                  :key="`option-asr-${optionIndex}`"
+                  :label="item.label"
+                  :value="item.value"
+                />
+              </el-select>
+            </el-form-item>
+            <el-form-item class="model-item">
+              <template #label>
+                <el-tooltip :content="$t('roleConfig.tooltip.llm')" placement="top" effect="light" popper-class="custom-tooltip">
+                  <span>{{ $t('roleConfig.llm') }} <span class="model-code">· LLM</span></span>
+                </el-tooltip>
+              </template>
+              <el-select
+                v-model="form.model.llmModelId"
+                filterable
+                :placeholder="$t('roleConfig.pleaseSelect')"
+                class="form-select"
+                @change="handleModelChange('LLM', $event)"
+              >
+                <el-option
+                  v-for="(item, optionIndex) in modelOptions['LLM']"
+                  :key="`option-asr-${optionIndex}`"
+                  :label="item.label"
+                  :value="item.value"
+                />
+              </el-select>
+            </el-form-item>
+            <el-form-item class="model-item">
+              <template #label>
+                <el-tooltip :content="$t('roleConfig.tooltip.slm')" placement="top" effect="light" popper-class="custom-tooltip">
+                  <span>{{ $t('roleConfig.slm') }} <span class="model-code">· SLM</span></span>
+                </el-tooltip>
+              </template>
+              <el-select
+                v-model="form.model.slmModelId"
+                filterable
+                :placeholder="$t('roleConfig.pleaseSelect')"
+                class="form-select"
+              >
+                <el-option
+                  v-for="(item, optionIndex) in modelOptions['LLM']"
+                  :key="`option-asr-${optionIndex}`"
+                  :label="item.label"
+                  :value="item.value"
+                />
+              </el-select>
+            </el-form-item>
+            <el-form-item
+              v-for="(model, index) in models.slice(4)"
+              v-if="model.type !== 'TTS'"
+              :key="`model-${index}`"
+              class="model-item"
+              :class="{ 'model-item--wide': model.type === 'Memory' && form.model.memModelId !== 'Memory_nomem' }"
+            >
+              <template #label>
+                <el-tooltip :content="$t('roleConfig.tooltip.' + model.type.toLowerCase())" placement="top" effect="light" popper-class="custom-tooltip">
+                  <span>{{ $t('roleConfig.' + model.type.toLowerCase()) }} <span class="model-code">· {{ model.type }}</span></span>
+                </el-tooltip>
+              </template>
+              <div class="model-select-wrapper">
+                <el-select
+                  v-model="form.model[model.key]"
+                  filterable
+                  :placeholder="$t('roleConfig.pleaseSelect')"
+                  class="form-select"
+                  @change="handleModelChange(model.type, $event)"
                 >
-                  {{ $t("roleConfig.saveConfig") }}
-                </el-button>
-                <el-button class="reset-btn" @click="resetConfig">{{
-                  $t("roleConfig.reset")
-                }}</el-button>
-                <button class="custom-close-btn" @click="goToHome">×</button>
+                  <el-option
+                    v-for="(item, optionIndex) in modelOptions[model.type]"
+                    v-if="!item.isHidden"
+                    :key="`option-${index}-${optionIndex}`"
+                    :label="item.label"
+                    :value="item.value"
+                  />
+                </el-select>
+                <div
+                  v-if="
+                    model.type === 'Memory' &&
+                    form.model.memModelId !== 'Memory_nomem'
+                  "
+                  class="chat-history-options"
+                >
+                  <el-radio-group
+                    v-model="form.chatHistoryConf"
+                    size="small"
+                    @change="updateChatHistoryConf"
+                  >
+                    <el-radio-button :label="1">{{
+                      $t("roleConfig.reportText")
+                    }}</el-radio-button>
+                    <el-radio-button :label="2">{{
+                      $t("roleConfig.reportTextVoice")
+                    }}</el-radio-button>
+                  </el-radio-group>
+                </div>
+              </div>
+            </el-form-item>
+          </div>
+        </section>
+
+        <!-- Voice -->
+        <section class="config-card">
+          <div class="card-head card-head--actions">
+            <h2 class="card-title">{{ $t("roleConfig.tts") }}</h2>
+            <div class="card-actions">
+              <el-button
+                size="small"
+                :icon="playingVoice && currentPlayingVoiceId === form.ttsVoiceId && !isPaused ? 'el-icon-video-pause' : 'el-icon-video-play'"
+                :disabled="!form.ttsVoiceId || voiceOptionsLoading"
+                @click="toggleAudioPlayback(form.ttsVoiceId)"
+              >
+                {{ $t("ttsModel.preview") }}
+              </el-button>
+              <el-button size="small" class="edit-function-btn" @click="openTtsAdvancedSettings">
+                {{ $t('roleConfig.advancedSettings') }}
+              </el-button>
+            </div>
+          </div>
+          <div class="card-body grid-2">
+            <el-form-item
+              v-for="(model, index) in models.slice(4)"
+              v-if="model.type === 'TTS'"
+              :key="`tts-model-${index}`"
+              class="model-item span-all"
+            >
+              <template #label>
+                <el-tooltip :content="$t('roleConfig.tooltip.' + model.type.toLowerCase())" placement="top" effect="light" popper-class="custom-tooltip">
+                  <span>{{ $t('roleConfig.' + model.type.toLowerCase()) }} <span class="model-code">· {{ model.type }}</span></span>
+                </el-tooltip>
+              </template>
+              <el-select
+                v-model="form.model[model.key]"
+                filterable
+                :disabled="model.type === 'TTS' && voiceOptionsLoading"
+                :placeholder="$t('roleConfig.pleaseSelect')"
+                class="form-select"
+                @change="handleModelChange(model.type, $event)"
+              >
+                <el-option
+                  v-for="(item, optionIndex) in modelOptions[model.type]"
+                  v-if="!item.isHidden"
+                  :key="`option-${index}-${optionIndex}`"
+                  :label="item.label"
+                  :value="item.value"
+                />
+              </el-select>
+            </el-form-item>
+
+            <!-- Language filter -->
+            <el-form-item class="model-item language-select-item">
+              <template #label>
+                <el-tooltip :content="$t('roleConfig.tooltip.language')" placement="top" effect="light" popper-class="custom-tooltip">
+                  <span>{{ $t('roleConfig.language') }}</span>
+                </el-tooltip>
+              </template>
+              <el-select
+                v-model="selectedLanguage"
+                :disabled="voiceOptionsLoading"
+                :placeholder="$t('roleConfig.selectLanguage')"
+                class="form-select language-select"
+                @change="handleLanguageChange"
+              >
+                <el-option
+                  v-for="(lang, index) in languageOptions"
+                  :key="`lang-${index}`"
+                  :label="lang.label"
+                  :value="lang.value"
+                />
+              </el-select>
+            </el-form-item>
+
+            <!-- Voice selector -->
+            <el-form-item class="model-item">
+              <template #label>
+                <el-tooltip :content="$t('roleConfig.tooltip.voiceType')" placement="top" effect="light" popper-class="custom-tooltip">
+                  <span>{{ $t('roleConfig.voiceType') }}</span>
+                </el-tooltip>
+              </template>
+              <el-select
+                v-model="form.ttsVoiceId"
+                filterable
+                :disabled="voiceOptionsLoading"
+                :placeholder="$t('roleConfig.pleaseSelect')"
+                class="form-select"
+                @change="handleVoiceChange"
+              >
+                <el-option
+                  v-for="(item, index) in voiceOptions"
+                  :key="`voice-${index}`"
+                  :label="item.label"
+                  :value="item.value"
+                >
+                  <div class="voice-option">
+                    <span>{{ item.label }}</span>
+                    <template v-if="hasAudioPreview(item)">
+                      <el-button
+                        type="text"
+                        :icon="
+                          playingVoice &&
+                          currentPlayingVoiceId === item.value &&
+                          !isPaused
+                            ? 'el-icon-video-pause'
+                            : 'el-icon-video-play'
+                        "
+                        size="small"
+                        :aria-label="$t('ttsModel.preview')"
+                        @click.stop="toggleAudioPlayback(item.value)"
+                        :loading="false"
+                        class="play-button"
+                      />
+                    </template>
+                  </div>
+                </el-option>
+              </el-select>
+            </el-form-item>
+
+            <!-- Read-only summary of the TTS parameters edited in the advanced dialog -->
+            <div class="span-all tts-params">
+              <div
+                v-for="param in [
+                  { key: 'volume', label: $t('roleConfig.ttsVolume'), hint: $t('roleConfig.volumeHint') },
+                  { key: 'speed', label: $t('roleConfig.ttsRate'), hint: $t('roleConfig.speedHint') },
+                  { key: 'pitch', label: $t('roleConfig.ttsPitch'), hint: $t('roleConfig.pitchHint') }
+                ]"
+                :key="param.key"
+                class="tts-param"
+              >
+                <div class="tts-param-head">
+                  <span class="tts-param-label">{{ param.label }}</span>
+                  <span class="tts-param-value">{{ ttsSettings[param.key] || 0 }}</span>
+                </div>
+                <div class="tts-param-track" aria-hidden="true">
+                  <span
+                    class="tts-param-fill"
+                    :style="{
+                      left: Math.min(50, 50 + (ttsSettings[param.key] || 0) / 2) + '%',
+                      width: Math.abs(ttsSettings[param.key] || 0) / 2 + '%'
+                    }"
+                  ></span>
+                  <span
+                    class="tts-param-thumb"
+                    :style="{ left: 50 + (ttsSettings[param.key] || 0) / 2 + '%' }"
+                  ></span>
+                </div>
+                <span class="tts-param-hint">{{ param.hint }}</span>
               </div>
             </div>
-            <div class="divider"></div>
+          </div>
+        </section>
 
-            <el-form ref="form" :model="form" label-width="72px">
-              <div class="form-content">
-                <div class="form-grid">
-                  <div class="form-column">
-                    <el-form-item>
-                      <template #label>
-                        <el-tooltip :content="$t('roleConfig.tooltip.agentName')" placement="top" effect="light" popper-class="custom-tooltip">
-                          <span>{{ $t('roleConfig.agentName') }}：</span>
-                        </el-tooltip>
-                      </template>
-                      <el-input
-                        v-model="form.agentName"
-                        class="form-input"
-                        maxlength="64"
-                      />
-                    </el-form-item>
-                    <el-form-item>
-                      <template #label>
-                        <el-tooltip :content="$t('roleConfig.tooltip.roleTemplate')" placement="top" effect="light" popper-class="custom-tooltip">
-                          <span>{{ $t('roleConfig.roleTemplate') }}：</span>
-                        </el-tooltip>
-                      </template>
-                      <div class="template-container">
-                        <div
-                          v-for="(template, index) in templates"
-                          :key="`template-${index}`"
-                          class="template-item"
-                          :class="{ 'template-loading': loadingTemplate }"
-                          @click="selectTemplate(template)"
-                        >
-                          {{ template.agentName }}
-                        </div>
-                      </div>
-                    </el-form-item>
-                    <el-form-item class="context-provider-item">
-                      <template #label>
-                        <el-tooltip :content="$t('roleConfig.tooltip.contextProvider')" placement="top" effect="light" popper-class="custom-tooltip">
-                          <span>{{ $t('roleConfig.contextProvider') }}：</span>
-                        </el-tooltip>
-                      </template>
-                      <div style="display: flex; align-items: center; justify-content: space-between;">
-                        <span style="color: #606266; font-size: 13px;">
-                          {{ $t('roleConfig.contextProviderSuccess', { count: currentContextProviders.length }) }}<a href="https://github.com/xinnan-tech/xiaozhi-esp32-server/blob/main/docs/context-provider-integration.md" target="_blank" class="doc-link">{{ $t('roleConfig.contextProviderDocLink') }}</a>
-                        </span>
-                        <el-button
-                          class="edit-function-btn"
-                          size="small"
-                          @click="openContextProviderDialog"
-                        >
-                          {{ $t('roleConfig.editContextProvider') }}
-                        </el-button>
-                      </div>
-                    </el-form-item>
-                    <el-form-item>
-                      <template #label>
-                        <el-tooltip :content="$t('roleConfig.tooltip.roleIntroduction')" placement="top" effect="light" popper-class="custom-tooltip">
-                          <span>{{ $t('roleConfig.roleIntroduction') }}：</span>
-                        </el-tooltip>
-                      </template>
-                      <el-input
-                        type="textarea"
-                        rows="8"
-                        resize="none"
-                        :placeholder="$t('roleConfig.pleaseEnterContent')"
-                        v-model="form.systemPrompt"
-                        maxlength="2000"
-                        show-word-limit
-                        class="form-textarea"
-                      />
-                    </el-form-item>
-
-                    <el-form-item>
-                      <template #label>
-                        <el-tooltip :content="$t('roleConfig.tooltip.memoryHis')" placement="top" effect="light" popper-class="custom-tooltip">
-                          <span>{{ $t('roleConfig.memoryHis') }}：</span>
-                        </el-tooltip>
-                      </template>
-                      <el-input
-                        type="textarea"
-                        rows="4"
-                        resize="none"
-                        v-model="form.summaryMemory"
-                        maxlength="2000"
-                        show-word-limit
-                        class="form-textarea"
-                        :disabled="form.model.memModelId !== 'Memory_mem_local_short'"
-                      />
-                    </el-form-item>
-                    <el-form-item
-                      style="display: none"
-                    >
-                      <template #label>
-                        <el-tooltip :content="$t('roleConfig.tooltip.languageCode')" placement="top" effect="light" popper-class="custom-tooltip">
-                          <span>{{ $t('roleConfig.languageCode') }}：</span>
-                        </el-tooltip>
-                      </template>
-                      <el-input
-                        v-model="form.langCode"
-                        :placeholder="$t('roleConfig.pleaseEnterLangCode')"
-                        maxlength="10"
-                        show-word-limit
-                        class="form-input"
-                      />
-                    </el-form-item>
-                    <el-form-item
-                      style="display: none"
-                    >
-                      <template #label>
-                        <el-tooltip :content="$t('roleConfig.tooltip.interactionLanguage')" placement="top" effect="light" popper-class="custom-tooltip">
-                          <span>{{ $t('roleConfig.interactionLanguage') }}：</span>
-                        </el-tooltip>
-                      </template>
-                      <el-input
-                        v-model="form.language"
-                        :placeholder="$t('roleConfig.pleaseEnterLangName')"
-                        maxlength="10"
-                        show-word-limit
-                        class="form-input"
-                      />
-                    </el-form-item>
-                  </div>
-                  <div class="form-column">
-                    <div class="model-row">
-                      <el-form-item 
-                        v-if="featureStatus.vad" 
-                        class="model-item"
-                      >
-                        <template #label>
-                          <el-tooltip :content="$t('roleConfig.tooltip.vad')" placement="top" effect="light" popper-class="custom-tooltip">
-                            <span>{{ $t('roleConfig.vad') }}</span>
-                          </el-tooltip>
-                        </template>
-                        <div class="model-select-wrapper">
-                          <el-select
-                            v-model="form.model.vadModelId"
-                            filterable
-                            :placeholder="$t('roleConfig.pleaseSelect')"
-                            class="form-select"
-                            @change="handleModelChange('VAD', $event)"
-                          >
-                            <el-option
-                              v-for="(item, optionIndex) in modelOptions['VAD']"
-                              :key="`option-vad-${optionIndex}`"
-                              :label="item.label"
-                              :value="item.value"
-                            />
-                          </el-select>
-                        </div>
-                      </el-form-item>
-                      <el-form-item 
-                        v-if="featureStatus.asr" 
-                        class="model-item"
-                      >
-                        <template #label>
-                          <el-tooltip :content="$t('roleConfig.tooltip.asr')" placement="top" effect="light" popper-class="custom-tooltip">
-                            <span>{{ $t('roleConfig.asr') }}</span>
-                          </el-tooltip>
-                        </template>
-                        <div class="model-select-wrapper">
-                          <el-select
-                            v-model="form.model.asrModelId"
-                            filterable
-                            :placeholder="$t('roleConfig.pleaseSelect')"
-                            class="form-select"
-                            @change="handleModelChange('ASR', $event)"
-                          >
-                            <el-option
-                              v-for="(item, optionIndex) in modelOptions['ASR']"
-                              :key="`option-asr-${optionIndex}`"
-                              :label="item.label"
-                              :value="item.value"
-                            />
-                          </el-select>
-                        </div>
-                      </el-form-item>
-                    </div>
-                    <div class="model-row">
-                      <el-form-item class="model-item">
-                        <template #label>
-                          <el-tooltip :content="$t('roleConfig.tooltip.llm')" placement="top" effect="light" popper-class="custom-tooltip">
-                            <span>{{ $t('roleConfig.llm') }}</span>
-                          </el-tooltip>
-                        </template>
-                        <div class="model-select-wrapper">
-                          <el-select
-                            v-model="form.model.llmModelId"
-                            filterable
-                            :placeholder="$t('roleConfig.pleaseSelect')"
-                            class="form-select"
-                            @change="handleModelChange('LLM', $event)"
-                          >
-                            <el-option
-                              v-for="(item, optionIndex) in modelOptions['LLM']"
-                              :key="`option-asr-${optionIndex}`"
-                              :label="item.label"
-                              :value="item.value"
-                            />
-                          </el-select>
-                        </div>
-                      </el-form-item>
-                      <el-form-item class="model-item">
-                        <template #label>
-                          <el-tooltip :content="$t('roleConfig.tooltip.slm')" placement="top" effect="light" popper-class="custom-tooltip">
-                            <span>{{ $t('roleConfig.slm') }}</span>
-                          </el-tooltip>
-                        </template>
-                        <div class="model-select-wrapper">
-                          <el-select
-                            v-model="form.model.slmModelId"
-                            filterable
-                            :placeholder="$t('roleConfig.pleaseSelect')"
-                            class="form-select"
-                          >
-                            <el-option
-                              v-for="(item, optionIndex) in modelOptions['LLM']"
-                              :key="`option-asr-${optionIndex}`"
-                              :label="item.label"
-                              :value="item.value"
-                            />
-                          </el-select>
-                        </div>
-                      </el-form-item>
-                    </div>
-                    <el-form-item
-                      v-for="(model, index) in models.slice(4)"
-                      :key="`model-${index}`"
-                      class="model-item"
-                    >
-                      <template #label>
-                        <el-tooltip :content="$t('roleConfig.tooltip.' + model.type.toLowerCase())" placement="top" effect="light" popper-class="custom-tooltip">
-                          <span>{{ $t('roleConfig.' + model.type.toLowerCase()) }}</span>
-                        </el-tooltip>
-                      </template>
-                      <div class="model-select-wrapper">
-                        <el-select
-                          v-model="form.model[model.key]"
-                          filterable
-                          :disabled="model.type === 'TTS' && voiceOptionsLoading"
-                          :placeholder="$t('roleConfig.pleaseSelect')"
-                          class="form-select"
-                          @change="handleModelChange(model.type, $event)"
-                        >
-                          <el-option
-                            v-for="(item, optionIndex) in modelOptions[model.type]"
-                            v-if="!item.isHidden"
-                            :key="`option-${index}-${optionIndex}`"
-                            :label="item.label"
-                            :value="item.value"
-                          />
-                        </el-select>
-                        <div v-if="showFunctionIcons(model.type)" class="function-icons">
-                          <el-tooltip
-                            v-for="func in currentFunctions"
-                            :key="func.name"
-                            effect="light"
-                            placement="top"
-                          >
-                            <div slot="content">
-                              <div><strong>{{ $t("roleConfig.functionName") }}:</strong> {{ func.name }}</div>
-                            </div>
-                            <div class="icon-dot">
-                              {{ getFunctionDisplayChar(func.name) }}
-                            </div>
-                          </el-tooltip>
-                          <el-button
-                            class="edit-function-btn"
-                            @click="openFunctionDialog"
-                            :class="{ 'active-btn': showFunctionDialog }"
-                          >
-                            {{ $t("roleConfig.editFunctions") }}
-                          </el-button>
-                        </div>
-                        <div
-                          v-if="
-                            model.type === 'Memory' &&
-                            form.model.memModelId !== 'Memory_nomem'
-                          "
-                          class="chat-history-options"
-                        >
-                          <el-radio-group
-                            v-model="form.chatHistoryConf"
-                            @change="updateChatHistoryConf"
-                          >
-                            <el-radio-button :label="1">{{
-                              $t("roleConfig.reportText")
-                            }}</el-radio-button>
-                            <el-radio-button :label="2">{{
-                              $t("roleConfig.reportTextVoice")
-                            }}</el-radio-button>
-                          </el-radio-group>
-                        </div>
-                      </div>
-                    </el-form-item>
-                    <div class="model-row">
-                      <!-- Language filter -->
-                      <el-form-item class="model-item language-select-item">
-                        <template #label>
-                          <el-tooltip :content="$t('roleConfig.tooltip.language')" placement="top" effect="light" popper-class="custom-tooltip">
-                            <span>{{ $t('roleConfig.language') }}</span>
-                          </el-tooltip>
-                        </template>
-                        <div class="model-select-wrapper">
-                          <el-select
-                            v-model="selectedLanguage"
-                            :disabled="voiceOptionsLoading"
-                            :placeholder="$t('roleConfig.selectLanguage')"
-                            class="form-select language-select"
-                            @change="handleLanguageChange"
-                          >
-                            <el-option
-                              v-for="(lang, index) in languageOptions"
-                              :key="`lang-${index}`"
-                              :label="lang.label"
-                              :value="lang.value"
-                            />
-                          </el-select>
-                        </div>
-                      </el-form-item>
-
-                      <!-- Voice selector -->
-                      <el-form-item class="model-item">
-                        <template #label>
-                          <el-tooltip :content="$t('roleConfig.tooltip.voiceType')" placement="top" effect="light" popper-class="custom-tooltip">
-                            <span>{{ $t('roleConfig.voiceType') }}</span>
-                          </el-tooltip>
-                        </template>
-                        <div class="model-select-wrapper">
-                          <el-select
-                            v-model="form.ttsVoiceId"
-                            filterable
-                            :disabled="voiceOptionsLoading"
-                            :placeholder="$t('roleConfig.pleaseSelect')"
-                            class="form-select"
-                            @change="handleVoiceChange"
-                          >
-                            <el-option
-                              v-for="(item, index) in voiceOptions"
-                              :key="`voice-${index}`"
-                              :label="item.label"
-                              :value="item.value"
-                            >
-                              <div
-                                style="
-                                  display: flex;
-                                  justify-content: space-between;
-                                  align-items: center;
-                                "
-                              >
-                                <span>{{ item.label }}</span>
-                                <template v-if="hasAudioPreview(item)">
-                                  <el-button
-                                    type="text"
-                                    :icon="
-                                      playingVoice &&
-                                      currentPlayingVoiceId === item.value &&
-                                      !isPaused
-                                        ? 'el-icon-video-pause'
-                                        : 'el-icon-video-play'
-                                    "
-                                    size="small"
-                                    @click.stop="toggleAudioPlayback(item.value)"
-                                    :loading="false"
-                                    class="play-button"
-                                  />
-                                </template>
-                              </div>
-                            </el-option>
-                          </el-select>
-                          <el-button
-                            class="edit-function-btn"
-                            style="margin-left: 10px;"
-                            @click="openTtsAdvancedSettings"
-                          >
-                            {{ $t('roleConfig.advancedSettings') }}
-                          </el-button>
-                        </div>
-                      </el-form-item>
-                    </div>
-                  </div>
+        <!-- Functions (only when an intent model is active) -->
+        <section v-if="showFunctionIcons('Intent')" class="config-card">
+          <div class="card-head card-head--actions">
+            <h2 class="card-title">{{ $t("agentSnapshot.field.functions") }}</h2>
+            <div class="card-actions">
+              <el-button
+                size="small"
+                class="edit-function-btn"
+                @click="openFunctionDialog"
+                :class="{ 'active-btn': showFunctionDialog }"
+              >
+                {{ $t("roleConfig.editFunctions") }}
+              </el-button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="function-icons">
+              <el-tooltip
+                v-for="func in currentFunctions"
+                :key="func.name"
+                effect="light"
+                placement="top"
+              >
+                <div slot="content">
+                  <div><strong>{{ $t("roleConfig.functionName") }}:</strong> {{ func.name }}</div>
                 </div>
-              </div>
-            </el-form>
-          </el-card>
-        </div>
-      </div>
+                <span class="function-chip">
+                  <span class="icon-dot">{{ getFunctionDisplayChar(func.name) }}</span>
+                  {{ func.name }}
+                </span>
+              </el-tooltip>
+            </div>
+          </div>
+        </section>
+
+        <!-- Context providers -->
+        <section class="config-card">
+          <div class="card-head card-head--actions">
+            <el-tooltip :content="$t('roleConfig.tooltip.contextProvider')" placement="top" effect="light" popper-class="custom-tooltip">
+              <h2 class="card-title">{{ $t('roleConfig.contextProvider') }}</h2>
+            </el-tooltip>
+            <div class="card-actions">
+              <el-button
+                class="edit-function-btn"
+                size="small"
+                @click="openContextProviderDialog"
+              >
+                {{ $t('roleConfig.editContextProvider') }}
+              </el-button>
+            </div>
+          </div>
+          <div class="card-body">
+            <p class="context-text">
+              {{ $t('roleConfig.contextProviderSuccess', { count: currentContextProviders.length }) }}
+              <a href="https://github.com/xinnan-tech/xiaozhi-esp32-server/blob/main/docs/context-provider-integration.md" target="_blank" rel="noopener" class="doc-link">{{ $t('roleConfig.contextProviderDocLink') }}</a>
+            </p>
+          </div>
+        </section>
+      </el-form>
     </div>
     <function-dialog
       v-model="showFunctionDialog"
@@ -1912,215 +1991,324 @@ export default {
 };
 </script>
 
+
 <style lang="scss" scoped>
-::v-deep .el-radio-group {
-  .is-active {
-    .el-radio-button__inner {
-      &:hover {
-        color: #fff !important;
-      }
-    }
-  }
-}
 .welcome {
-  min-width: 900px;
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
-  position: relative;
   flex-direction: column;
-  background: #eff4ff;
-  background-size: cover;
-  -webkit-background-size: cover;
-  -o-background-size: cover;
-  overflow: hidden;
+  background: var(--x-canvas);
 }
 
-.operation-bar {
+.role-page {
+  flex: 1;
+  width: 100%;
+  max-width: 1120px;
+  box-sizing: border-box;
+  padding: 24px 32px 32px;
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 20px;
+  text-align: left;
+}
+
+// Breadcrumb
+.breadcrumb {
+  padding: 0; // App.vue has a global `nav { padding: 30px }`
+  display: flex;
   align-items: center;
-  padding: 16px 24px;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--x-text-muted);
+  min-width: 0;
+}
+
+.breadcrumb-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 4px 2px 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--x-text-muted);
+  cursor: pointer;
+  border-radius: 6px;
+
+  &:hover {
+    color: var(--x-ink);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--x-focus-ring);
+  }
+}
+
+.breadcrumb-sep {
+  color: var(--x-border-control);
+}
+
+.breadcrumb-current {
+  color: var(--x-text);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// Page header
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.page-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1 1 320px;
 }
 
 .page-title {
-  font-size: 24px;
   margin: 0;
-  color: #2c3e50;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+  color: var(--x-text);
+  overflow-wrap: anywhere;
 }
 
-.main-wrapper {
-  height: calc(100vh - 63px - 35px - 60px);
-  margin: 0 22px;
-  border-radius: 15px;
-  position: relative;
-  display: flex;
-  flex-direction: column;
+.page-desc {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--x-text-muted);
 }
 
-.content-panel {
-  flex: 1;
-  display: flex;
-  overflow: hidden;
-  height: 100%;
-  border-radius: 15px;
-  background: transparent;
-  border: 1px solid #fff;
-}
-
-.content-area {
-  flex: 1;
-  height: 100%;
-  min-width: 600px;
-  overflow: auto;
-  background-color: white;
-  display: flex;
-  flex-direction: column;
-}
-
-.config-card {
-  background: white;
-  border: none;
-  box-shadow: none;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  overflow-y: auto;
-}
-
-.config-header {
-  position: relative;
+.header-actions {
   display: flex;
   align-items: center;
-  gap: 13px;
-  padding: 0 0 5px 0;
-  font-weight: 700;
-  font-size: 19px;
-  color: #3d4566;
-  justify-content: space-between;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 13px;
-  flex-shrink: 0;
-}
-
-.header-tags {
-  display: flex;
-  align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
-  flex: 1;
-  min-width: 0;
-  overflow-x: auto;
-  padding-bottom: 4px;
-  &::-webkit-scrollbar {
-      height: 6px;
-      background: #e6ebff;
-    }
-    &::-webkit-scrollbar-thumb {
-      background: #5778ff;
-      border-radius: 8px;
-    }
-}
 
-.header-tags .el-tag {
-  flex-shrink: 0;
+  .el-button + .el-button {
+    margin-left: 0;
+  }
 }
 
 .current-version-tag {
-  flex-shrink: 0;
-  padding: 3px 9px;
-  border: 1px solid #dfe7ff;
-  border-radius: 999px;
-  background: #f4f7ff;
-  color: #5778ff;
   font-size: 12px;
-  font-weight: 500;
-  line-height: 1.5;
+  color: var(--x-text-muted);
+  font-variant-numeric: tabular-nums;
+  margin-right: 4px;
 }
 
-.more-tag {
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.all-tags-popover {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  padding: 8px;
-}
-
-.header-icon {
-  width: 37px;
-  height: 37px;
-  background: #5778ff;
-  border-radius: 50%;
+// Tags
+.header-tags {
   display: flex;
   align-items: center;
-  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: -8px;
 }
 
-.header-icon img {
-  width: 19px;
-  height: 19px;
+.custom-tag {
+  height: 26px;
+  line-height: 24px;
+  padding: 0 10px;
+  border-radius: var(--x-radius-pill);
+  border: 1px solid var(--x-border);
+  background: var(--x-surface);
+  color: var(--x-text-secondary);
+  font-size: 12px;
+
+  ::v-deep .el-tag__close {
+    color: var(--x-text-muted);
+
+    &:hover {
+      background: var(--x-selected);
+      color: var(--x-ink);
+    }
+  }
 }
 
-.divider {
-  height: 1px;
-  background: #e8f0ff;
+.custom-tag-btn {
+  height: 26px;
+  padding: 0 10px;
+  border-style: dashed;
+  font-size: 12px;
+  color: var(--x-text-muted);
 }
 
-.form-content {
-  padding: 2vh 0;
+.input-new-tag {
+  width: 120px;
 }
 
-.form-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+// Cards
+.role-form {
+  display: flex;
+  flex-direction: column;
   gap: 20px;
 }
 
-.form-column {
+.config-card {
+  background: var(--x-surface);
+  border: 1px solid var(--x-border);
+  border-radius: var(--x-radius-card);
+  min-width: 0;
+}
+
+.card-head {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--x-divider);
+}
+
+.card-head--actions {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
-.form-input {
-  width: 100%;
+.card-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--x-text);
 }
 
-.form-select {
-  flex: 1;
-  width: 100%;
-  height: 36px;
+.card-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  .el-button + .el-button {
+    margin-left: 0;
+  }
 }
 
-.play-button {
-  color: #409eff;
-  transition: color 0.3s;
+.card-body {
+  padding: 20px;
 }
 
-.play-button:hover {
-  color: #66b1ff;
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 20px;
 }
 
-.play-button.is-loading {
-  color: #909399;
+.model-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px 20px;
 }
 
+.span-all {
+  grid-column: 1 / -1;
+}
+
+.model-item--wide {
+  grid-column: span 2;
+}
+
+// Form items: label on top, no extra bottom margin (grid gap handles spacing)
+.role-form ::v-deep .el-form-item {
+  margin-bottom: 0;
+  min-width: 0;
+}
+
+.role-form ::v-deep .el-form-item__label {
+  float: none;
+  display: block;
+  padding: 0 0 6px;
+  line-height: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--x-text);
+  text-align: left;
+}
+
+.role-form ::v-deep .el-form-item__content {
+  line-height: normal;
+}
+
+.model-code {
+  font-weight: 400;
+  color: var(--x-text-muted);
+}
+
+.form-input,
+.form-select,
 .form-textarea {
   width: 100%;
 }
 
-.voice-select-wrapper {
+.model-select-wrapper {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
+  width: 100%;
+
+  .form-select {
+    flex: 1 1 200px;
+    width: auto;
+  }
 }
 
+.chat-history-options {
+  display: flex;
+  flex: 0 0 auto;
+}
+
+// Theme the radio group as an ink segmented control
+.chat-history-options ::v-deep .el-radio-button__inner {
+  color: var(--x-text-secondary);
+  border-color: var(--x-border-control);
+  background: var(--x-surface);
+  box-shadow: none;
+
+  &:hover {
+    color: var(--x-ink);
+  }
+}
+
+.chat-history-options ::v-deep .el-radio-button:first-child .el-radio-button__inner {
+  border-left-color: var(--x-border-control);
+}
+
+.chat-history-options ::v-deep .el-radio-button.is-active .el-radio-button__inner {
+  background: var(--x-ink);
+  border-color: var(--x-ink);
+  color: var(--x-on-ink);
+  box-shadow: -1px 0 0 0 var(--x-ink);
+}
+
+// Textarea counter
+.form-textarea ::v-deep .el-textarea__inner {
+  line-height: 1.55;
+  padding: 10px 12px 26px;
+}
+
+.form-textarea ::v-deep .el-input__count {
+  color: var(--x-text-muted);
+  background: none;
+  font-size: 12px;
+  right: 12px;
+  bottom: 6px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+// Template pills
 .template-container {
   display: flex;
   gap: 8px;
@@ -2128,287 +2316,213 @@ export default {
 }
 
 .template-item {
-  height: 4vh;
-  min-width: 60px;
+  height: 32px;
   padding: 0 12px;
-  border-radius: 8px;
-  background: #e6ebff;
-  line-height: 4vh;
-  font-weight: 400;
-  font-size: 11px;
-  text-align: center;
-  color: #5778ff;
+  border: 1px solid var(--x-border-control);
+  border-radius: var(--x-radius-control);
+  background: var(--x-surface);
+  color: var(--x-text-secondary);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+
+  &:hover {
+    background: var(--x-selected);
+    border-color: var(--x-ink);
+    color: var(--x-text);
+  }
+
+  &:focus-visible {
+    outline: none;
+    border-color: var(--x-ink);
+    box-shadow: 0 0 0 4px var(--x-focus-ring);
+  }
+
+  &.template-loading {
+    cursor: progress;
+    opacity: 0.6;
+  }
+}
+
+// Voice
+.voice-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.play-button {
+  color: var(--x-text-secondary);
+
+  &:hover,
+  &:focus {
+    color: var(--x-ink);
+  }
+}
+
+.tts-params {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px 20px;
+  padding-top: 4px;
+}
+
+.tts-param {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.tts-param-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.tts-param-label {
+  font-weight: 500;
+  color: var(--x-text);
+}
+
+.tts-param-value {
+  color: var(--x-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.tts-param-track {
+  position: relative;
+  height: 4px;
+  margin: 4px 0;
+  border-radius: var(--x-radius-pill);
+  background: var(--x-border);
+}
+
+.tts-param-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: var(--x-radius-pill);
+  background: var(--x-ink);
+}
+
+.tts-param-thumb {
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--x-surface);
+  border: 2px solid var(--x-ink);
+  box-sizing: border-box;
+  transform: translate(-50%, -50%);
+}
+
+.tts-param-hint {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--x-text-muted);
+}
+
+// Functions
+.function-icons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.function-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  padding: 0 12px 0 4px;
+  border: 1px solid var(--x-border);
+  border-radius: var(--x-radius-pill);
+  background: var(--x-surface-raised);
+  font-size: 13px;
+  color: var(--x-text-secondary);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.template-item:hover {
-  background-color: #d0d8ff;
-}
-
-.model-select-wrapper {
-  display: flex;
-  align-items: center;
-  width: 100%;
-}
-
-.model-row {
-  display: flex;
-  gap: 20px;
-  margin-bottom: 6px;
-}
-
-.model-row .model-item {
-  flex: 1;
-  margin-bottom: 0;
-}
-
-.model-row .language-select-item {
-  flex: 0 0 35%;
-  max-width: 35%;
-}
-
-.model-row .language-select-item .language-select {
-  width: 100%;
-}
-
-.model-row .el-form-item__label {
-  font-size: 12px !important;
-  color: #3d4566 !important;
-  font-weight: 400;
-  line-height: 22px;
-  padding-bottom: 2px;
-}
-
-.function-icons {
-  display: flex;
-  align-items: center;
-  margin-left: auto;
-  padding-left: 10px;
-}
-
 .icon-dot {
-  width: 25px;
-  height: 25px;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #5778ff;
-  font-weight: bold;
-  font-size: 12px;
-  margin-right: 8px;
-  position: relative;
-  background-color: #e6ebff;
-}
-
-::v-deep .el-form-item__label {
-  font-size: 12px !important;
-  color: #3d4566 !important;
-  font-weight: 400;
-  line-height: 22px;
-  padding-bottom: 2px;
-}
-
-::v-deep .el-textarea .el-input__count {
-  color: #909399;
-  background: none;
-  position: absolute;
-  font-size: 12px;
-  right: 3%;
-}
-
-.custom-close-btn {
-  position: absolute;
-  top: 25%;
-  right: 0;
-  transform: translateY(-50%);
-  width: 35px;
-  height: 35px;
-  border-radius: 50%;
-  border: 2px solid #cfcfcf;
-  background: none;
-  font-size: 30px;
-  font-weight: lighter;
-  color: #cfcfcf;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1;
-  padding: 0;
-  outline: none;
-}
-
-.custom-close-btn:hover {
-  color: #409eff;
-  border-color: #409eff;
-}
-
-.edit-function-btn {
-  background: #e6ebff;
-  color: #5778ff;
-  border: 1px solid #adbdff;
-  border-radius: 18px;
-  padding: 10px 20px;
-  transition: all 0.3s;
+  background: var(--x-ink);
+  color: var(--x-on-ink);
+  font-weight: 600;
+  font-size: 11px;
 }
 
 .edit-function-btn.active-btn {
-  background: #5778ff;
-  color: white;
+  background: var(--x-ink);
+  border-color: var(--x-ink);
+  color: var(--x-on-ink);
 }
 
-.chat-history-options {
-  display: flex;
-  gap: 10px;
-  min-width: 250px;
-  justify-content: flex-end;
-}
-
-.chat-history-options ::v-deep .el-radio-button {
-  border-color: #5778ff;
-}
-
-.chat-history-options ::v-deep .el-radio-button .el-radio-button__inner {
-  color: #5778ff;
-  border-color: #5778ff;
-  background-color: transparent;
-}
-
-.chat-history-options ::v-deep .el-radio-button.is-active .el-radio-button__inner {
-  background-color: #5778ff;
-  border-color: #5778ff;
-  color: white;
-}
-
-.chat-history-options ::v-deep .el-radio-button .el-radio-button__inner:hover {
-  color: #5778ff;
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-left: auto;
-}
-
-.header-actions .hint-text {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  color: #979db1;
-  font-size: 12px;
-  margin-right: 8px;
-}
-
-.header-actions .hint-text img {
-  width: 16px;
-  height: 16px;
-}
-
-.header-actions .save-btn {
-  background: #5778ff;
-  color: white;
-  border: none;
-  border-radius: 18px;
-  padding: 8px 16px;
-  height: 32px;
-  font-size: 14px;
-}
-
-.header-actions .history-btn {
-  background: #ffffff;
-  color: #4d5b7c;
-  border: 1px solid #d8dce8;
-  border-radius: 18px;
-  padding: 8px 16px;
-  height: 32px;
-  font-size: 14px;
-}
-
-.header-actions .reset-btn {
-  background: #e6ebff;
-  color: #5778ff;
-  border: 1px solid #adbdff;
-  border-radius: 18px;
-  padding: 8px 16px;
-  height: 32px;
-}
-
-.header-actions .custom-close-btn {
-  position: static;
-  transform: none;
-  width: 32px;
-  height: 32px;
-  margin-left: 8px;
-}
-
-.context-provider-item ::v-deep .el-form-item__label {
-  line-height: 42px !important;
+// Context
+.context-text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--x-text-secondary);
 }
 
 .doc-link {
-  color: #5778ff;
-  text-decoration: none;
+  color: var(--x-ink);
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 2px;
   margin-left: 4px;
 
   &:hover {
-    text-decoration: underline;
+    color: var(--x-ink-pressed);
   }
 }
 
-.slider-wrapper {
-  width: 100%;
-  padding-right: 12px;
-}
-
-.slider-hint {
-  display: block;
-  font-size: 12px;
-  color: #909399;
-  margin-top: 4px;
-  line-height: 1.5;
-}
-
-.tts-slider {
-  width: 100%;
-}
-
-.tts-slider ::v-deep .el-slider__input {
-  width: 80px;
-}
-
-.tts-slider ::v-deep .el-input__inner {
-  text-align: center;
-  padding: 0 8px;
-}
-.custom-tag {
-  background: #e6ebff;
-  color: #5778ff;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: normal;
-  border: none;
-}
-.custom-tag-btn {
-  background: #e6ebff;
-  color: #5778ff;
-  border-radius: 8px;
-  font-weight: normal;
-  border: 1px solid #e6ebff;
-  &:hover {
-    background-color: #d0d8ff;
-  }
-}
-.input-new-tag {
-  width: 90px;
-  &::v-deep(.el-input__inner) {
-    width: 90px !important;
+@media (max-width: 900px) {
+  .tts-params {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
+@media (max-width: 768px) {
+  .role-page {
+    padding: 16px;
+    gap: 16px;
+  }
+
+  .grid-2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .model-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .model-item--wide {
+    grid-column: auto;
+  }
+
+  .card-head,
+  .card-body {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
 </style>
 
 <style>

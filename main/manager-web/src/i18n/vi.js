@@ -1695,4 +1695,11 @@ export default {
   'console.accountMenu': 'Menu tài khoản',
   'console.openMenu': 'Mở menu',
   'console.closeMenu': 'Đóng menu',
+  'login.subtitle': 'Quản lý tác tử, thiết bị và mô hình của bạn.',
+  'console.authHeadline': 'Một bảng điều khiển cho mọi trợ lý giọng nói trong mạng của bạn.',
+  'console.authDescription': 'Cấu hình tác tử, liên kết thiết bị ESP32 và chọn mô hình cho mỗi cuộc hội thoại.',
+  'console.agentsDescription': 'Mỗi tác tử kết hợp vai trò, mô hình và giọng nói. Thiết bị được liên kết với một tác tử.',
+  'console.devicesDescription': 'Các thiết bị liên kết với tác tử này. Khởi động lại thiết bị sau khi thay đổi cấu hình.',
+  'console.modelsDescription': 'Nhà cung cấp được cấu hình cho từng bước của luồng xử lý giọng nói.',
+  'console.bindWithCode': 'Liên kết bằng mã',
 }

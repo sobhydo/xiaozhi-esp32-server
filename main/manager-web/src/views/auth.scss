@@ -1,132 +1,346 @@
-.welcome {
-  min-width: 1200px;
-  min-height: 675px;
-  height: 100vh;
+// Shared layout for the sign-in, register and reset-password pages:
+// form column on the left, "night" brand panel on the right.
+
+.auth {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(145deg, #f5f8fd, #6baaff, #9ebbfc, #f5f8fd);
-  background-size: cover;
-  /* Make the background image cover the whole element */
-  background-position: center;
-  /* Align from top center */
-  -webkit-background-size: cover;
-  /* Compatibility with older WebKit browsers */
-  -o-background-size: cover;
-  /* Compatibility with older Opera browsers */
-}
-
-.login-text {
-  font-weight: 700;
-  font-size: 25px;
+  min-height: 100vh;
   text-align: left;
-  color: #3d4566;
-  white-space: nowrap;
-  flex-shrink: 0;
+  background: var(--x-surface);
+  color: var(--x-text);
+  font-size: 14px;
 }
 
-.login-welcome {
-  font-weight: 400;
-  font-size: 9px;
-  text-align: left;
-  color: #818cae;
-  align-self: flex-end;
-  margin-bottom: 7px;
-}
+// ---------- Form column ----------
 
-.login-box {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  right: 18%;
-  background-color: #fff;
-  border-radius: 20px;
-  padding: 35px 0;
-  width: 450px;
+.auth-main {
+  flex: 1 1 480px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 32px 40px;
   box-sizing: border-box;
 }
 
-.el-dropdown-link {
-  font-weight: 400;
-  font-size: 14px;
-  text-align: left;
-  color: #979db1;
+.auth-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
 }
 
-.input-icon {
-  width: 19px;
-  height: 22px;
+.auth-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.auth-brand-tile {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background: var(--x-surface);
+  border: 1px solid var(--x-border);
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-brand-name {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--x-text);
+  white-space: nowrap;
+}
+
+.auth-form {
+  margin: auto;
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 48px 0;
+  box-sizing: border-box;
+}
+
+.auth-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+
+  h1 {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+    color: var(--x-text);
+  }
+
+  p {
+    margin: 0;
+    color: var(--x-text-muted);
+  }
+}
+
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.auth-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.auth-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--x-text);
+}
+
+// Input + side control (captcha image, SMS button, area code)
+.auth-inline {
+  display: flex;
+  gap: 8px;
+
+  > .el-input {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.auth-area-code {
+  width: 132px;
   flex-shrink: 0;
 }
 
-.login-btn {
-  height: 35px;
-  background: #5778ff;
-  border-radius: 10px;
-  font-weight: 400;
-  font-size: 14px;
-  cursor: pointer;
-  color: #fff;
-  line-height: 35px;
-  margin: 15px 30px 15px 30px;
-}
-
-.input-box {
-  display: flex;
-  margin-top: 20px;
-  align-items: center;
-  border-radius: 10px;
-  border: 1px solid #e4e6ef;
+.auth-captcha {
+  width: 112px;
   height: 40px;
-  padding: 0 15px;
-  gap: 20px;
-}
+  flex-shrink: 0;
+  padding: 0;
+  border: 1px solid var(--x-border);
+  border-radius: var(--x-radius-control);
+  background: var(--x-surface-raised);
+  overflow: hidden;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-::v-deep {
-  .el-tabs__nav-wrap::after {
-    height: 1px;
-  }
-
-  .el-tabs__nav-wrap::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 0;
+  img {
     width: 100%;
-    height: 1px;
-    background-color: #e4e7ed;
-    z-index: 1;
+    height: 100%;
+    object-fit: cover;
+    display: block;
   }
 
-  .el-tabs__item {
-    height: 65px;
-    line-height: 65px;
-    font-weight: 700;
-    color: #3d4566;
+  &:hover {
+    border-color: var(--x-border-control);
   }
 
-  .el-tabs__item.is-active {
-    color: #5778ff;
-  }
-
-  .el-tabs__nav-scroll {
-    padding: 0 30px;
-  }
-
-  .el-input__inner {
-    border: none;
-    background-color: transparent;
-    height: 56px;
-    padding: 0;
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--x-focus-ring);
+    border-color: var(--x-ink);
   }
 }
 
-.login-person {
-  width: 500px;
-  color: #fff;
+.auth-sms-btn {
+  flex-shrink: 0;
+  min-width: 112px;
+  height: 40px;
+  margin: 0;
+}
+
+.auth-submit {
+  width: 100%;
+  height: 40px;
+  margin: 8px 0 0;
+  font-weight: 600;
+}
+
+.auth-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--x-ink);
+  cursor: pointer;
+  text-decoration: none;
+
+  &:hover {
+    color: var(--x-ink-pressed);
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: none;
+    border-radius: 4px;
+    box-shadow: 0 0 0 3px var(--x-focus-ring);
+  }
+}
+
+.auth-alt {
+  margin: 4px 0 0;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  font-size: 13px;
+  color: var(--x-text-muted);
+}
+
+.auth-legal {
+  margin: 0;
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--x-text-muted);
+
+  .auth-link {
+    font-size: 12px;
+  }
+}
+
+.auth-footer {
+  font-size: 12px;
+  color: var(--x-text-muted);
+
+  ::v-deep {
+    .copyright {
+      padding: 0;
+      justify-content: flex-start;
+      color: var(--x-text-muted);
+    }
+
+    .copyright .footer-content {
+      justify-content: flex-start;
+      flex-wrap: wrap;
+    }
+
+    .copyright .beian-text {
+      color: var(--x-text-muted);
+    }
+  }
+}
+
+// ---------- Night panel ----------
+
+.auth-night {
+  flex: 1 1 480px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 48px;
+  padding: 56px;
+  box-sizing: border-box;
+  overflow: hidden;
+  color: var(--x-night-text);
+  background-color: var(--x-night);
+  // The one allowed gradient: a soft highlight behind the mark.
+  background-image: radial-gradient(120% 90% at 50% 38%, var(--x-night-raised) 0%, var(--x-night) 62%);
+}
+
+.auth-night-hero {
+  flex: 1;
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+}
+
+.auth-night-name {
+  font-size: 12px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--x-night-muted);
+}
+
+.auth-night-headline {
+  max-width: 420px;
+  margin: 12px 0 0;
+  font-size: 24px;
+  line-height: 1.3;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  text-align: center;
+  color: #ffffff;
+}
+
+.auth-night-copy {
+  max-width: 400px;
+  margin: -12px 0 0;
+  font-size: 14px;
+  line-height: 1.6;
+  text-align: center;
+  color: var(--x-night-text);
+}
+
+.auth-night-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  span {
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: var(--x-radius-pill);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    color: var(--x-night-text);
+  }
+}
+
+// ---------- Responsive ----------
+
+@media (max-width: 900px) {
+  .auth-night {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .auth-main {
+    padding: 20px 16px;
+  }
+
+  .auth-form {
+    padding: 32px 0;
+  }
+
+  // SMS code row: button drops below the input
+  .auth-inline--wrap {
+    flex-wrap: wrap;
+
+    > .el-input,
+    .auth-sms-btn {
+      flex: 1 1 100%;
+    }
+  }
+}
+
+.auth-sr-only {
   position: absolute;
-  top: 50%;
-  left: 25%;
-  transform: translate(-50%, -50%);
-  z-index: 1;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }

@@ -477,23 +477,32 @@ export default {
 @import '@/styles/global.scss';
 
 .model-edit-dialog {
+  ::v-deep .el-dialog {
+    max-width: calc(100vw - 32px);
+  }
+
   ::v-deep .el-dialog__body {
-    padding: 24px 40px;
+    @include scrollbar-style;
   }
 
   .header-row {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 4px;
+    gap: 12px;
+    margin-bottom: 10px;
   }
 
   .section-title {
-    margin-bottom: 10px;
-    font-size: 20px;
-    font-weight: bold;
-    color: #3d4566;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--x-text);
     text-align: left;
+  }
+
+  .section-title + .section-divider {
+    margin-top: 10px;
   }
 
   .switch-group {
@@ -505,6 +514,7 @@ export default {
   .switch-item {
     display: flex;
     align-items: center;
+    color: var(--x-text-secondary);
 
     &.hidden {
       display: none;
@@ -517,24 +527,47 @@ export default {
 
   .section-divider {
     height: 1px;
-    background: #e9e9e9;
-    margin-bottom: 18px;
+    background: var(--x-divider);
+    margin-bottom: 16px;
   }
 
   .form-row {
     display: flex;
-    gap: 20px;
+    flex-wrap: wrap;
+    column-gap: 20px;
     margin-bottom: 0;
+
+    > .el-form-item {
+      min-width: 260px;
+    }
   }
 
-  ::v-deep .el-input__inner {
-    height: 38px;
-  }
   ::v-deep .el-form-item {
     margin-bottom: 14px;
   }
-  ::v-deep .el-form-item__label {
-    line-height: 38px;
+
+  @media (max-width: 600px) {
+    .form-row > .el-form-item {
+      min-width: 100%;
+    }
+
+    ::v-deep .el-form-item__label {
+      float: none;
+      display: block;
+      width: auto !important;
+      text-align: left;
+      line-height: 1.5;
+      padding-bottom: 6px;
+    }
+
+    ::v-deep .el-form-item__label-wrap {
+      float: none;
+      margin-left: 0 !important;
+    }
+
+    ::v-deep .el-form-item__content {
+      margin-left: 0 !important;
+    }
   }
 }
 </style>

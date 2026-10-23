@@ -1695,4 +1695,11 @@ export default {
   'console.accountMenu': '账户菜单',
   'console.openMenu': '打开菜单',
   'console.closeMenu': '关闭菜单',
+  'login.subtitle': '管理您的智能体、设备和模型。',
+  'console.authHeadline': '一个控制台，管理网络中的每一个语音助手。',
+  'console.authDescription': '配置智能体、绑定 ESP32 设备，并为每次对话选择模型。',
+  'console.agentsDescription': '每个智能体包含角色、模型和音色，设备绑定到智能体。',
+  'console.devicesDescription': '绑定到此智能体的设备。修改配置后请重启设备。',
+  'console.modelsDescription': '为语音流程的每个环节配置服务提供方。',
+  'console.bindWithCode': '验证码绑定',
 }

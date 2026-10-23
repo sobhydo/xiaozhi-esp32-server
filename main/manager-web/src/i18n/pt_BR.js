@@ -1695,4 +1695,11 @@ export default {
   'console.accountMenu': 'Menu da conta',
   'console.openMenu': 'Abrir menu',
   'console.closeMenu': 'Fechar menu',
+  'login.subtitle': 'Gerencie seus agentes, dispositivos e modelos.',
+  'console.authHeadline': 'Um console para todos os assistentes de voz da sua rede.',
+  'console.authDescription': 'Configure agentes, vincule dispositivos ESP32 e escolha os modelos por trás de cada conversa.',
+  'console.agentsDescription': 'Cada agente combina uma função, modelos e uma voz. Os dispositivos são vinculados a um agente.',
+  'console.devicesDescription': 'Dispositivos vinculados a este agente. Reinicie o dispositivo após alterar a configuração.',
+  'console.modelsDescription': 'Provedores configurados para cada etapa do fluxo de voz.',
+  'console.bindWithCode': 'Vincular com código',
 }

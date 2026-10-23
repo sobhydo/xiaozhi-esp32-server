@@ -2,87 +2,109 @@
   <div class="welcome">
     <HeaderBar />
 
-    <div class="main-wrapper">
-      <div class="content-panel">
-        <div class="content-area">
-          <el-card class="device-card" shadow="never">
-            <div class="operation-header">
-              <h2 class="page-title">{{ $t('device.management') }}</h2>
-              <div class="right-operations">
-                <el-input :placeholder="$t('device.searchPlaceholder')" v-model="searchKeyword" class="search-input"
-                  @keyup.enter.native="handleSearch" clearable />
-                <CustomButton icon="el-icon-search" type="confirm" @click="handleSearch">{{ $t('device.search') }}</CustomButton>
-              </div>
-            </div>
-            <CustomTable
-              ref="deviceTable"
-              :data="paginatedDeviceList"
-              :columns="tableColumns"
-              :loading="loading"
-              :loading-text="$t('deviceManagement.loading')"
-              :show-selection="true"
-              :show-operations="true"
-              :operations-label="$t('device.operation')"
-              :total="filteredDeviceList.length"
-              :current-page="currentPage"
-              :page-size="pageSize"
-              :page-size-options="pageSizeOptions"
-              @size-change="handlePageSizeChange"
-              @page-change="goToPage"
-            >
-              <template slot="model" slot-scope="scope">
-                {{ getFirmwareTypeName(scope.row.model) }}
-              </template>
-              <template slot="macAddress" slot-scope="scope">
-                <MacAddressMask :macAddress="scope.row.macAddress" />
-              </template>
-              <template slot="deviceStatus" slot-scope="scope">
-                <el-tag v-if="scope.row.deviceStatus === 'online'" type="success">{{ $t('device.online') }}</el-tag>
-                <el-tag v-else type="danger">{{ $t('device.offline') }}</el-tag>
-              </template>
-              <template slot="alias" slot-scope="scope">
-                <el-input v-show="scope.row.isEdit" v-model="scope.row.alias" size="mini" maxlength="64" show-word-limit
-                  @blur="onAliasBlur(scope.row)" @keyup.enter.native="onAliasEnter(scope.row)" />
-                <span v-show="!scope.row.isEdit" class="alias-view">
-                  <i class="el-icon-edit" @click="scope.row.isEdit = true" style="cursor: pointer;"></i>
-                  <span @click="scope.row.isEdit = true">
-                    {{ scope.row.alias || '-' }}
-                  </span>
-                </span>
-              </template>
-              <template slot="otaSwitch" slot-scope="scope">
-                <el-switch v-model="scope.row.otaSwitch" size="mini" active-color="#13ce66" inactive-color="#ff4949"
-                  @change="handleOtaSwitchChange(scope.row)"></el-switch>
-              </template>
-              <template slot="operations" slot-scope="scope">
-                <el-button size="mini" type="text" @click="handleUnbind(scope.row.device_id)">
-                  {{ $t('device.unbind') }}
-                </el-button>
-                <el-button v-if="isGenerate(scope.row)" size="mini" type="text" @click="handleGenertor(scope.row)">
-                  {{ $t('device.deviceThemeGeneration') }}
-                </el-button>
-              </template>
-              <template slot="footer-btns">
-                <div class="ctrl_btn">
-                  <CustomButton :icon="isCurrentPageAllSelected ? 'el-icon-circle-close' : 'el-icon-circle-check'" size="small" @click="handleSelectAll">
-                    {{ isCurrentPageAllSelected ? $t('common.deselectAll') : $t('common.selectAll') }}
-                  </CustomButton>
-                  <CustomButton icon="el-icon-plus" type="add" size="small" @click="handleAddDevice">
-                    {{ $t('device.bindWithCode') }}
-                  </CustomButton>
-                  <CustomButton icon="el-icon-plus" type="add" size="small" @click="handleManualAddDevice">
-                    {{ $t('device.manualAdd') }}
-                  </CustomButton>
-                  <CustomButton size="small" type="delete" icon="el-icon-delete" @click="deleteSelected">
-                    {{ $t('device.unbind') }}
-                  </CustomButton>
-                </div>
-              </template>
-            </CustomTable>
-          </el-card>
+    <main class="devices-page">
+      <nav class="breadcrumb" :aria-label="$t('device.management')">
+        <router-link to="/home" class="breadcrumb-link">{{ $t('header.smartManagement') }}</router-link>
+        <span class="breadcrumb-sep" aria-hidden="true">/</span>
+        <span class="breadcrumb-current" aria-current="page">{{ $t('device.management') }}</span>
+      </nav>
+
+      <header class="page-header">
+        <div class="page-heading">
+          <h1 class="page-title">{{ $t('device.management') }}</h1>
+          <p class="page-description">{{ $t('console.devicesDescription') }}</p>
         </div>
-      </div>
-    </div>
+        <div class="page-actions">
+          <el-button @click="handleManualAddDevice">{{ $t('device.manualAdd') }}</el-button>
+          <el-button type="primary" icon="el-icon-plus" @click="handleAddDevice">
+            {{ $t('console.bindWithCode') }}
+          </el-button>
+        </div>
+      </header>
+
+      <section class="device-card">
+        <div class="table-toolbar">
+          <el-input :placeholder="$t('device.searchPlaceholder')" :aria-label="$t('device.searchPlaceholder')"
+            v-model="searchKeyword" class="search-input" @keyup.enter.native="handleSearch" clearable>
+            <button slot="prefix" type="button" class="search-icon-btn" :aria-label="$t('device.search')"
+              @click="handleSearch">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" aria-hidden="true">
+                <circle cx="11" cy="11" r="7" />
+                <path d="m20 20-3.5-3.5" />
+              </svg>
+            </button>
+          </el-input>
+          <div class="toolbar-actions">
+            <el-button size="small" @click="handleSelectAll">
+              {{ isCurrentPageAllSelected ? $t('common.deselectAll') : $t('common.selectAll') }}
+            </el-button>
+            <el-button size="small" class="btn-danger-outline" @click="deleteSelected">
+              {{ $t('device.unbind') }}
+            </el-button>
+          </div>
+        </div>
+        <CustomTable
+          ref="deviceTable"
+          class="device-table"
+          :data="paginatedDeviceList"
+          :columns="tableColumns"
+          :loading="loading"
+          :loading-text="$t('deviceManagement.loading')"
+          :show-selection="true"
+          :show-operations="true"
+          :operations-label="$t('device.operation')"
+          :operations-width="130"
+          :total="filteredDeviceList.length"
+          :current-page="currentPage"
+          :page-size="pageSize"
+          :page-size-options="pageSizeOptions"
+          @size-change="handlePageSizeChange"
+          @page-change="goToPage"
+        >
+          <template slot="model" slot-scope="scope">
+            <span class="cell-strong">{{ getFirmwareTypeName(scope.row.model) }}</span>
+          </template>
+          <template slot="macAddress" slot-scope="scope">
+            <span class="mono">
+              <MacAddressMask :macAddress="scope.row.macAddress" />
+            </span>
+          </template>
+          <template slot="deviceStatus" slot-scope="scope">
+            <span v-if="scope.row.deviceStatus === 'online'" class="status-pill status-pill--success">
+              <span class="status-pill-dot" aria-hidden="true"></span>{{ $t('device.online') }}
+            </span>
+            <span v-else class="status-pill status-pill--neutral">
+              <span class="status-pill-dot" aria-hidden="true"></span>{{ $t('device.offline') }}
+            </span>
+          </template>
+          <template slot="alias" slot-scope="scope">
+            <el-input v-show="scope.row.isEdit" v-model="scope.row.alias" size="mini" maxlength="64" show-word-limit
+              :aria-label="$t('device.alias')" @blur="onAliasBlur(scope.row)"
+              @keyup.enter.native="onAliasEnter(scope.row)" />
+            <button v-show="!scope.row.isEdit" type="button" class="alias-view" @click="scope.row.isEdit = true">
+              <span class="alias-text">{{ scope.row.alias || '-' }}</span>
+              <i class="el-icon-edit" aria-hidden="true"></i>
+            </button>
+          </template>
+          <template slot="otaSwitch" slot-scope="scope">
+            <el-switch v-model="scope.row.otaSwitch" @change="handleOtaSwitchChange(scope.row)"></el-switch>
+          </template>
+          <template slot="operations" slot-scope="scope">
+            <div class="row-actions">
+              <el-button v-if="isGenerate(scope.row)" size="mini" type="text" class="row-action"
+                @click="handleGenertor(scope.row)">
+                {{ $t('device.deviceThemeGeneration') }}
+              </el-button>
+              <el-button size="mini" type="text" class="row-action row-action--danger"
+                @click="handleUnbind(scope.row.device_id)">
+                {{ $t('device.unbind') }}
+              </el-button>
+            </div>
+          </template>
+        </CustomTable>
+      </section>
+    </main>
 
     <AddDeviceDialog :visible.sync="addDeviceDialogVisible" :agent-id="currentAgentId"
       @refresh="fetchBindDevices(currentAgentId)" />
@@ -161,17 +183,17 @@ export default {
     },
     tableColumns() {
       const columns = [
-        { prop: 'model', label: this.$t('device.model'), align: 'center' },
-        { prop: 'firmwareVersion', label: this.$t('device.firmwareVersion'), align: 'center' },
-        { prop: 'macAddress', label: this.$t('device.macAddress'), align: 'center' },
-        { prop: 'bindTime', label: this.$t('device.bindTime'), align: 'center' },
-        { prop: 'lastConversation', label: this.$t('device.lastConversation'), align: 'center' },
+        { prop: 'model', label: this.$t('device.model'), align: 'left', minWidth: 110 },
+        { prop: 'firmwareVersion', label: this.$t('device.firmwareVersion'), align: 'left', minWidth: 90 },
+        { prop: 'macAddress', label: this.$t('device.macAddress'), align: 'left', minWidth: 170 },
+        { prop: 'bindTime', label: this.$t('device.bindTime'), align: 'left', minWidth: 140 },
+        { prop: 'lastConversation', label: this.$t('device.lastConversation'), align: 'left', minWidth: 120 },
       ];
       if (this.mqttServiceAvailable) {
-        columns.push({ prop: 'deviceStatus', label: this.$t('device.deviceStatus'), align: 'center' });
+        columns.push({ prop: 'deviceStatus', label: this.$t('device.deviceStatus'), align: 'left', minWidth: 100 });
       }
-      columns.push({ prop: 'alias', label: this.$t('device.alias'), align: 'center' });
-      columns.push({ prop: 'otaSwitch', label: this.$t('device.autoUpdate'), align: 'center' });
+      columns.push({ prop: 'alias', label: this.$t('device.alias'), align: 'left', minWidth: 110 });
+      columns.push({ prop: 'otaSwitch', label: this.$t('device.autoUpdate'), align: 'left', minWidth: 90 });
       return columns;
     },
   },
@@ -448,107 +470,325 @@ export default {
 
 <style lang="scss" scoped>
 .welcome {
-  min-width: 900px;
-  min-height: 506px;
   height: 100vh;
+  min-height: 560px;
   display: flex;
-  position: relative;
   flex-direction: column;
-  background: #eff4ff;
-  background-size: cover;
-  -webkit-background-size: cover;
-  -o-background-size: cover;
-  overflow: hidden;
+  background: var(--x-canvas);
 }
 
-.main-wrapper {
-  height: calc(100vh - 63px - 35px);
-  padding: 20px 22px 0;
-  position: relative;
-  display: flex;
-  flex-direction: column;
+.devices-page {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  max-width: 1280px;
+  padding: 24px 32px 0;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.operation-header {
+.breadcrumb {
+  padding: 0;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 0 16px 0;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: var(--x-text-muted);
+  margin-bottom: -8px;
 }
 
-.page-title {
-  font-weight: 500;
-  font-size: 24px;
-  margin: 0;
-}
+.breadcrumb-link {
+  font-weight: 400;
+  color: var(--x-text-muted);
+  text-decoration: none;
 
-.right-operations {
-  display: flex;
-  gap: 10px;
-  margin-left: auto;
-}
-
-.search-input {
-  width: 240px;
-}
-
-.content-panel {
-  display: flex;
-  overflow: hidden;
-  height: 100%;
-  border-radius: 15px;
-  background: transparent;
-  border: 1px solid #fff;
-}
-
-.content-area {
-  flex: 1;
-  height: 100%;
-  min-width: 600px;
-  overflow: auto;
-  background-color: white;
-  display: flex;
-  flex-direction: column;
-}
-
-.device-card {
-  background: white;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  border: none;
-  box-shadow: none;
-  overflow: hidden;
-
-  ::v-deep .el-card__body {
-    padding: 14px 20px;
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    overflow: hidden;
+  &:hover {
+    color: var(--x-text);
   }
 }
 
-.ctrl_btn {
+.breadcrumb-sep {
+  padding: 0 6px;
+  color: var(--x-border-control);
+}
+
+.breadcrumb-current {
+  color: var(--x-text);
+  font-weight: 500;
+}
+
+.page-header {
   display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.page-heading {
+  min-width: 0;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+  color: var(--x-text);
+}
+
+.page-actions {
+  display: flex;
+  flex-wrap: wrap;
   gap: 8px;
+
+  .el-button + .el-button {
+    margin-left: 0;
+  }
 }
 
-:deep(.el-table .el-button--text) {
-  color: #7079aa;
+.device-card {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--x-surface);
+  border: 1px solid var(--x-border);
+  border-radius: var(--x-radius-card);
+  overflow: hidden;
 }
 
-:deep(.el-table .el-button--text:hover) {
-  color: #5a64b5;
+.table-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--x-border);
 }
 
-:deep(.el-icon-edit) {
-  color: #7079aa;
+.search-input {
+  width: 320px;
+  max-width: 100%;
+
+  ::v-deep .el-input__inner {
+    height: 34px;
+    line-height: 34px;
+    padding-left: 34px;
+  }
+
+  ::v-deep .el-input__prefix {
+    left: 0;
+    display: flex;
+    align-items: center;
+  }
+}
+
+.search-icon-btn {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--x-text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
+
+  &:hover {
+    color: var(--x-text);
+  }
 }
 
-:deep(.el-icon-edit:hover) {
-  color: #5a64b5;
+.toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+
+  .el-button + .el-button {
+    margin-left: 0;
+  }
+}
+
+.btn-danger-outline {
+  color: var(--x-danger-text);
+  border-color: var(--x-border-control);
+  border-color: color-mix(in srgb, var(--x-danger) 30%, transparent);
+
+  &:not(.is-disabled):hover,
+  &:not(.is-disabled):focus {
+    color: var(--x-danger-text);
+    background: var(--x-danger-bg);
+    border-color: color-mix(in srgb, var(--x-danger) 45%, transparent);
+  }
+}
+
+/* Table sits flush inside the card; CustomTable's own frame is removed */
+.device-table {
+  ::v-deep .table-container {
+    border: 0;
+    border-radius: 0;
+  }
+
+  ::v-deep .table-footer {
+    padding: 10px 16px;
+    border-top: 1px solid var(--x-border);
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  ::v-deep .el-table th.el-table__cell > .cell {
+    white-space: nowrap;
+  }
+
+  ::v-deep .el-table th.el-table__cell > .cell,
+  ::v-deep .el-table td.el-table__cell > .cell {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+}
+
+.cell-strong {
+  font-weight: 500;
+  color: var(--x-text);
+}
+
+.mono {
+  font-family: var(--x-font-mono);
+  font-size: 13px;
+  color: var(--x-text-secondary);
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: var(--x-radius-pill);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+
+  &--success {
+    background: var(--x-success-bg);
+    color: var(--x-success-text);
+
+    .status-pill-dot {
+      background: var(--x-success);
+    }
+  }
+
+  &--neutral {
+    background: var(--x-divider);
+    color: var(--x-text-secondary);
+
+    .status-pill-dot {
+      background: var(--x-text-muted);
+    }
+  }
+}
+
+.status-pill-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.alias-view {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 2px 6px;
+  margin-left: -6px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  font: inherit;
+  color: var(--x-text);
+  cursor: pointer;
+
+  .alias-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .el-icon-edit {
+    color: var(--x-text-muted);
+  }
+
+  &:hover,
+  &:focus-visible {
+    background: var(--x-canvas);
+
+    .el-icon-edit {
+      color: var(--x-text);
+    }
+  }
+}
+
+.row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2px;
+
+  .el-button + .el-button {
+    margin-left: 0;
+  }
+}
+
+.row-action {
+  padding: 6px 8px;
+  font-size: 13px;
+  color: var(--x-text-secondary);
+
+  &:hover,
+  &:focus {
+    color: var(--x-text);
+    background: var(--x-canvas);
+  }
+
+  &--danger,
+  &--danger:hover,
+  &--danger:focus {
+    color: var(--x-danger-text);
+  }
+
+  &--danger:hover,
+  &--danger:focus {
+    background: var(--x-danger-bg);
+  }
+}
+
+@media (max-width: 900px) {
+  .welcome {
+    height: auto;
+    min-height: calc(100vh - var(--x-topbar-height));
+  }
+
+  .device-card {
+    flex: none;
+    height: 560px;
+  }
+}
+
+@media (max-width: 768px) {
+  .devices-page {
+    padding: 16px 16px 0;
+    gap: 16px;
+  }
+
+  .search-input {
+    width: 100%;
+  }
 }
 </style>

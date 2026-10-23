@@ -1,130 +1,120 @@
 <template>
-  <div class="welcome" @keyup.enter="register">
-    <el-container style="height: 100%;">
-      <!-- Same header -->
-      <el-header>
-        <div style="display: flex;align-items: center;margin-top: 15px;margin-left: 10px;gap: 10px;">
-          <img loading="lazy" alt="" src="@/assets/xiaozhi-logo.png" style="width: 45px;height: 45px;" />
-          <img loading="lazy" alt="" :src="xiaozhiAiIcon" style="height: 18px;" />
+  <div class="auth">
+    <main class="auth-main">
+      <header class="auth-top">
+        <div class="auth-brand">
+          <span class="auth-brand-tile"><XMark :size="20" /></span>
+          <span class="auth-brand-name">{{ $t('console.productName') }}</span>
         </div>
-      </el-header>
-      <div class="login-person">
-        <img loading="lazy" alt="" src="@/assets/login/register-person.png" style="width: 100%;" />
-      </div>
-      <el-main style="position: relative;">
-        <div class="login-box">
-          <!-- Title section -->
-          <div style="display: flex;align-items: center;gap: 20px;margin-bottom: 39px;padding: 0 30px;">
-            <img loading="lazy" alt="" src="@/assets/login/hi.png" style="width: 34px;height: 34px;" />
-            <div class="login-text">{{ $t('register.title') }}</div>
-            <div class="login-welcome">
-              {{ $t('register.welcome') }}
+      </header>
+
+      <form class="auth-form" novalidate @submit.prevent @keyup.enter="register">
+        <div class="auth-heading">
+          <h1>{{ $t('register.title') }}</h1>
+          <p>{{ $t('register.welcome') }}</p>
+        </div>
+
+        <!-- Username registration -->
+        <div v-if="!enableMobileRegister" class="auth-field">
+          <label class="auth-label" for="register-username">{{ $t('login.username') }}</label>
+          <el-input id="register-username" v-model="form.username" autocomplete="username"
+            :placeholder="$t('register.usernamePlaceholder')" />
+        </div>
+
+        <!-- Mobile registration: mobile, captcha, SMS code -->
+        <template v-if="enableMobileRegister">
+          <div class="auth-field">
+            <label class="auth-label" for="register-mobile">{{ $t('retrievePassword.mobile') }}</label>
+            <div class="auth-inline">
+              <el-select v-model="form.areaCode" class="auth-area-code" filterable>
+                <el-option v-for="item in mobileAreaList" :key="item.key" :label="`${item.name} (${item.key})`"
+                  :value="item.key" />
+              </el-select>
+              <el-input id="register-mobile" v-model="form.mobile" autocomplete="tel-national" :placeholder="$t('register.mobilePlaceholder')" />
             </div>
           </div>
-
-          <div style="padding: 0 30px;">
-            <form @submit.prevent="register">
-              <!-- Username/mobile input -->
-              <div class="input-box" v-if="!enableMobileRegister">
-                <img loading="lazy" alt="" class="input-icon" src="@/assets/login/username.png" />
-                <el-input v-model="form.username" :placeholder="$t('register.usernamePlaceholder')" />
-              </div>
-
-              <!-- Mobile registration section -->
-              <template v-if="enableMobileRegister">
-                <div class="input-box">
-                  <div style="display: flex; align-items: center; width: 100%;">
-                    <el-select v-model="form.areaCode" style="width: 220px; margin-right: 10px;" filterable>
-                      <el-option v-for="item in mobileAreaList" :key="item.key" :label="`${item.name} (${item.key})`"
-                        :value="item.key" />
-                    </el-select>
-                    <el-input v-model="form.mobile" :placeholder="$t('register.mobilePlaceholder')" />
-                  </div>
-                </div>
-
-                <div style="display: flex; align-items: center; margin-top: 20px; width: 100%; gap: 10px;">
-                  <div class="input-box" style="width: calc(100% - 130px); margin-top: 0;">
-                    <img loading="lazy" alt="" class="input-icon" src="@/assets/login/shield.png" />
-                    <el-input v-model="form.captcha" :placeholder="$t('register.captchaPlaceholder')"
-                      style="flex: 1;" />
-                  </div>
-                  <img loading="lazy" v-if="captchaUrl" :src="captchaUrl" alt="Captcha"
-                    style="width: 150px; height: 40px; cursor: pointer;" @click="fetchCaptcha" />
-                </div>
-
-                <!-- SMS verification code -->
-
-                <div style="display: flex; align-items: center; margin-top: 20px; width: 100%; gap: 10px;">
-                  <div class="input-box" style="width: calc(100% - 130px); margin-top: 0;">
-                    <img loading="lazy" alt="" class="input-icon" src="@/assets/login/phone.png" />
-                    <el-input v-model="form.mobileCaptcha" :placeholder="$t('register.mobileCaptchaPlaceholder')"
-                      style="flex: 1;" maxlength="6" />
-                  </div>
-                  <el-button type="primary" class="send-captcha-btn" :disabled="!canSendMobileCaptcha"
-                    @click="sendMobileCaptcha">
-                    <span>
-                      {{ countdown > 0 ? `${countdown}${$t('register.secondsLater')}` : $t('register.sendCaptcha') }}
-                    </span>
-                  </el-button>
-                </div>
-              </template>
-
-              <!-- Password input -->
-              <div class="input-box">
-                <img loading="lazy" alt="" class="input-icon" src="@/assets/login/password.png" />
-                <el-input v-model="form.password" :placeholder="$t('register.passwordPlaceholder')" type="password"
-                  show-password />
-              </div>
-
-              <!-- Confirm password -->
-              <div class="input-box">
-                <img loading="lazy" alt="" class="input-icon" src="@/assets/login/password.png" />
-                <el-input v-model="form.confirmPassword" :placeholder="$t('register.confirmPasswordPlaceholder')"
-                  type="password" show-password />
-              </div>
-
-              <!-- Captcha section (same as login) -->
-              <div v-if="!enableMobileRegister"
-                style="display: flex; align-items: center; margin-top: 20px; width: 100%; gap: 10px;">
-                <div class="input-box" style="width: calc(100% - 130px); margin-top: 0;">
-                  <img loading="lazy" alt="" class="input-icon" src="@/assets/login/shield.png" />
-                  <el-input v-model="form.captcha" :placeholder="$t('register.captchaPlaceholder')" style="flex: 1;" />
-                </div>
-                <img loading="lazy" v-if="captchaUrl" :src="captchaUrl" alt="Captcha"
-                  style="width: 150px; height: 40px; cursor: pointer;" @click="fetchCaptcha" />
-              </div>
-
-              <!-- Footer links -->
-              <div style="font-weight: 400;font-size: 14px;text-align: left;color: #5778ff;margin-top: 20px;">
-                <div style="cursor: pointer;" @click="goToLogin">{{ $t('register.goToLogin') }}</div>
-              </div>
-            </form>
+          <div class="auth-field">
+            <label class="auth-label" for="register-captcha">{{ $t('retrievePassword.captcha') }}</label>
+            <div class="auth-inline">
+              <el-input id="register-captcha" v-model="form.captcha" autocomplete="off" :placeholder="$t('register.captchaPlaceholder')" />
+              <button v-if="captchaUrl" type="button" class="auth-captcha" @click="fetchCaptcha">
+                <img :src="captchaUrl" alt="Captcha" />
+              </button>
+            </div>
           </div>
-
-          <!-- Button text -->
-          <div class="login-btn" @click="register">{{ $t('register.registerButton') }}</div>
-
-          <!-- Same agreement notice -->
-          <div style="font-size: 14px;color: #979db1;">
-            {{ $t('register.agreeTo') }}
-            <div style="display: inline-block;color: #5778FF;cursor: pointer;" @click="openPage('/user-agreement.html')">{{ $t('register.userAgreement') }}</div>
-            {{ $t('login.and') }}
-            <div style="display: inline-block;color: #5778FF;cursor: pointer;" @click="openPage('/privacy-policy.html')">{{ $t('register.privacyPolicy') }}</div>
+          <div class="auth-field">
+            <label class="auth-label" for="register-sms">{{ $t('retrievePassword.mobileCaptcha') }}</label>
+            <div class="auth-inline auth-inline--wrap">
+              <el-input id="register-sms" v-model="form.mobileCaptcha" autocomplete="one-time-code" maxlength="6"
+                :placeholder="$t('register.mobileCaptchaPlaceholder')" />
+              <el-button class="auth-sms-btn" :disabled="!canSendMobileCaptcha" @click="sendMobileCaptcha">
+                {{ countdown > 0 ? `${countdown}${$t('register.secondsLater')}` : $t('register.sendCaptcha') }}
+              </el-button>
+            </div>
           </div>
+        </template>
+
+        <div class="auth-field">
+          <label class="auth-label" for="register-password">{{ $t('login.password') }}</label>
+          <el-input id="register-password" v-model="form.password" autocomplete="new-password"
+            :placeholder="$t('register.passwordPlaceholder')" type="password" show-password />
+          <label class="auth-sr-only" for="register-confirm">{{ $t('register.confirmPasswordPlaceholder') }}</label>
+          <el-input id="register-confirm" v-model="form.confirmPassword" autocomplete="new-password"
+            :placeholder="$t('register.confirmPasswordPlaceholder')" type="password" show-password />
         </div>
-      </el-main>
 
-      <!-- Same footer -->
-      <el-footer>
+        <!-- Captcha (username registration) -->
+        <template v-if="!enableMobileRegister">
+          <div class="auth-field">
+            <label class="auth-label" for="register-captcha">{{ $t('retrievePassword.captcha') }}</label>
+            <div class="auth-inline">
+              <el-input id="register-captcha" v-model="form.captcha" autocomplete="off" :placeholder="$t('register.captchaPlaceholder')" />
+              <button v-if="captchaUrl" type="button" class="auth-captcha" @click="fetchCaptcha">
+                <img :src="captchaUrl" alt="Captcha" />
+              </button>
+            </div>
+          </div>
+        </template>
+
+        <el-button type="primary" class="auth-submit" @click="register">{{ $t('register.registerButton') }}</el-button>
+
+        <p class="auth-alt">
+          <button type="button" class="auth-link" @click="goToLogin">{{ $t('register.goToLogin') }}</button>
+        </p>
+
+        <p class="auth-legal">
+          {{ $t('register.agreeTo') }}
+          <button type="button" class="auth-link" @click="openPage('/user-agreement.html')">{{ $t('register.userAgreement') }}</button>
+          {{ $t('login.and') }}
+          <button type="button" class="auth-link" @click="openPage('/privacy-policy.html')">{{ $t('register.privacyPolicy') }}</button>
+        </p>
+      </form>
+
+      <footer class="auth-footer">
         <version-footer />
-      </el-footer>
-    </el-container>
+      </footer>
+    </main>
+
+    <aside class="auth-night" aria-hidden="true">
+      <div class="auth-night-hero">
+        <XMark inverse :size="200" />
+        <span class="auth-night-name">{{ $t('console.productName') }}</span>
+        <p class="auth-night-headline">{{ $t('console.authHeadline') }}</p>
+        <p class="auth-night-copy">{{ $t('console.authDescription') }}</p>
+      </div>
+      <div class="auth-night-chips">
+        <span>{{ $t('modelConfig.asr') }}</span>
+        <span>{{ $t('home.languageModel') }}</span>
+        <span>{{ $t('modelConfig.tts') }}</span>
+      </div>
+    </aside>
   </div>
 </template>
 
 <script>
 import Api from '@/apis/api';
 import VersionFooter from '@/components/VersionFooter.vue';
+import XMark from '@/components/XMark.vue';
 import { getUUID, goToPage, showDanger, showSuccess, sm2Encrypt, validateMobile } from '@/utils';
 import { mapState } from 'vuex';
 import i18n from '@/i18n';
@@ -134,7 +124,8 @@ import i18n from '@/i18n';
 export default {
   name: 'register',
   components: {
-    VersionFooter
+    VersionFooter,
+    XMark
   },
   computed: {
     ...mapState({
@@ -146,24 +137,6 @@ export default {
     // Get the current language
     currentLanguage() {
       return i18n.locale || "zh_CN";
-    },
-    // Get the xiaozhi-ai icon for the current language
-    xiaozhiAiIcon() {
-      const currentLang = this.currentLanguage;
-      switch (currentLang) {
-        case "zh_CN":
-          return require("@/assets/xiaozhi-ai.png");
-        case "zh_TW":
-          return require("@/assets/xiaozhi-ai_zh_TW.png");
-        case "en":
-          return require("@/assets/xiaozhi-ai_en.png");
-        case "de":
-          return require("@/assets/xiaozhi-ai_de.png");
-        case "vi":
-          return require("@/assets/xiaozhi-ai_vi.png");
-        default:
-          return require("@/assets/xiaozhi-ai.png");
-      }
     },
     canSendMobileCaptcha() {
       return this.countdown === 0 && validateMobile(this.form.mobile, this.form.areaCode);
@@ -356,21 +329,4 @@ export default {
 
 <style lang="scss" scoped>
 @import './auth.scss';
-
-.send-captcha-btn {
-  margin-right: -5px;
-  min-width: 100px;
-  height: 40px;
-  line-height: 40px;
-  border-radius: 4px;
-  font-size: 14px;
-  background: rgb(87, 120, 255);
-  border: none;
-  padding: 0px;
-
-  &:disabled {
-    background: #c0c4cc;
-    cursor: not-allowed;
-  }
-}
 </style>

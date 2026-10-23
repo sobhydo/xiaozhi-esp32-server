@@ -7,7 +7,8 @@
     @close="closeDialog"
     @confirm="submitForm"
   >
-    <el-form :model="deviceForm" :rules="rules" ref="deviceForm" label-width="auto">
+    <el-form :model="deviceForm" :rules="rules" ref="deviceForm" label-position="top"
+      class="manual-add-form">
       <el-form-item :label="$t('manualAddDeviceDialog.deviceType')" prop="board">
         <el-select v-model="deviceForm.board" :placeholder="$t('manualAddDeviceDialog.deviceTypePlaceholder')" style="width: 100%" filterable>
           <el-option
@@ -22,7 +23,7 @@
         <el-input v-model="deviceForm.appVersion" :placeholder="$t('manualAddDeviceDialog.firmwareVersionPlaceholder')"></el-input>
       </el-form-item>
       <el-form-item :label="$t('manualAddDeviceDialog.macAddress')" prop="macAddress">
-        <el-input v-model="deviceForm.macAddress" :placeholder="$t('manualAddDeviceDialog.macAddressPlaceholder')"></el-input>
+        <el-input v-model="deviceForm.macAddress" class="mac-input" :placeholder="$t('manualAddDeviceDialog.macAddressPlaceholder')"></el-input>
       </el-form-item>
     </el-form>
   </CustomDialog>
@@ -114,3 +115,40 @@ export default {
   }
 };
 </script>
+
+<style lang="scss" scoped>
+::v-deep .el-dialog {
+  max-width: calc(100vw - 32px);
+}
+
+.manual-add-form {
+  text-align: left;
+
+  ::v-deep .el-form-item {
+    margin-bottom: 18px;
+
+    &:last-child {
+      margin-bottom: 4px;
+    }
+  }
+
+  ::v-deep .el-form-item__label {
+    display: block;
+    float: none;
+    text-align: left;
+    padding: 0 0 6px;
+    line-height: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--x-text);
+  }
+
+  ::v-deep .el-input__inner {
+    height: 40px;
+  }
+}
+
+.mac-input ::v-deep .el-input__inner {
+  font-family: var(--x-font-mono);
+}
+</style>

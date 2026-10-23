@@ -6,8 +6,8 @@
       <div class="table-container" ref="tableContainer" @scroll="handleScroll">
         <el-table v-loading="loading" :data="filteredTtsModels" style="width: 100%;" class="data-table"
           header-row-class-name="table-header" :fit="true" :element-loading-text="$t('voicePrint.loading')"
-          element-loading-spinner="el-icon-loading" element-loading-background="rgba(0, 0, 0, 0.8)">
-          <el-table-column :label="$t('ttsModel.select')" width="50" align="center">
+          element-loading-spinner="el-icon-loading" element-loading-background="rgba(255, 255, 255, 0.7)">
+          <el-table-column :label="$t('ttsModel.select')" width="72" align="center">
             <template slot-scope="scope">
               <el-checkbox v-model="scope.row.selected"></el-checkbox>
             </template>
@@ -70,10 +70,10 @@
                   </el-button>
               </template>
               <template v-else>
-                <el-button type="success" size="mini" @click="cancelEdit(scope.row)" class="save-Tts">
+                <el-button size="mini" @click="cancelEdit(scope.row)" class="save-Tts">
                   {{ $t('button.cancel') }}
                 </el-button>
-                <el-button type="success" size="mini" @click="saveEdit(scope.row)" class="save-Tts">
+                <el-button type="primary" size="mini" @click="saveEdit(scope.row)" class="save-Tts">
                   {{ $t('ttsModel.save') }}
                 </el-button>
               </template>
@@ -534,12 +534,14 @@ export default {
 <style lang="scss" scoped>
 /* Table styles */
 ::v-deep .data-table .el-table__header th {
-  color: black;
-  padding: 6px 0 !important;
+  padding: 8px 0 !important;
+  border-bottom: 1px solid var(--x-divider);
 }
 
 ::v-deep .data-table .el-table__row td {
-  padding: 8px 0 12px !important;
+  padding: 10px 0 !important;
+  border-bottom: 1px solid var(--x-divider) !important;
+  color: var(--x-text);
 }
 
 ::v-deep .data-table {
@@ -550,35 +552,18 @@ export default {
   display: none !important;
 }
 
-::v-deep .data-table .el-table__header-wrapper {
-  border-bottom: 2px solid #f1f2fb !important;
-}
-
-::v-deep .data-table .el-table__body-wrapper .el-table__body td {
-  border: none !important;
+::v-deep .data-table .el-checkbox__inner {
+  border-color: var(--x-text-disabled);
+  border-radius: 4px;
 }
 
 /* Remark text */
 ::v-deep .remark-input .el-textarea__inner {
-  border-radius: 4px;
-  border: 1px solid #e6e6e6;
   padding: 8px 12px;
   resize: none;
   max-height: 40px !important;
   line-height: 1.5;
-  background-color: transparent !important;
 }
-
-::v-deep .remark-input .el-textarea__inner:focus {
-  border-color: #409EFF !important;
-  outline: none;
-}
-
-::v-deep .remark-input .el-textarea__inner::placeholder {
-  color: #c0c4cc !important;
-  opacity: 1;
-}
-
 
 /* Scroll container */
 .scroll-wrapper {
@@ -591,7 +576,7 @@ export default {
   flex: 1;
   overflow: auto;
   scrollbar-width: none;
-  padding-right: 15px;
+  padding-right: 12px;
   width: calc(100% - 16px);
 }
 
@@ -601,13 +586,13 @@ export default {
 
 /* Custom scrollbar */
 .custom-scrollbar {
-  width: 8px;
-  background: #f1f1f1;
-  border-radius: 4px;
+  width: 6px;
+  background: var(--x-divider);
+  border-radius: var(--x-radius-pill);
   position: relative;
-  margin-left: 8px;
+  margin-left: 6px;
   height: 100%;
-  top: 55px;
+  top: 48px;
 }
 
 .custom-scrollbar-track {
@@ -619,27 +604,18 @@ export default {
 .custom-scrollbar-thumb {
   position: absolute;
   width: 100%;
-  background: #9dade7;
-  border-radius: 4px;
+  background: var(--x-border-control);
+  border-radius: var(--x-radius-pill);
   cursor: grab;
   transition: background 0.2s;
 }
 
 .custom-scrollbar-thumb:hover {
-  background: #6b84d9;
+  background: var(--x-text-disabled);
 }
 
 .custom-scrollbar-thumb:active {
   cursor: grabbing;
-}
-
-.save-Tts {
-  background: #796dea;
-  border: None;
-}
-
-.save-Tts:hover {
-  background: #8b80f0;
 }
 
 .custom-audio-container audio {
@@ -653,22 +629,23 @@ export default {
 }
 
 .edit-btn,
-.delete-btn,
-.save-btn {
-  margin: 0 8px;
-  color: #7079aa !important;
-  transition: all 0.3s;
+.delete-btn {
+  height: 28px;
+  padding: 0 10px;
+  color: var(--x-text-secondary) !important;
+  font-size: 13px;
 }
 
 .edit-btn:hover,
-.delete-btn:hover,
-.save-btn:hover {
-  color: #5f70f3 !important;
-  transform: scale(1.05);
+.edit-btn:focus {
+  background: var(--x-canvas);
+  color: var(--x-text) !important;
 }
 
-.save-btn {
-  color: #5cca8e !important;
+.delete-btn:hover,
+.delete-btn:focus {
+  background: var(--x-danger-bg);
+  color: var(--x-danger-text) !important;
 }
 
 /* Adaptive table cells */
@@ -683,8 +660,16 @@ export default {
 
 /* Button group positioning */
 .action-buttons {
-  padding-top: 10px;
-  text-align: left;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 14px;
+  margin-top: 4px;
+  border-top: 1px solid var(--x-divider);
+
+  ::v-deep .el-button + .el-button {
+    margin-left: 0;
+  }
 }
 
 /* Adaptive inputs */
@@ -697,6 +682,16 @@ export default {
 /* Special handling for the audio input */
 .audio-input ::v-deep .el-input__inner {
   min-width: 200px;
+}
+
+@media (max-width: 768px) {
+  ::v-deep .el-dialog {
+    width: calc(100vw - 32px) !important;
+  }
+
+  .data-table {
+    min-width: 720px;
+  }
 }
 
 /* Flex layout for action buttons */

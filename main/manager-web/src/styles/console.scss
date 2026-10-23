@@ -44,6 +44,20 @@ body.x-has-sidenav #app {
   }
 }
 
+// Page headers are left-aligned (App.vue still centers #app text for legacy pages)
+.page-header,
+.page-heading {
+  text-align: left;
+}
+
+// Muted line under a page title
+.page-description {
+  margin: 4px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--x-text-muted);
+}
+
 // Scrollbars
 * {
   scrollbar-color: var(--x-border-control) transparent;

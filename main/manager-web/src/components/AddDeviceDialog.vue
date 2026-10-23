@@ -11,11 +11,11 @@
     :cancelText="$t('device.cancelButton')"
   >
     <div class="add-device-body">
-      <div class="add-device-label">
-        <span class="required">*</span>
-        {{ $t('device.verificationCode') }}
-      </div>
+      <label class="add-device-label" for="add-device-code">
+        {{ $t('device.verificationCode') }}<span class="required" aria-hidden="true">*</span>
+      </label>
       <el-input
+        id="add-device-code"
         :placeholder="$t('device.verificationCodePlaceholder')"
         v-model="deviceCode"
         class="add-device-input"
@@ -93,27 +93,30 @@ export default {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+::v-deep .el-dialog {
+  max-width: calc(100vw - 32px);
+}
+
 .add-device-body {
-  padding: 6px 4px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .add-device-label {
   font-size: 14px;
-  color: #475569;
+  font-weight: 500;
+  color: var(--x-text);
   text-align: left;
-  margin-bottom: 12px;
+
+  .required {
+    color: var(--x-danger);
+    margin-left: 2px;
+  }
 }
 
-.add-device-label .required {
-  color: #f56c6c;
-  margin-right: 2px;
-}
-
-.add-device-input ::v-deep(.el-input__inner) {
+.add-device-input ::v-deep .el-input__inner {
   height: 40px;
-  border-radius: 8px;
-  border-color: #e2e8f0;
-  font-size: 14px;
 }
 </style>

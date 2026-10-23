@@ -11,11 +11,11 @@
     @open="handleOpen"
   >
     <div class="add-agent-body">
-      <div class="add-agent-label">
-        <span class="required">*</span>
-        {{ $t('addAgentDialog.agentName') }}
-      </div>
+      <label class="add-agent-label" for="add-agent-name">
+        {{ $t('addAgentDialog.agentName') }}<span class="required" aria-hidden="true">*</span>
+      </label>
       <el-input
+        id="add-agent-name"
         maxLength="64"
         ref="inputRef"
         :placeholder="$t('addAgentDialog.placeholder')"
@@ -76,27 +76,30 @@ export default {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+::v-deep .el-dialog {
+  max-width: calc(100vw - 32px);
+}
+
 .add-agent-body {
-  padding: 6px 4px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .add-agent-label {
   font-size: 14px;
-  color: #475569;
+  font-weight: 500;
+  color: var(--x-text);
   text-align: left;
-  margin-bottom: 12px;
+
+  .required {
+    color: var(--x-danger);
+    margin-left: 2px;
+  }
 }
 
-.add-agent-label .required {
-  color: #f56c6c;
-  margin-right: 2px;
-}
-
-.add-agent-input ::v-deep(.el-input__inner) {
+.add-agent-input ::v-deep .el-input__inner {
   height: 40px;
-  border-radius: 8px;
-  border-color: #e2e8f0;
-  font-size: 14px;
 }
 </style>

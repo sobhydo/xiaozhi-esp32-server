@@ -1,161 +1,146 @@
 <template>
-  <div class="welcome">
-    <el-container style="height: 100%">
-      <el-header>
-        <div style="
-            display: flex;
-            align-items: center;
-            margin-top: 11px;
-            margin-left: 11px;
-            gap: 10px;
-          ">
-          <img loading="lazy" alt="" src="@/assets/xiaozhi-logo.png" style="width: 42px; height: 42px" />
-          <img loading="lazy" alt="" :src="xiaozhiAiIcon" style="height: 20px" />
+  <div class="auth">
+    <main class="auth-main">
+      <header class="auth-top">
+        <div class="auth-brand">
+          <span class="auth-brand-tile"><XMark :size="20" /></span>
+          <span class="auth-brand-name">{{ $t("console.productName") }}</span>
         </div>
-      </el-header>
-      <div class="login-person">
-        <img loading="lazy" alt="" src="@/assets/login/login-person.png" style="width: 100%" />
-      </div>
-      <el-main style="position: relative">
-        <div class="login-box" @keyup.enter="login">
-          <div style="
-              display: flex;
-              align-items: center;
-              gap: 20px;
-              margin-bottom: 39px;
-              padding: 0 30px;
-            ">
-            <img loading="lazy" alt="" src="@/assets/login/hi.png" style="width: 34px; height: 34px" />
-            <div class="login-text">{{ $t("login.title") }}</div>
 
-            <div class="login-welcome">
-              {{ $t("login.welcome") }}
-            </div>
+        <!-- Language switch dropdown -->
+        <el-dropdown trigger="click" class="auth-lang" @visible-change="handleLanguageDropdownVisibleChange">
+          <button type="button" class="auth-lang-btn" :aria-label="$t('console.language')">
+            <span>{{ currentLanguageText }}</span>
+            <i class="el-icon-arrow-down" :class="{ 'rotate-down': languageDropdownVisible }" aria-hidden="true"></i>
+          </button>
+          <el-dropdown-menu slot="dropdown">
+            <el-dropdown-item @click.native="changeLanguage('zh_CN')">
+              {{ $t("language.zhCN") }}
+            </el-dropdown-item>
+            <el-dropdown-item @click.native="changeLanguage('zh_TW')">
+              {{ $t("language.zhTW") }}
+            </el-dropdown-item>
+            <el-dropdown-item @click.native="changeLanguage('en')">
+              {{ $t("language.en") }}
+            </el-dropdown-item>
+            <el-dropdown-item @click.native="changeLanguage('de')">
+              {{ $t("language.de") }}
+            </el-dropdown-item>
+            <el-dropdown-item @click.native="changeLanguage('vi')">
+              {{ $t("language.vi") }}
+            </el-dropdown-item>
+            <el-dropdown-item @click.native="changeLanguage('pt_BR')">
+              {{ $t("language.ptBR") }}
+            </el-dropdown-item>
+          </el-dropdown-menu>
+        </el-dropdown>
+      </header>
 
-            <!-- Language switch dropdown -->
-            <el-dropdown trigger="click" class="title-language-dropdown"
-              @visible-change="handleLanguageDropdownVisibleChange">
-              <span class="el-dropdown-link">
-                <span class="current-language-text">{{ currentLanguageText }}</span>
-                <i class="el-icon-arrow-down el-icon--right" :class="{ 'rotate-down': languageDropdownVisible }"></i>
-              </span>
-              <el-dropdown-menu slot="dropdown">
-                <el-dropdown-item @click.native="changeLanguage('zh_CN')">
-                  {{ $t("language.zhCN") }}
-                </el-dropdown-item>
-                <el-dropdown-item @click.native="changeLanguage('zh_TW')">
-                  {{ $t("language.zhTW") }}
-                </el-dropdown-item>
-                <el-dropdown-item @click.native="changeLanguage('en')">
-                  {{ $t("language.en") }}
-                </el-dropdown-item>
-                <el-dropdown-item @click.native="changeLanguage('de')">
-                  {{ $t("language.de") }}
-                </el-dropdown-item>
-                <el-dropdown-item @click.native="changeLanguage('vi')">
-                  {{ $t("language.vi") }}
-                </el-dropdown-item>
-                <el-dropdown-item @click.native="changeLanguage('pt_BR')">
-                  {{ $t("language.ptBR") }}
-                </el-dropdown-item>
-              </el-dropdown-menu>
-            </el-dropdown>
-          </div>
-          <div style="padding: 0 30px">
-            <!-- Username login -->
-            <template v-if="!isMobileLogin">
-              <div class="input-box">
-                <img loading="lazy" alt="" class="input-icon" src="@/assets/login/username.png" />
-                <el-input v-model="form.username" :placeholder="$t('login.usernamePlaceholder')" />
-              </div>
-            </template>
+      <form class="auth-form" novalidate @submit.prevent @keyup.enter="login">
+        <div class="auth-heading">
+          <h1>{{ $t("login.title") }}</h1>
+          <p>{{ $t("login.subtitle") }}</p>
+        </div>
 
-            <!-- Mobile number login -->
-            <template v-else>
-              <div class="input-box">
-                <div style="display: flex; align-items: center; width: 100%">
-                  <el-select v-model="form.areaCode" style="width: 220px; margin-right: 10px" filterable>
-                    <el-option v-for="item in mobileAreaList" :key="item.key" :label="`${item.name} (${item.key})`"
-                      :value="item.key" />
-                  </el-select>
-                  <el-input v-model="form.mobile" :placeholder="$t('login.mobilePlaceholder')" />
-                </div>
-              </div>
-            </template>
+        <!-- Login method switch -->
+        <div v-if="enableMobileRegister" class="auth-switch" role="group">
+          <button type="button" class="auth-switch-btn" :class="{ 'is-active': !isMobileLogin }"
+            :aria-pressed="String(!isMobileLogin)" @click="switchLoginType('username')">
+            <i class="el-icon-user" aria-hidden="true"></i>
+            {{ $t("login.usernameLogin") }}
+          </button>
+          <button type="button" class="auth-switch-btn" :class="{ 'is-active': isMobileLogin }"
+            :aria-pressed="String(isMobileLogin)" @click="switchLoginType('mobile')">
+            <i class="el-icon-mobile" aria-hidden="true"></i>
+            {{ $t("login.mobileLogin") }}
+          </button>
+        </div>
 
-            <div class="input-box">
-              <img loading="lazy" alt="" class="input-icon" src="@/assets/login/password.png" />
-              <el-input v-model="form.password" :placeholder="$t('login.passwordPlaceholder')" type="password"
-                show-password />
-            </div>
-            <div style="
-                display: flex;
-                align-items: center;
-                margin-top: 20px;
-                width: 100%;
-                gap: 10px;
-              ">
-              <div class="input-box" style="width: calc(100% - 130px); margin-top: 0">
-                <img loading="lazy" alt="" class="input-icon" src="@/assets/login/shield.png" />
-                <el-input v-model="form.captcha" :placeholder="$t('login.captchaPlaceholder')" style="flex: 1" />
-              </div>
-              <img loading="lazy" v-if="captchaUrl" :src="captchaUrl" alt="Captcha"
-                style="width: 150px; height: 40px; cursor: pointer" @click="fetchCaptcha" />
-            </div>
-            <div style="
-                font-weight: 400;
-                font-size: 14px;
-                text-align: left;
-                color: #5778ff;
-                display: flex;
-                justify-content: space-between;
-                margin-top: 20px;
-              ">
-              <div v-if="allowUserRegister" style="cursor: pointer" @click="goToRegister">
-                {{ $t("login.register") }}
-              </div>
-              <div style="cursor: pointer" @click="goToForgetPassword" v-if="enableMobileRegister">
-                {{ $t("login.forgetPassword") }}
-              </div>
-            </div>
-          </div>
-          <div class="login-btn" @click="login">{{ $t("login.login") }}</div>
+        <!-- Username login -->
+        <div v-if="!isMobileLogin" class="auth-field">
+          <label class="auth-label" for="login-username">{{ $t("login.username") }}</label>
+          <el-input id="login-username" v-model="form.username" autocomplete="username"
+            :placeholder="$t('login.usernamePlaceholder')" />
+        </div>
 
-          <!-- Login method switch buttons -->
-          <div class="login-type-container" v-if="enableMobileRegister">
-            <div style="display: flex; gap: 10px">
-              <el-tooltip :content="$t('login.mobileLogin')" placement="bottom">
-                <el-button :type="isMobileLogin ? 'primary' : 'default'" icon="el-icon-mobile" circle
-                  @click="switchLoginType('mobile')"></el-button>
-              </el-tooltip>
-              <el-tooltip :content="$t('login.usernameLogin')" placement="bottom">
-                <el-button :type="!isMobileLogin ? 'primary' : 'default'" icon="el-icon-user" circle
-                  @click="switchLoginType('username')"></el-button>
-              </el-tooltip>
-            </div>
-          </div>
-          <div style="font-size: 14px; color: #979db1">
-            {{ $t("login.agreeTo") }}
-            <div style="display: inline-block; color: #5778ff; cursor: pointer" @click="openPage('/user-agreement.html')">
-              {{ $t("login.userAgreement") }}
-            </div>
-            {{ $t("login.and") }}
-            <div style="display: inline-block; color: #5778ff; cursor: pointer" @click="openPage('/privacy-policy.html')">
-              {{ $t("login.privacyPolicy") }}
-            </div>
+        <!-- Mobile number login -->
+        <div v-else class="auth-field">
+          <label class="auth-label" for="login-mobile">{{ $t("retrievePassword.mobile") }}</label>
+          <div class="auth-inline">
+            <el-select v-model="form.areaCode" class="auth-area-code" filterable>
+              <el-option v-for="item in mobileAreaList" :key="item.key" :label="`${item.name} (${item.key})`"
+                :value="item.key" />
+            </el-select>
+            <el-input id="login-mobile" v-model="form.mobile" autocomplete="tel-national"
+              :placeholder="$t('login.mobilePlaceholder')" />
           </div>
         </div>
-      </el-main>
-      <el-footer>
+
+        <div class="auth-field">
+          <div class="auth-label-row">
+            <label class="auth-label" for="login-password">{{ $t("login.password") }}</label>
+            <button v-if="enableMobileRegister" type="button" class="auth-link" @click="goToForgetPassword">
+              {{ $t("login.forgetPassword") }}
+            </button>
+          </div>
+          <el-input id="login-password" v-model="form.password" autocomplete="current-password"
+            :placeholder="$t('login.passwordPlaceholder')" type="password" show-password />
+        </div>
+
+        <div class="auth-field">
+          <label class="auth-label" for="login-captcha">{{ $t("retrievePassword.captcha") }}</label>
+          <div class="auth-inline">
+            <el-input id="login-captcha" v-model="form.captcha" autocomplete="off"
+              :placeholder="$t('login.captchaPlaceholder')" />
+            <button v-if="captchaUrl" type="button" class="auth-captcha" @click="fetchCaptcha">
+              <img :src="captchaUrl" alt="Captcha" />
+            </button>
+          </div>
+        </div>
+
+        <el-button type="primary" class="auth-submit" @click="login">{{ $t("login.login") }}</el-button>
+
+        <p v-if="allowUserRegister" class="auth-alt">
+          <button type="button" class="auth-link" @click="goToRegister">{{ $t("login.register") }}</button>
+        </p>
+
+        <p class="auth-legal">
+          {{ $t("login.agreeTo") }}
+          <button type="button" class="auth-link" @click="openPage('/user-agreement.html')">
+            {{ $t("login.userAgreement") }}
+          </button>
+          {{ $t("login.and") }}
+          <button type="button" class="auth-link" @click="openPage('/privacy-policy.html')">
+            {{ $t("login.privacyPolicy") }}
+          </button>
+        </p>
+      </form>
+
+      <footer class="auth-footer">
         <version-footer />
-      </el-footer>
-    </el-container>
+      </footer>
+    </main>
+
+    <aside class="auth-night" aria-hidden="true">
+      <div class="auth-night-hero">
+        <XMark inverse :size="200" />
+        <span class="auth-night-name">{{ $t("console.productName") }}</span>
+        <p class="auth-night-headline">{{ $t("console.authHeadline") }}</p>
+        <p class="auth-night-copy">{{ $t("console.authDescription") }}</p>
+      </div>
+      <div class="auth-night-chips">
+        <span>{{ $t("modelConfig.asr") }}</span>
+        <span>{{ $t("home.languageModel") }}</span>
+        <span>{{ $t("modelConfig.tts") }}</span>
+      </div>
+    </aside>
   </div>
 </template>
 
 <script>
 import Api from "@/apis/api";
 import VersionFooter from "@/components/VersionFooter.vue";
+import XMark from "@/components/XMark.vue";
 import i18n, { changeLanguage } from "@/i18n";
 import { getUUID, goToPage, showDanger, showSuccess, sm2Encrypt, validateMobile } from "@/utils";
 import { mapState } from "vuex";
@@ -165,6 +150,7 @@ export default {
   name: "login",
   components: {
     VersionFooter,
+    XMark,
   },
   computed: {
     ...mapState({
@@ -195,24 +181,6 @@ export default {
           return this.$t("language.ptBR");
         default:
           return this.$t("language.zhCN");
-      }
-    },
-    // Get the xiaozhi-ai icon for the current language
-    xiaozhiAiIcon() {
-      const currentLang = this.currentLanguage;
-      switch (currentLang) {
-        case "zh_CN":
-          return require("@/assets/xiaozhi-ai.png");
-        case "zh_TW":
-          return require("@/assets/xiaozhi-ai_zh_TW.png");
-        case "en":
-          return require("@/assets/xiaozhi-ai_en.png");
-        case "de":
-          return require("@/assets/xiaozhi-ai_de.png");
-        case "vi":
-          return require("@/assets/xiaozhi-ai_vi.png");
-        default:
-          return require("@/assets/xiaozhi-ai.png");
       }
     },
   },
@@ -395,49 +363,83 @@ export default {
 <style lang="scss" scoped>
 @import "./auth.scss";
 
-.login-type-container {
-  margin: 10px 20px;
-  display: flex;
-  justify-content: center;
-}
+.auth-lang-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 10px 0 12px;
+  border: 1px solid var(--x-border);
+  border-radius: var(--x-radius-control);
+  background: var(--x-surface);
+  font: inherit;
+  font-size: 13px;
+  color: var(--x-text-secondary);
+  cursor: pointer;
 
-.title-language-dropdown {
-  margin-left: auto;
-}
+  &:hover {
+    border-color: var(--x-border-control);
+    color: var(--x-text);
+  }
 
-.current-language-text {
-  margin-left: 4px;
-  margin-right: 4px;
-  font-size: 12px;
-  color: #3d4566;
-}
+  &:focus-visible {
+    outline: none;
+    border-color: var(--x-ink);
+    box-shadow: 0 0 0 3px var(--x-focus-ring);
+  }
 
-.language-dropdown {
-  margin-left: auto;
+  i {
+    font-size: 12px;
+    color: var(--x-text-muted);
+    transition: transform 0.3s ease;
+  }
 }
 
 .rotate-down {
   transform: rotate(180deg);
-  transition: transform 0.3s ease;
 }
 
-.el-icon-arrow-down {
-  transition: transform 0.3s ease;
+// Username / mobile segmented switch
+.auth-switch {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--x-radius-pill);
+  background: var(--x-canvas);
 }
 
-:deep(.el-button--primary) {
-  background-color: #5778ff;
-  border-color: #5778ff;
+.auth-switch-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--x-radius-pill);
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--x-text-muted);
+  cursor: pointer;
+  white-space: nowrap;
 
-  &:hover,
-  &:focus {
-    background-color: #4a6ae8;
-    border-color: #4a6ae8;
+  &:hover {
+    color: var(--x-text);
   }
 
-  &:active {
-    background-color: #3d5cd6;
-    border-color: #3d5cd6;
+  &.is-active {
+    background: var(--x-surface);
+    color: var(--x-text);
+    box-shadow: 0 0 0 1px var(--x-border);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--x-focus-ring);
   }
 }
 </style>

@@ -1695,4 +1695,11 @@ export default {
   'console.accountMenu': 'Kontomenü',
   'console.openMenu': 'Menü öffnen',
   'console.closeMenu': 'Menü schließen',
+  'login.subtitle': 'Verwalten Sie Ihre Agenten, Geräte und Modelle.',
+  'console.authHeadline': 'Eine Konsole für jeden Sprachassistenten in Ihrem Netzwerk.',
+  'console.authDescription': 'Agenten konfigurieren, ESP32-Geräte koppeln und die Modelle hinter jedem Gespräch wählen.',
+  'console.agentsDescription': 'Jeder Agent kombiniert Rolle, Modelle und Stimme. Geräte werden an einen Agenten gebunden.',
+  'console.devicesDescription': 'An diesen Agenten gebundene Geräte. Starten Sie ein Gerät nach Konfigurationsänderungen neu.',
+  'console.modelsDescription': 'Konfigurierte Anbieter für jede Stufe der Sprachverarbeitung.',
+  'console.bindWithCode': 'Mit Code koppeln',
 }

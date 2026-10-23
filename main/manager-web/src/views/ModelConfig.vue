@@ -2,64 +2,57 @@
   <div class="welcome">
     <HeaderBar />
 
-    <div class="operation-bar">
-      <h2 class="page-title">{{ $t("modelConfig." + activeTab) }}</h2>
-      <div class="action-group">
-        <div class="search-group">
-          <el-input
-            :placeholder="$t('modelConfig.searchPlaceholder')"
-            v-model="search"
-            class="search-input"
-            clearable
-            @keyup.enter.native="handleSearch"
-            style="width: 240px"
-          />
-          <el-button class="btn-search" @click="handleSearch">
-            {{ $t("modelConfig.search") }}
+    <main class="page">
+      <header class="page-header">
+        <div class="page-heading">
+          <h1 class="page-title">{{ $t("header.modelConfig") }}</h1>
+          <p class="page-description">{{ $t("console.modelsDescription") }}</p>
+        </div>
+        <div class="page-actions">
+          <el-button type="primary" icon="el-icon-plus" @click="addModel">
+            {{ $t("modelConfigDialog.addModel") }}
           </el-button>
         </div>
-      </div>
-    </div>
+      </header>
 
-    <!-- Main content -->
-    <div class="main-wrapper">
-      <div class="content-panel">
-        <!-- Left navigation -->
-        <el-menu
-          :default-active="activeTab"
-          class="nav-panel"
-          @select="handleMenuSelect"
-          style="background-size: cover; background-position: center"
-        >
-          <el-menu-item index="vad">
-            <span class="menu-text">{{ $t("modelConfig.vad") }}</span>
-          </el-menu-item>
-          <el-menu-item index="asr">
-            <span class="menu-text">{{ $t("modelConfig.asr") }}</span>
-          </el-menu-item>
-          <el-menu-item index="llm">
-            <span class="menu-text">{{ $t("modelConfig.llm") }}</span>
-          </el-menu-item>
-          <el-menu-item index="vllm">
-            <span class="menu-text">{{ $t("modelConfig.vllm") }}</span>
-          </el-menu-item>
-          <el-menu-item index="intent">
-            <span class="menu-text">{{ $t("modelConfig.intent") }}</span>
-          </el-menu-item>
-          <el-menu-item index="tts">
-            <span class="menu-text">{{ $t("modelConfig.tts") }}</span>
-          </el-menu-item>
-          <el-menu-item index="memory">
-            <span class="menu-text">{{ $t("modelConfig.memory") }}</span>
-          </el-menu-item>
-          <el-menu-item index="rag">
-            <span class="menu-text">{{ $t("modelConfig.rag") }}</span>
-          </el-menu-item>
-        </el-menu>
+      <div class="model-layout">
+        <!-- Model type list -->
+        <div class="type-list" role="tablist" :aria-label="$t('header.modelConfig')">
+          <button
+            v-for="type in modelTypes"
+            :key="type"
+            type="button"
+            role="tab"
+            class="type-tab"
+            :class="{ 'is-active': activeTab === type }"
+            :aria-selected="activeTab === type ? 'true' : 'false'"
+            @click="handleMenuSelect(type)"
+          >
+            {{ $t("modelConfig." + type) }}
+          </button>
+        </div>
 
-        <!-- Right content -->
-        <div class="content-area">
-          <el-card class="model-card" shadow="never">
+        <!-- Model table -->
+        <section class="model-card">
+          <div class="card-header">
+            <h2 class="card-title">{{ $t("modelConfig." + activeTab) }}</h2>
+            <div class="search-group">
+              <el-input
+                :placeholder="$t('modelConfig.searchPlaceholder')"
+                :aria-label="$t('modelConfig.searchPlaceholder')"
+                v-model="search"
+                class="search-input"
+                prefix-icon="el-icon-search"
+                clearable
+                @keyup.enter.native="handleSearch"
+              />
+              <el-button class="btn-search" @click="handleSearch">
+                {{ $t("modelConfig.search") }}
+              </el-button>
+            </div>
+          </div>
+
+          <div class="table-scroll">
             <el-table
               ref="modelTable"
               style="width: 100%"
@@ -67,156 +60,141 @@
               :element-loading-text="$t('modelConfig.loading')"
               element-loading-spinner="el-icon-loading"
               element-loading-background="rgba(255, 255, 255, 0.7)"
-              :header-cell-style="{ background: 'transparent' }"
               :data="modelList"
-              class="transparent-table"
-              header-row-class-name="table-header"
+              class="model-table"
               :header-cell-class-name="headerCellClassName"
               @selection-change="handleSelectionChange"
             >
               <el-table-column
                 type="selection"
-                width="55"
+                width="64"
                 align="center"
                 :cell-class-name="selectionCellClassName"
               ></el-table-column>
-              <el-table-column
-                :label="$t('modelConfig.modelId')"
-                prop="id"
-                align="center"
-              ></el-table-column>
-              <el-table-column
-                :label="$t('modelConfig.modelName')"
-                prop="modelName"
-                align="center"
-              ></el-table-column>
-              <el-table-column :label="$t('modelConfig.provider')" align="center">
+              <el-table-column :label="$t('modelConfig.modelName')" min-width="180">
                 <template slot-scope="scope">
-                  {{ scope.row.configJson.type || $t("modelConfig.unknown") }}
+                  <div class="name-cell">
+                    <div class="name-line">
+                      <span class="model-name">{{ scope.row.modelName }}</span>
+                      <span v-if="scope.row.isDefault === 1" class="badge-default">
+                        {{ $t("modelConfig.isDefault") }}
+                      </span>
+                    </div>
+                    <span class="model-id" :title="$t('modelConfig.modelId')">{{ scope.row.id }}</span>
+                  </div>
                 </template>
               </el-table-column>
-              <el-table-column :label="$t('modelConfig.isEnabled')" align="center">
+              <el-table-column :label="$t('modelConfig.provider')" min-width="120">
+                <template slot-scope="scope">
+                  <span class="provider">{{ scope.row.configJson.type || $t("modelConfig.unknown") }}</span>
+                </template>
+              </el-table-column>
+              <el-table-column :label="$t('modelConfig.isEnabled')" width="110">
                 <template slot-scope="scope">
                   <el-tooltip
                     v-if="scope.row.isDefault === 1 && scope.row.isEnabled === 1"
                     :content="$t('modelConfig.defaultModelCannotDisable')"
                     placement="top"
-                    effect="light"
-                  > 
-                    <el-switch
-                      v-model="scope.row.isEnabled"
-                      active-color="#5778ff"
-                      inactive-color="#DCDFE6"
-                      :active-value="1"
-                      :inactive-value="0"
-                      disabled
-                      @change="handleStatusChange(scope.row)"
-                    />
+                  >
+                    <span class="switch-wrap">
+                      <el-switch
+                        v-model="scope.row.isEnabled"
+                        :active-value="1"
+                        :inactive-value="0"
+                        :aria-label="$t('modelConfig.isEnabled')"
+                        disabled
+                        @change="handleStatusChange(scope.row)"
+                      />
+                    </span>
                   </el-tooltip>
                   <el-switch
                     v-else
                     v-model="scope.row.isEnabled"
-                    active-color="#5778ff"
-                    inactive-color="#DCDFE6"
                     :active-value="1"
                     :inactive-value="0"
+                    :aria-label="$t('modelConfig.isEnabled')"
                     @change="handleStatusChange(scope.row)"
                   />
                 </template>
               </el-table-column>
-              <el-table-column :label="$t('modelConfig.isDefault')" align="center">
-                <template slot-scope="scope">
-                  <el-switch
-                    v-model="scope.row.isDefault"
-                    active-color="#5778ff"
-                    inactive-color="#DCDFE6"
-                    :active-value="1"
-                    :inactive-value="0"
-                    @change="handleDefaultChange(scope.row)"
-                  />
-                </template>
-              </el-table-column>
-              <el-table-column
-                v-if="activeTab === 'tts'"
-                :label="$t('modelConfig.voiceManagement')"
-                align="center"
-              >
-                <template slot-scope="scope">
-                  <el-button
-                    type="text"
-                    size="mini"
-                    @click="openTtsDialog(scope.row)"
-                    class="voice-management-btn"
-                  >
-                    {{ $t("modelConfig.voiceManagement") }}
-                  </el-button>
-                </template>
-              </el-table-column>
               <el-table-column
                 :label="$t('modelConfig.action')"
-                align="center"
-                width="210px"
+                align="right"
+                :width="activeTab === 'tts' ? 390 : 270"
               >
                 <template slot-scope="scope">
-                  <el-button
-                    type="text"
-                    size="mini"
-                    @click="editModel(scope.row)"
-                    class="edit-btn"
-                  >
-                    {{ $t("modelConfig.edit") }}
-                  </el-button>
-                  <el-button
-                    type="text"
-                    size="mini"
-                    @click="duplicateModel(scope.row)"
-                    class="edit-btn"
-                  >
-                    {{ $t("modelConfig.duplicate") }}
-                  </el-button>
-                  <el-button
-                    type="text"
-                    size="mini"
-                    @click="deleteModel(scope.row)"
-                    class="delete-btn"
-                  >
-                    {{ $t("modelConfig.delete") }}
-                  </el-button>
+                  <div class="row-actions">
+                    <el-button type="text" size="mini" class="action-btn" @click="editModel(scope.row)">
+                      {{ $t("modelConfig.edit") }}
+                    </el-button>
+                    <el-button
+                      v-if="scope.row.isDefault !== 1"
+                      type="text"
+                      size="mini"
+                      class="action-btn"
+                      @click="handleDefaultChange(scope.row)"
+                    >
+                      {{ $t("modelConfigDialog.setDefault") }}
+                    </el-button>
+                    <el-button
+                      v-if="activeTab === 'tts'"
+                      type="text"
+                      size="mini"
+                      class="action-btn"
+                      @click="openTtsDialog(scope.row)"
+                    >
+                      {{ $t("modelConfig.voiceManagement") }}
+                    </el-button>
+                    <el-tooltip :content="$t('modelConfig.duplicate')" placement="top">
+                      <el-button
+                        type="text"
+                        size="mini"
+                        class="icon-btn"
+                        icon="el-icon-document-copy"
+                        :aria-label="$t('modelConfig.duplicate')"
+                        @click="duplicateModel(scope.row)"
+                      />
+                    </el-tooltip>
+                    <el-tooltip :content="$t('modelConfig.delete')" placement="top">
+                      <el-button
+                        type="text"
+                        size="mini"
+                        class="icon-btn icon-btn--danger"
+                        icon="el-icon-delete"
+                        :aria-label="$t('modelConfig.delete')"
+                        @click="deleteModel(scope.row)"
+                      />
+                    </el-tooltip>
+                  </div>
                 </template>
               </el-table-column>
             </el-table>
-            <div class="table-footer">
-              <div class="batch-actions">
-                <CustomButton :icon="isAllSelected ? 'el-icon-circle-close' : 'el-icon-circle-check'" type="default" size="small" @click="selectAll">
-                  {{
-                    isAllSelected
-                      ? $t("modelConfig.deselectAll")
-                      : $t("modelConfig.selectAll")
-                  }}
-                </CustomButton>
-                <CustomButton icon="el-icon-plus" type="add" size="small" @click="addModel">
-                  {{ $t("modelConfig.add") }}
-                </CustomButton>
-                <CustomButton
-                  type="delete"
-                  size="small"
-                  icon="el-icon-delete"
-                  @click="batchDelete"
-                >
-                  {{ $t("modelConfig.delete") }}
-                </CustomButton>
-              </div>
-              <CustomPagination
-                :total="total"
-                :current-page="currentPage"
-                :page-size="pageSize"
-                :page-size-options="pageSizeOptions"
-                @size-change="handlePageSizeChange"
-                @page-change="handlePageChange"
-              />
+          </div>
+
+          <div class="table-footer">
+            <div class="batch-actions">
+              <CustomButton
+                :icon="isAllSelected ? 'el-icon-circle-close' : 'el-icon-circle-check'"
+                type="default"
+                size="small"
+                @click="selectAll"
+              >
+                {{ isAllSelected ? $t("modelConfig.deselectAll") : $t("modelConfig.selectAll") }}
+              </CustomButton>
+              <CustomButton type="delete" size="small" icon="el-icon-delete" @click="batchDelete">
+                {{ $t("modelConfig.delete") }}
+              </CustomButton>
             </div>
-          </el-card>
-        </div>
+            <CustomPagination
+              :total="total"
+              :current-page="currentPage"
+              :page-size="pageSize"
+              :page-size-options="pageSizeOptions"
+              @size-change="handlePageSizeChange"
+              @page-change="handlePageChange"
+            />
+          </div>
+        </section>
       </div>
 
       <ModelEditDialog
@@ -235,7 +213,7 @@
         :visible.sync="addDialogVisible"
         @confirm="handleAddConfirm"
       />
-    </div>
+    </main>
     <el-footer>
       <version-footer />
     </el-footer>
@@ -256,6 +234,7 @@ export default {
   data() {
     return {
       addDialogVisible: false,
+      modelTypes: ["vad", "asr", "llm", "vllm", "intent", "tts", "memory", "rag"],
       activeTab: "llm",
       search: "",
       editDialogVisible: false,
@@ -560,424 +539,345 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.el-switch {
-  height: 23px;
-}
-
-::v-deep .el-table tr {
-  background: transparent;
-}
-
 .welcome {
-  min-width: 900px;
-  min-height: 506px;
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
-  position: relative;
   flex-direction: column;
-  background-size: cover;
-  background: #eff4ff;
-  -webkit-background-size: cover;
-  -o-background-size: cover;
+  background: var(--x-canvas);
 }
 
-.main-wrapper {
-  // top 63px, bottom 35px, query 72px
-  height: calc(100vh - 63px - 35px - 72px);
-  margin: 0 22px;
-  border-radius: 15px;
-  position: relative;
-}
-
-.operation-bar {
+.page {
+  flex: 1;
+  width: 100%;
+  max-width: 1280px;
+  padding: 32px;
+  box-sizing: border-box;
   display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
   justify-content: space-between;
-  align-items: center;
-  padding: 16px 24px;
+  gap: 16px;
 }
 
 .page-title {
-  font-size: 24px;
   margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--x-text);
 }
 
-.content-panel {
-  flex: 1;
+.model-layout {
   display: flex;
-  overflow: hidden;
-  height: 100%;
-  border-radius: 15px;
-  background: transparent;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 20px;
 }
 
-.nav-panel {
-  min-width: 242px;
-  height: 100%;
-  border-right: 1px solid #ebeef5;
-  background: linear-gradient(
-      120deg,
-      rgba(107, 140, 255, 0.3) 0%,
-      rgba(169, 102, 255, 0.3) 25%,
-      transparent 60%
-    ),
-    url("../assets/model/model.png") no-repeat center / cover;
-  padding: 16px 0;
-  flex-shrink: 0;
+// Model type tabs
+.type-list {
+  flex: 1 1 200px;
+  max-width: 240px;
   display: flex;
   flex-direction: column;
-}
-
-.nav-panel .el-menu-item {
-  height: 50px;
-  background: #e9f0ff;
-  line-height: 50px;
-  border-radius: 4px 0 0 4px !important;
-  transition: all 0.3s;
-  display: flex !important;
-  justify-content: flex-end;
-  padding-right: 12px !important;
-  width: fit-content;
-  margin: 8px 0 8px auto;
-  min-width: unset;
-}
-
-.nav-panel .el-menu-item.is-active {
-  background: #5778ff;
-  position: relative;
-  padding-left: 40px !important;
-}
-
-.nav-panel .el-menu-item.is-active::before {
-  content: "";
-  position: absolute;
-  left: 15px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 13px;
-  height: 13px;
-  background: #fff;
-  border-radius: 50%;
-  box-shadow: 0 0 4px rgba(64, 158, 255, 0.5);
-}
-
-.menu-text {
-  font-size: 14px;
-  color: #606266;
-  text-align: right;
-  width: 100%;
-  padding-right: 8px;
-}
-
-.content-area {
-  flex: 1;
-  padding: 24px 24px 0;
-  height: 100%;
-  min-width: 600px;
-  overflow: hidden;
-  background-color: white;
-  display: flex;
-  flex-direction: column;
+  gap: 2px;
+  padding: 8px;
+  background: var(--x-surface);
+  border: 1px solid var(--x-border);
+  border-radius: var(--x-radius-card);
   box-sizing: border-box;
 }
 
-.action-group {
+.type-tab {
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: var(--x-radius-control);
+  background: transparent;
+  color: var(--x-text-secondary);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+
+  &:hover {
+    background: var(--x-surface-raised);
+    color: var(--x-text);
+  }
+
+  &.is-active {
+    background: var(--x-selected);
+    color: var(--x-text);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--x-focus-ring);
+  }
+}
+
+// Table card
+.model-card {
+  flex: 999 1 560px;
+  min-width: 0;
+  background: var(--x-surface);
+  border: 1px solid var(--x-border);
+  border-radius: var(--x-radius-card);
+  overflow: hidden;
+}
+
+.card-header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 16px;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--x-border);
+}
+
+.card-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--x-text);
 }
 
 .search-group {
   display: flex;
-  gap: 10px;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .search-input {
-  width: 240px;
-}
-
-.btn-search {
-  background: linear-gradient(135deg, #6b8cff, #a966ff);
-  border: none;
-  color: white;
-}
-
-.btn-search:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
+  width: 260px;
+  max-width: 100%;
 }
 
 ::v-deep .search-input .el-input__inner {
+  height: 34px;
+  line-height: 34px;
+}
+
+::v-deep .search-input .el-input__icon {
+  line-height: 34px;
+  color: var(--x-text-muted);
+}
+
+.btn-search {
+  height: 34px;
+  padding: 0 14px;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.model-table {
+  min-width: 720px;
+
+  &::before {
+    display: none;
+  }
+}
+
+::v-deep .model-table {
+  th.el-table__cell {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--x-divider);
+  }
+
+  td.el-table__cell {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--x-divider);
+  }
+
+  .cell {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .el-table__row:last-child td.el-table__cell {
+    border-bottom: 0;
+  }
+}
+
+::v-deep .model-table .el-checkbox__inner {
+  border-color: var(--x-text-disabled);
   border-radius: 4px;
-  border: 1px solid #dcdfe6;
-  background-color: white;
-  transition: border-color 0.2s;
 }
 
-::v-deep .search-input .el-input__inner:focus {
-  border-color: #6b8cff;
-  outline: none;
+.name-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
-// .data-table {
-//   border-radius: 6px;
-//   overflow: hidden;
-//   background-color: transparent !important;
-// }
+.name-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
 
-// .data-table ::v-deep .el-table__row {
-//   background-color: transparent !important;
-// }
+.model-name {
+  font-weight: 500;
+  color: var(--x-text);
+}
 
-.table-header th {
-  background-color: transparent !important;
-  color: #606266;
+.badge-default {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: var(--x-radius-pill);
+  background: var(--x-ink);
+  color: var(--x-on-ink);
+  font-size: 11px;
   font-weight: 600;
+  line-height: 1;
+}
+
+.model-id {
+  font-family: var(--x-font-mono);
+  font-size: 12px;
+  color: var(--x-text-muted);
+  word-break: break-all;
+}
+
+.provider {
+  color: var(--x-text-secondary);
+}
+
+.switch-wrap {
+  display: inline-flex;
+}
+
+.row-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+  white-space: nowrap;
+}
+
+.action-btn {
+  height: 30px;
+  padding: 0 10px;
+  margin: 0 !important;
+  color: var(--x-text-secondary);
+  font-size: 13px;
+
+  &:hover,
+  &:focus {
+    background: var(--x-canvas);
+    color: var(--x-text);
+  }
+}
+
+.icon-btn {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  margin: 0 !important;
+  color: var(--x-text-muted);
+  font-size: 15px;
+
+  &:hover,
+  &:focus {
+    background: var(--x-canvas);
+    color: var(--x-text);
+  }
+
+  &--danger:hover,
+  &--danger:focus {
+    background: var(--x-danger-bg);
+    color: var(--x-danger-text);
+  }
+}
+
+// The selection header shows a "Select" label instead of the select-all checkbox
+::v-deep .model-table .custom-selection-header .cell {
+  position: relative;
+  min-height: 23px;
+
+  .el-checkbox {
+    display: none;
+  }
+
+  &::before {
+    content: attr(data-content);
+    display: block;
+    text-align: center;
+    color: var(--x-text-muted);
+  }
 }
 
 .table-footer {
   display: flex;
-  justify-content: space-between;
+  flex-wrap: wrap;
   align-items: center;
-  // padding: 16px 0;
-  width: 100%;
-  flex-shrink: 0;
-  min-height: 60px;
-  background: white;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--x-border);
 }
 
-// .batch-actions {
-//   display: flex;
-//   gap: 8px;
-// }
-
-// .batch-actions .el-button {
-//   min-width: 72px;
-//   height: 32px;
-//   padding: 7px 12px 7px 10px;
-//   font-size: 12px;
-//   border-radius: 4px;
-//   line-height: 1;
-//   font-weight: 500;
-//   border: none;
-//   transition: all 0.3s ease;
-//   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-// }
-
-// .batch-actions .el-button:hover {
-//   transform: translateY(-1px);
-//   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-// }
-
-// .batch-actions .el-button--primary {
-//   background: #5f70f3 !important;
-//   color: white;
-// }
-
-// .batch-actions .el-button--success {
-//   background: #5bc98c;
-//   color: white;
-// }
-
-// .batch-actions .el-button--danger {
-//   background: #fd5b63;
-//   color: white;
-// }
-
-// .batch-actions .el-button:first-child {
-//   background: linear-gradient(135deg, #409eff, #6b8cff);
-//   border: none;
-//   color: white;
-// }
-
-// .batch-actions .el-button:first-child:hover {
-//   background: linear-gradient(135deg, #3a8ee6, #5a7cff);
-// }
-
-.el-table th ::v-deep .el-table__cell {
-  overflow: hidden;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  user-select: none;
-  background-color: transparent !important;
-}
-
-::v-deep .el-table .custom-selection-header .cell .el-checkbox__inner {
-  display: none !important;
-}
-
-::v-deep .el-table .custom-selection-header .cell::before {
-  content: attr(data-content);
-  display: block;
-  text-align: center;
-  line-height: 32px;
-  /* Set a suitable line height so text displays fully */
-  color: black;
-  margin-top: 0;
-  /* Remove top margin that may cause offset */
-  height: 32px;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 100%;
-}
-
-.custom-selection-header .cell {
-  position: relative;
-}
-
-/* Removed empty pseudo-elements that could affect text display */
-
-::v-deep .el-table__body .el-checkbox__inner {
-  display: inline-block !important;
-  background: #ffffff;
-}
-
-::v-deep .el-table thead th:not(:first-child) .cell {
-  color: #303133 !important;
-}
-
-::v-deep .nav-panel .el-menu-item.is-active .menu-text {
-  color: #fff !important;
-}
-
-
-.el-button img {
-  height: 1em;
-  vertical-align: middle;
-  padding-right: 2px;
-  padding-bottom: 2px;
-}
-
-::v-deep .el-checkbox__inner {
-  border-color: #cfcfcf !important;
-  transition: all 0.2s ease-in-out;
-}
-
-::v-deep .el-checkbox__input.is-checked .el-checkbox__inner {
-  background-color: #5f70f3;
-  border-color: #5f70f3;
-}
-
-.voice-management-btn {
-  background: #9db3ea;
-  color: white;
-  min-width: 68px;
-  line-height: 14px;
-  white-space: nowrap;
-  transition: all 0.3s;
-  border-radius: 10px;
-}
-
-.voice-management-btn:hover {
-  background: #8aa2e0;
-  /* Darken color on hover */
-  transform: scale(1.05);
-}
-
-::v-deep .el-table .el-table-column--selection .cell {
-  padding-left: 15px !important;
-}
-
-::v-deep .el-table .el-table__fixed-right .cell {
-  padding-right: 15px !important;
-}
-
-.edit-btn,
-.delete-btn {
-  margin: 0 8px;
-  color: #7079aa !important;
-}
-
-::v-deep .el-table .cell {
-  padding-left: 10px;
-  padding-right: 10px;
-}
-
-.model-card {
-  background: white;
-  flex: 1;
+.batch-actions {
   display: flex;
-  flex-direction: column;
-  border: none;
-  box-shadow: none;
-  overflow: hidden;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  ::v-deep .el-button + .el-button {
+    margin-left: 0;
+  }
 }
 
-.model-card ::v-deep .el-card__body {
+.el-footer {
+  height: auto !important;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  overflow: hidden;
 }
-:deep(.transparent-table) {
-    background: white;
-    flex: 1;
+
+@media (max-width: 900px) {
+  .type-list {
+    flex: 1 1 100%;
+    max-width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .type-tab {
+    flex: 0 0 auto;
+    min-height: 34px;
+    padding: 6px 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .page {
+    padding: 16px;
+  }
+
+  .search-group,
+  .search-input {
     width: 100%;
-    display: flex;
-    flex-direction: column;
+  }
 
-    .el-table__body-wrapper {
-        flex: 1;
-        overflow-y: auto;
-        max-height: none !important;
-    }
-
-    .el-table__header-wrapper {
-        flex-shrink: 0;
-    }
-
-    .el-table__header th {
-        background: white !important;
-        color: black;
-        font-weight: 600;
-        height: 40px;
-        padding: 8px 0;
-        font-size: 14px;
-        border-bottom: 1px solid #e4e7ed;
-    }
-
-    .el-table__body tr {
-        background-color: white;
-
-        td {
-            border-top: 1px solid rgba(0, 0, 0, 0.04);
-            border-bottom: 1px solid rgba(0, 0, 0, 0.04);
-            padding: 8px 0;
-            height: 40px;
-            color: #606266;
-            font-size: 14px;
-        }
-    }
-
-    .el-table__row:hover>td {
-        background-color: #f5f7fa !important;
-    }
-
-    &::before {
-        display: none;
-    }
-}
-
-
-::v-deep .el-loading-mask {
-  background-color: rgba(255, 255, 255, 0.6) !important;
-  backdrop-filter: blur(2px);
-}
-
-::v-deep .el-loading-spinner .circular {
-  width: 28px;
-  height: 28px;
-}
-
-::v-deep .el-loading-spinner .path {
-  stroke: #6b8cff;
-}
-
-::v-deep .el-loading-text {
-  color: #6b8cff !important;
-  font-size: 14px;
-  margin-top: 8px;
+  .search-input {
+    flex: 1;
+    width: auto;
+  }
 }
 </style>
