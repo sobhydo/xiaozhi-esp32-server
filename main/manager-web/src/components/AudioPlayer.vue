@@ -10,10 +10,11 @@
 
     <div class="custom-controls">
       <!-- Play/pause button -->
-      <button class="play-btn" @click="togglePlay">
-        <svg width="20" height="20" viewBox="0 0 20 20">
+      <button type="button" class="play-btn" :aria-label="isPlaying ? $t('voiceClone.pause') : $t('voiceClone.play')"
+        @click="togglePlay">
+        <svg width="14" height="14" viewBox="0 0 20 20" aria-hidden="true">
           <path
-            fill="#4362b3"
+            fill="currentColor"
             :d="isPlaying
               ? 'M6 3h3v14H6zm5 0h3v14h-3z'
               : 'M5 3l12 7-12 7z'"
@@ -46,9 +47,11 @@
           @mouseenter="handleVolumeMouseEnter"
           @mouseleave="startVolumeSliderHideTimer"
           ref="volumeButton"
+          type="button"
           class="volume-button"
+          :aria-label="$t('roleConfig.ttsVolume')"
         >
-          <svg width="20" height="20" viewBox="0 0 24 24">
+          <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
             <path fill="currentColor" :d="volumeIconPath"/>
           </svg>
         </button>
@@ -245,51 +248,71 @@ onUnmounted(() => {
 
 <style scoped>
 .audio-container {
-  background: #eef0fd;
-  padding: 8px;
+  width: 100%;
+  min-width: 0;
+  container-type: inline-size;
+  background: var(--x-surface-raised);
+  border: 1px solid var(--x-border);
+  padding: 4px 10px 4px 4px;
   height: 40px;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
-  border-radius: 5px;
+  border-radius: var(--x-radius-pill);
 }
 
 .custom-controls {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   width: 100%;
 }
 
 .play-btn {
-  background: none;
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  background: var(--x-ink);
+  color: var(--x-on-ink);
   border: none;
+  border-radius: 50%;
   padding: 0;
   cursor: pointer;
   display: flex;
   align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+
+.play-btn:hover {
+  background: var(--x-ink-hover);
+}
+
+.play-btn:focus-visible,
+.volume-button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--x-focus-ring);
 }
 
 .time-display {
   font-size: 12px;
-  color: #5f7ba7;
+  color: var(--x-text-muted);
   min-width: 40px;
   text-align: center;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .progress-container {
   flex: 1;
-  padding: 0 10px;
-  opacity: 0.7;
-  transition: opacity 0.3s ease;
-}
-
-.progress-container:hover {
-  opacity: 1;
+  min-width: 24px;
+  padding: 8px 6px;
 }
 
 .progress-bar {
-  height: 2px;
-  background: #bfcadb;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--x-border-control);
   position: relative;
   cursor: pointer;
 }
@@ -297,15 +320,17 @@ onUnmounted(() => {
 .progress-track {
   position: absolute;
   height: 100%;
-  background: #4167ed;
+  border-radius: 2px;
+  background: var(--x-ink);
 }
 
 .progress-thumb {
   position: absolute;
-  width: 12px;
-  height: 12px;
-  background: #4167ed;
-  border: 2px solid #d6dcfc;
+  width: 10px;
+  height: 10px;
+  background: var(--x-ink);
+  border: 2px solid var(--x-surface);
+  box-shadow: 0 0 0 1px var(--x-border-control);
   border-radius: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
@@ -315,43 +340,58 @@ onUnmounted(() => {
 
 .volume-control {
   position: relative;
+  flex-shrink: 0;
 }
 
 .volume-button {
+  width: 28px;
+  height: 28px;
   background: none;
   border: none;
+  border-radius: 50%;
   padding: 0;
-  color: #8f95cd;
+  color: var(--x-text-muted);
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.volume-button:hover {
+  color: var(--x-text);
+  background: var(--x-canvas);
 }
 
 .volume-slider-container {
   position: fixed;
   padding: 10px 4px;
-  background: #eef0fd;
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: var(--x-surface);
+  border: 1px solid var(--x-border);
+  border-radius: var(--x-radius-control);
+  box-shadow: var(--x-shadow-raised);
   z-index: 1000;
   height: 75px;
+  box-sizing: content-box;
 }
 
 .volume-slider-track {
   position: relative;
   height: 55px;
-  width: 2px;
-  background: #bfcadb;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--x-border-control);
   margin: 1px;
 }
 
 .volume-slider-thumb {
   position: absolute;
-  left: 1px;
+  left: 1.5px;
   width: 9px;
   height: 9px;
-  background: #4167ed;
-  border: 2px solid #d6dcfc;
+  background: var(--x-ink);
+  border: 2px solid var(--x-surface);
   border-radius: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, 50%);
   pointer-events: none;
 }
 
@@ -367,13 +407,21 @@ onUnmounted(() => {
   z-index: 2;
 }
 
+/* Narrow cells (e.g. the voice table): drop the time readout first */
+@container (max-width: 200px) {
+  .time-display {
+    display: none;
+  }
+}
+
 .volume-slider-track::after {
   content: '';
   position: absolute;
   left: 0;
   bottom: 0;
-  width: 2px;
+  width: 3px;
+  border-radius: 2px;
   height: calc(100% * v-bind(volume));
-  background: #4167ed;
+  background: var(--x-ink);
 }
 </style>

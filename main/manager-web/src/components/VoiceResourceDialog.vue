@@ -4,12 +4,13 @@
     :visible.sync="dialogVisible"
     :close-on-click-modal="false"
     width="600px"
+    class="voice-resource-dialog"
     @close="handleClose"
     @open="handleOpen"
     @cancel="handleCancel"
     @confirm="handleSubmit"
   >
-    <el-form ref="form" :model="form" :rules="rules" label-width="auto">
+    <el-form ref="form" :model="form" :rules="rules" label-width="auto" label-position="top" class="resource-form">
       <el-form-item :label="$t('voiceClone.platformName')" prop="modelId">
         <el-select v-model="form.modelId" :placeholder="$t('voiceClone.platformNamePlaceholder')" filterable
           style="width: 100%" @change="handlePlatformChange">
@@ -159,3 +160,29 @@ export default {
   }
 }
 </script>
+
+<style lang="scss" scoped>
+.voice-resource-dialog {
+  ::v-deep .el-dialog {
+    max-width: calc(100vw - 32px);
+  }
+}
+
+.resource-form {
+  text-align: left;
+
+  ::v-deep .el-form-item {
+    margin-bottom: 18px;
+  }
+
+  ::v-deep .el-form-item:last-child {
+    margin-bottom: 4px;
+  }
+
+  ::v-deep .el-form-item__label {
+    padding-bottom: 6px;
+    line-height: 20px;
+    font-size: 13px;
+  }
+}
+</style>

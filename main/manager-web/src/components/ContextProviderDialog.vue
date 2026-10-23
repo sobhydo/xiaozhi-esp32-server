@@ -2,8 +2,7 @@
   <CustomDialog
     :title="$t('contextProviderDialog.title')"
     :visible.sync="dialogVisible"
-    width="960px"
-    size="large"
+    width="860px"
     class="context-provider-dialog"
     :closeOnClickModal="false"
     :confirmText="$t('contextProviderDialog.confirm')"
@@ -11,30 +10,45 @@
     @confirm="handleConfirm"
   >
     <div class="dialog-content">
-      <el-empty v-if="localProviders.length === 0" :description="$t('contextProviderDialog.noContextApi')">
+      <el-empty v-if="localProviders.length === 0" :image-size="64" :description="$t('contextProviderDialog.noContextApi')">
         <el-button type="primary" icon="el-icon-plus" @click="addProvider(0)">{{ $t('contextProviderDialog.add') }}</el-button>
       </el-empty>
 
-      <div
+      <section
         v-for="(provider, pIndex) in localProviders"
         :key="pIndex"
         class="provider-item"
       >
-        <el-card class="provider-card" shadow="hover" :body-style="{ padding: '15px 20px' }">
+        <div class="provider-head">
+          <span class="provider-index">#{{ pIndex + 1 }}</span>
+          <!-- Provider block controls -->
+          <div class="block-controls">
+            <el-button size="mini" icon="el-icon-plus" @click="addProvider(pIndex + 1)">
+              {{ $t('contextProviderDialog.add') }}
+            </el-button>
+            <button type="button" class="icon-btn icon-btn--danger" :aria-label="$t('common.delete')"
+              @click="removeProvider(pIndex)">
+              <i class="el-icon-delete" aria-hidden="true"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="provider-body">
           <!-- URL Row -->
           <div class="input-row">
-            <span class="label-text">{{ $t('contextProviderDialog.apiUrl') }}</span>
+            <label class="label-text" :for="'ctx-url-' + pIndex">{{ $t('contextProviderDialog.apiUrl') }}</label>
             <el-input
+              :id="'ctx-url-' + pIndex"
               v-model="provider.url"
               :placeholder="$t('contextProviderDialog.apiUrlPlaceholder')"
               size="small"
-              class="flex-1"
+              class="flex-1 mono-input"
             ></el-input>
           </div>
 
           <!-- Headers Section -->
           <div class="headers-section">
-            <div class="label-text" style="margin-top: 6px;">{{ $t('contextProviderDialog.requestHeaders') }}</div>
+            <div class="label-text">{{ $t('contextProviderDialog.requestHeaders') }}</div>
             <div class="headers-list">
               <div
                 v-for="(header, hIndex) in provider.headers"
@@ -44,68 +58,43 @@
                 <el-input
                   v-model="header.key"
                   :placeholder="$t('contextProviderDialog.headerKeyPlaceholder')"
+                  :aria-label="$t('contextProviderDialog.headerKeyPlaceholder')"
                   size="small"
-                  style="width: 180px;"
+                  class="header-key"
                 ></el-input>
-                <span class="separator">:</span>
+                <span class="separator" aria-hidden="true">:</span>
                 <el-input
                   v-model="header.value"
                   :placeholder="$t('contextProviderDialog.headerValuePlaceholder')"
+                  :aria-label="$t('contextProviderDialog.headerValuePlaceholder')"
                   size="small"
                   class="flex-1"
                 ></el-input>
 
                 <div class="row-controls">
-                  <el-button
-                    type="primary"
-                    icon="el-icon-plus"
-                    circle
-                    size="mini"
-                    plain
-                    @click="addHeader(pIndex, hIndex + 1)"
-                  ></el-button>
-                  <el-button
-                    type="danger"
-                    icon="el-icon-minus"
-                    circle
-                    size="mini"
-                    plain
-                    @click="removeHeader(pIndex, hIndex)"
-                  ></el-button>
+                  <button type="button" class="icon-btn" :aria-label="$t('contextProviderDialog.addHeader')"
+                    @click="addHeader(pIndex, hIndex + 1)">
+                    <i class="el-icon-plus" aria-hidden="true"></i>
+                  </button>
+                  <button type="button" class="icon-btn icon-btn--danger" :aria-label="$t('common.delete')"
+                    @click="removeHeader(pIndex, hIndex)">
+                    <i class="el-icon-minus" aria-hidden="true"></i>
+                  </button>
                 </div>
               </div>
               <!-- Empty Headers State -->
               <div v-if="provider.headers.length === 0" class="header-row empty-header">
                  <span class="no-header-text">{{ $t('contextProviderDialog.noHeaders') }}</span>
                  <el-button
-                    type="text"
-                    icon="el-icon-plus"
                     size="mini"
+                    icon="el-icon-plus"
                     @click="addHeader(pIndex, 0)"
                   >{{ $t('contextProviderDialog.addHeader') }}</el-button>
               </div>
             </div>
           </div>
-        </el-card>
-
-        <!-- Provider Block Controls (Right Side) -->
-        <div class="block-controls">
-          <el-button
-            type="primary"
-            icon="el-icon-plus"
-            circle
-            size="medium"
-            @click="addProvider(pIndex + 1)"
-          ></el-button>
-          <el-button
-            type="danger"
-            icon="el-icon-minus"
-            circle
-            size="medium"
-            @click="removeProvider(pIndex)"
-          ></el-button>
         </div>
-      </div>
+      </section>
     </div>
   </CustomDialog>
 </template>
@@ -202,74 +191,83 @@ export default {
 };
 </script>
 
-<style scoped>
-.context-provider-dialog ::v-deep .el-dialog__body {
-  padding: 16px 20px;
-}
-.dialog-content {
-  max-height: calc(100vh - 280px);
-  overflow-y: auto;
-  padding: 0 5px;
+<style lang="scss" scoped>
+.context-provider-dialog ::v-deep .el-dialog {
+  max-width: calc(100vw - 32px);
 }
 
-.dialog-content::-webkit-scrollbar {
-  width: 6px;
-}
-.dialog-content::-webkit-scrollbar-thumb {
-  background: #dcdfe6;
-  border-radius: 3px;
-}
-.dialog-content::-webkit-scrollbar-track {
-  background: #f5f7fa;
+.dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
 }
 
 .provider-item {
+  border: 1px solid var(--x-border);
+  border-radius: var(--x-radius-card);
+  background: var(--x-surface);
+  overflow: hidden;
+  transition: border-color 0.15s ease;
+
+  &:hover {
+    border-color: var(--x-border-control);
+  }
+}
+
+.provider-head {
   display: flex;
-  gap: 15px;
-  margin-bottom: 20px;
   align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 8px 8px 16px;
+  background: var(--x-surface-raised);
+  border-bottom: 1px solid var(--x-divider);
 }
 
-.provider-card {
-  flex: 1;
-  border-radius: 12px;
-  border: 1px solid #e4e7ed;
-  border-left: 4px solid #409EFF;
-  background-color: #fff;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
-}
-
-.provider-card:hover {
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-  transform: translateY(-2px);
+.provider-index {
+  font-family: var(--x-font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--x-text-muted);
 }
 
 .block-controls {
   display: flex;
-  flex-direction: row;
-  gap: 8px;
+  align-items: center;
+  gap: 4px;
+}
+
+.provider-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 .input-row {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 18px;
 }
 
 .label-text {
-  width: 60px;
-  font-weight: 600;
-  color: #606266;
-  text-align: right;
+  flex-shrink: 0;
+  width: 120px;
+  font-weight: 500;
+  color: var(--x-text);
   font-size: 13px;
-  white-space: nowrap;
   line-height: 32px;
 }
 
 .flex-1 {
   flex: 1;
+  min-width: 0;
+}
+
+.mono-input ::v-deep .el-input__inner {
+  font-family: var(--x-font-mono);
+  font-size: 12px;
 }
 
 .headers-section {
@@ -280,55 +278,95 @@ export default {
 
 .headers-list {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  background: #fcfcfc;
-  padding: 15px;
-  border-radius: 8px;
-  border: 1px dashed #dcdfe6;
-  transition: all 0.3s;
-}
-
-.headers-list:hover {
-  border-color: #c0c4cc;
-  background: #fff;
+  gap: 8px;
 }
 
 .header-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+}
+
+.header-key {
+  width: 180px;
+  flex-shrink: 0;
 }
 
 .separator {
-  color: #909399;
-  font-weight: bold;
-  margin: 0 2px;
+  color: var(--x-text-muted);
+  font-weight: 600;
 }
 
 .row-controls {
   display: flex;
-  gap: 6px;
-  margin-left: 8px;
+  gap: 2px;
   flex-shrink: 0;
-  opacity: 0.6;
-  transition: opacity 0.2s;
 }
 
-.header-row:hover .row-controls {
-  opacity: 1;
+.icon-btn {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--x-radius-control);
+  background: transparent;
+  color: var(--x-text-muted);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    background: var(--x-canvas);
+    color: var(--x-text);
+    outline: none;
+  }
+
+  &--danger:hover,
+  &--danger:focus-visible {
+    background: var(--x-danger-bg);
+    color: var(--x-danger-text);
+  }
 }
 
 .empty-header {
-  justify-content: center;
-  padding: 10px;
-  color: #909399;
+  justify-content: space-between;
+  padding: 6px 6px 6px 12px;
+  border: 1px dashed var(--x-border-control);
+  border-radius: var(--x-radius-control);
+  color: var(--x-text-muted);
   font-size: 13px;
 }
 
-.no-header-text {
-  margin-right: 8px;
+@media (max-width: 640px) {
+  .input-row,
+  .headers-section {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+
+  .label-text {
+    width: auto;
+    line-height: 20px;
+  }
+
+  .header-row {
+    flex-wrap: wrap;
+  }
+
+  .header-key {
+    width: auto;
+    flex: 1 1 100px;
+  }
+
+  .header-row .flex-1 {
+    flex: 1 1 140px;
+  }
 }
 </style>
-

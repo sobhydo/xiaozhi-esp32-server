@@ -92,3 +92,33 @@ export default {
   }
 };
 </script>
+
+<style scoped lang="scss">
+::v-deep .el-dialog {
+  max-width: calc(100vw - 32px);
+}
+
+.form-item:last-child {
+  margin-bottom: 0;
+}
+
+@media (max-width: 600px) {
+  ::v-deep .el-form-item__label {
+    float: none;
+    display: block;
+    width: auto !important;
+    text-align: left;
+    line-height: 1.5;
+    padding-bottom: 6px;
+  }
+
+  ::v-deep .el-form-item__label-wrap {
+    float: none;
+    margin-left: 0 !important;
+  }
+
+  ::v-deep .el-form-item__content {
+    margin-left: 0 !important;
+  }
+}
+</style>

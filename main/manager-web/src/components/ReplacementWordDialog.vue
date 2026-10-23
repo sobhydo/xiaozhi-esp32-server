@@ -33,20 +33,23 @@
               accept=".txt"
               :on-change="handleFileChange"
             >
-              <el-button size="small" type="primary" class="upload-file-btn">
+              <el-button size="small" class="upload-file-btn">
                 <div class="upload-file-content">
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 4px;">
-                    <path d="M7 1V13M1 7H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                    stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M12 16V4" />
+                    <path d="m7 9 5-5 5 5" />
+                    <path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" />
                   </svg>
                   <div>
-                    <p>{{ $t('replacementDialog.clickUploadTip') }}</p>
-                    <p>{{ $t('replacementDialog.uploadCoverTip') }}</p>
+                    <p class="upload-title">{{ $t('replacementDialog.clickUploadTip') }}</p>
+                    <p class="upload-hint">{{ $t('replacementDialog.uploadCoverTip') }}</p>
                   </div>
                 </div>
               </el-button>
             </el-upload>
             <span class="word-count" :class="{ 'over-limit': isOverLimit }">
-              {{ wordCountText }}{{ $t('replacementDialog.wordCountUnit') }}
+              {{ wordCountText }} {{ $t('replacementDialog.wordCountUnit') }}
             </span>
           </div>
         </div>
@@ -262,9 +265,15 @@ export default {
 </script>
 
 <style scoped lang="scss">
+::v-deep .el-dialog {
+  max-width: calc(100vw - 32px);
+}
+
 .param-dialog-wrapper {
   .param-form {
     .content-item {
+      margin-bottom: 0;
+
       :deep(.el-form-item__content) {
         line-height: 1;
       }
@@ -272,61 +281,105 @@ export default {
 
     .content-wrapper {
       width: 100%;
+
+      :deep(.el-textarea__inner) {
+        font-family: var(--x-font-mono);
+        font-size: 13px;
+        line-height: 1.5;
+      }
     }
 
     .format-tip {
+      margin: 8px 0 0;
       text-align: left;
       font-size: 12px;
-      color: #5778ff;
+      line-height: 1.5;
+      color: var(--x-text-muted);
     }
 
     .upload-section {
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
+      gap: 12px;
       margin-top: 12px;
     }
 
     .upload-btn {
       display: inline-block;
+      max-width: 100%;
     }
 
     .upload-file-btn {
-      background: #3b82f6;
-      border-color: #3b82f6;
-      border-radius: 6px;
-      font-size: 13px;
-      padding: 8px 16px;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      height: auto;
+      max-width: 100%;
+      padding: 10px 14px;
+      border-style: dashed;
+      border-radius: var(--x-radius-control);
+      white-space: normal;
+
       .upload-file-content {
         display: flex;
-        flex-direction: row;
         align-items: center;
+        gap: 10px;
+        color: var(--x-text-secondary);
+
         > div {
           text-align: left;
+
           > p {
-            margin: 4px;
+            margin: 0;
+            line-height: 1.45;
           }
         }
       }
 
-      &:hover {
-        background: #2563eb;
-        border-color: #2563eb;
-        transform: translateY(-1px);
+      .upload-title {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--x-text);
+      }
+
+      .upload-hint {
+        font-size: 12px;
+        font-weight: 400;
+        color: var(--x-text-muted);
       }
     }
 
     .word-count {
       font-size: 13px;
-      color: #64748b;
+      color: var(--x-text-muted);
       font-weight: 500;
-      transition: color 0.3s ease;
+      font-variant-numeric: tabular-nums;
 
       &.over-limit {
-        color: #ef4444;
+        color: var(--x-danger-text);
         font-weight: 600;
       }
+    }
+  }
+}
+
+@media (max-width: 600px) {
+  .param-dialog-wrapper {
+    ::v-deep .el-form-item__label {
+      float: none;
+      display: block;
+      width: auto !important;
+      text-align: left;
+      line-height: 1.5;
+      padding-bottom: 6px;
+    }
+
+    ::v-deep .el-form-item__label-wrap {
+      float: none;
+      margin-left: 0 !important;
+    }
+
+    ::v-deep .el-form-item__content {
+      margin-left: 0 !important;
     }
   }
 }

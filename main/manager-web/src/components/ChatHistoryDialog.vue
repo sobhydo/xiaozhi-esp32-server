@@ -8,79 +8,102 @@
         :close-on-click-modal="false"
         custom-class="chat-history-dialog">
         <template v-slot:title>
-            <span style="font-size: 18px;">
+            <span class="chat-title">
                 {{ $t('chatHistory.with') + agentName + $t('chatHistory.dialogTitle') }}
-                <template v-if="currentMacAddress">
-                    [<MacAddressMask :macAddress="currentMacAddress" />]
-                </template>
+                <span v-if="currentMacAddress" class="chat-title-mac">
+                    <MacAddressMask :macAddress="currentMacAddress" />
+                </span>
             </span>
         </template>
         <div class="chat-container">
             <div class="session-list" @scroll="handleScroll">
-                <div v-for="session in sessions" :key="session.sessionId" class="session-item"
-                    :class="{ active: currentSessionId === session.sessionId }" @click="selectSession(session)">
-                    <img :src="getUserAvatar(session.sessionId)" class="avatar" />
-                    <div class="session-info">
-                        <div class="session-time">{{ session.title || formatTime(session.createdAt) }}</div>
-                        <div class="message-count">{{ session.chatCount > 99 ? '99' : session.chatCount }}</div>
-                    </div>
-                </div>
+                <button v-for="session in sessions" :key="session.sessionId" type="button" class="session-item"
+                    :class="{ active: currentSessionId === session.sessionId }"
+                    :aria-current="currentSessionId === session.sessionId ? 'true' : null"
+                    @click="selectSession(session)">
+                    <span class="avatar avatar--user" aria-hidden="true">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="8" r="4" />
+                            <path d="M4 21a8 8 0 0 1 16 0" />
+                        </svg>
+                    </span>
+                    <span class="session-time">{{ session.title || formatTime(session.createdAt) }}</span>
+                    <span class="message-count">{{ session.chatCount > 99 ? '99' : session.chatCount }}</span>
+                </button>
                 <div v-if="loading" class="loading">{{ $t('chatHistory.loading') }}</div>
                 <div v-if="!hasMore" class="no-more">{{ $t('chatHistory.noMoreRecords') }}</div>
             </div>
-            <div class="chat-content">
-                <div v-if="currentSessionId" class="messages">
-                    <div v-for="(message, index) in messagesWithTime" :key="message.id">
-                        <div v-if="message.type === 'time'" class="time-divider">
-                            {{ message.content }}
-                        </div>
-                        <div v-else class="message-item" :class="{ 'user-message': message.chatType === 1, 'tool-message': message.chatType === 3 }">
-                            <img :src="message.chatType === 1 ? getUserAvatar(currentSessionId) : require('@/assets/xiaozhi-logo.png')"
-                                class="avatar" />
-                            <div class="message-content">
-                                <template v-if="Array.isArray(extractContentFromString(message.content))">
-                                    <div class="content-wrapper">
-                                        <div v-for="(item, idx) in extractContentFromString(message.content)" :key="idx">
-                                            <div v-if="item.type === 'text'" class="text-content">{{ item.text }}</div>
-                                            <div v-else-if="item.type === 'tool'" class="tool-call-text">{{ item.text }}</div>
-                                            <div v-else-if="item.type === 'tool_result'" class="tool-call-text">
-                                                <div v-if="item.text && item.text.length > 80" class="tool-result-wrapper">
-                                                    <div v-if="isToolResultCollapsed(index, idx)" class="tool-result-collapsed">
-                                                        {{ getFirstLineText(item.text) }}
+            <div class="chat-pane">
+                <div class="chat-content">
+                    <div v-if="currentSessionId" class="messages">
+                        <div v-for="(message, index) in messagesWithTime" :key="message.id">
+                            <div v-if="message.type === 'time'" class="time-divider">
+                                <span>{{ message.content }}</span>
+                            </div>
+                            <div v-else class="message-item" :class="{ 'user-message': message.chatType === 1, 'tool-message': message.chatType === 3 }">
+                                <span v-if="message.chatType === 1" class="avatar avatar--user" aria-hidden="true">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="12" cy="8" r="4" />
+                                        <path d="M4 21a8 8 0 0 1 16 0" />
+                                    </svg>
+                                </span>
+                                <span v-else class="avatar avatar--agent" aria-hidden="true">
+                                    <XMark :size="16" inverse />
+                                </span>
+                                <div class="message-content">
+                                    <template v-if="Array.isArray(extractContentFromString(message.content))">
+                                        <div class="content-wrapper">
+                                            <div v-for="(item, idx) in extractContentFromString(message.content)" :key="idx">
+                                                <div v-if="item.type === 'text'" class="text-content">{{ item.text }}</div>
+                                                <div v-else-if="item.type === 'tool'" class="tool-call-text">{{ item.text }}</div>
+                                                <div v-else-if="item.type === 'tool_result'" class="tool-call-text">
+                                                    <div v-if="item.text && item.text.length > 80" class="tool-result-wrapper">
+                                                        <div v-if="isToolResultCollapsed(index, idx)" class="tool-result-collapsed">
+                                                            {{ getFirstLineText(item.text) }}
+                                                        </div>
+                                                        <div v-else class="tool-result-expanded">
+                                                            {{ item.text }}
+                                                        </div>
+                                                        <button type="button" class="tool-toggle-btn"
+                                                            :aria-expanded="isToolResultCollapsed(index, idx) ? 'false' : 'true'"
+                                                            :aria-label="$t('chatHistory.expandToolResult')"
+                                                            @click="toggleToolResult(index, idx)">
+                                                            <i :class="isToolResultCollapsed(index, idx) ? 'el-icon-arrow-down' : 'el-icon-arrow-up'" aria-hidden="true"></i>
+                                                        </button>
                                                     </div>
-                                                    <div v-else class="tool-result-expanded">
-                                                        {{ item.text }}
-                                                    </div>
-                                                    <span class="tool-toggle-btn" @click="toggleToolResult(index, idx)">
-                                                        <i :class="isToolResultCollapsed(index, idx) ? 'el-icon-arrow-down' : 'el-icon-arrow-up'"></i>
-                                                    </span>
+                                                    <div v-else>{{ item.text }}</div>
                                                 </div>
-                                                <div v-else>{{ item.text }}</div>
                                             </div>
                                         </div>
-                                    </div>
-                                </template>
-                                <template v-else>
-                                    {{ extractContentFromString(message.content) }}
-                                </template>
-                                <i v-if="message.audioId" :class="getAudioIconClass(message)"
-                                    @click="playAudio(message)" class="audio-icon"></i>
+                                    </template>
+                                    <template v-else>
+                                        <span class="text-content">{{ extractContentFromString(message.content) }}</span>
+                                    </template>
+                                    <button v-if="message.audioId" type="button" class="audio-btn"
+                                        :class="{ 'is-playing': playingAudioId === message.audioId }"
+                                        :aria-label="$t('chatHistory.playAudio')"
+                                        @click="playAudio(message)">
+                                        <i :class="getAudioIconClass(message)" class="audio-icon" aria-hidden="true"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
+                    <div v-else class="no-session-selected">
+                        {{ $t('chatHistory.selectSession') }}
+                    </div>
                 </div>
-                <div v-else class="no-session-selected">
-                    {{ $t('chatHistory.selectSession') }}
+                <div v-if="currentSessionId" class="download-buttons">
+                    <el-button size="small" icon="el-icon-download" @click="downloadCurrentSessionWithPrevious">
+                        {{ $t('chatHistory.downloadCurrentWithPreviousSessions') }}
+                    </el-button>
+                    <el-button size="small" icon="el-icon-download" @click="downloadCurrentSession">
+                        {{ $t('chatHistory.downloadCurrentSession') }}
+                    </el-button>
                 </div>
             </div>
-        </div>
-        <div v-if="currentSessionId" class="download-buttons">
-            <el-button type="primary" plain size="small" @click="downloadCurrentSessionWithPrevious">
-                {{ $t('chatHistory.downloadCurrentWithPreviousSessions') }}
-            </el-button>
-            <el-button type="primary" plain size="small" @click="downloadCurrentSession">
-                {{ $t('chatHistory.downloadCurrentSession') }}
-            </el-button>
         </div>
     </CustomDialog>
 </template>
@@ -90,6 +113,7 @@ import { debounce } from '@/utils'
 import Api from '@/apis/api';
 import CustomDialog from '@/components/CustomDialog.vue';
 import MacAddressMask from '@/components/MacAddressMask.vue';
+import XMark from '@/components/XMark.vue';
 
 export default {
     name: 'ChatHistoryDialog',
@@ -128,6 +152,7 @@ export default {
     components: {
         CustomDialog,
         MacAddressMask,
+        XMark,
     },
     watch: {
         visible(val) {
@@ -369,21 +394,6 @@ export default {
                 }
             });
         }, 300),
-        getUserAvatar(sessionId) {
-            // Extract all digits from the sessionId
-            const numbers = sessionId.match(/\d+/g);
-            if (!numbers) return require('@/assets/user-avatar1.png');
-
-            // Sum all the digits
-            const sum = numbers.reduce((acc, num) => acc + parseInt(num), 0);
-
-            // Take mod 5 plus 1 to get a number from 1 to 5
-            const avatarIndex = (sum % 5) + 1;
-
-            // Return the corresponding avatar image
-            return require(`@/assets/user-avatar${avatarIndex}.png`);
-        },
-
         // Download this session's chat history
         downloadCurrentSession() {
             Api.agent.getDownloadUrl(this.agentId, this.currentSessionId, (res) => {
@@ -412,82 +422,145 @@ export default {
 </script>
 
 <style scoped>
+.chat-title {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 24px;
+    color: var(--x-text);
+    padding-right: 32px;
+}
+
+.chat-title-mac {
+    padding: 1px 8px;
+    border-radius: var(--x-radius-pill);
+    background: var(--x-divider);
+    color: var(--x-text-secondary);
+    font-family: var(--x-font-mono);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 18px;
+}
+
 .chat-container {
     display: flex;
     flex: 1;
     min-height: 0;
+    text-align: left;
 }
 
 .session-list {
-    width: 250px;
-    border-right: 1px solid #eee;
+    width: 260px;
+    min-height: 0;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    border-right: 1px solid var(--x-border);
+    background: var(--x-surface-raised);
     overflow-y: auto;
-    padding: 10px;
+    padding: 8px;
 }
 
 .session-item {
+    width: 100%;
     display: flex;
     align-items: center;
-    padding: 10px;
+    gap: 10px;
+    padding: 8px;
+    margin-bottom: 2px;
+    border: 0;
+    border-radius: var(--x-radius-control);
+    background: transparent;
+    font: inherit;
+    color: inherit;
+    text-align: left;
     cursor: pointer;
-    border-radius: 8px;
-    margin-bottom: 10px;
+    transition: background-color 0.15s ease;
 }
 
 .session-item:hover {
-    background-color: #f5f5f5;
+    background: var(--x-canvas);
+}
+
+.session-item:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--x-focus-ring);
 }
 
 .session-item.active {
-    background-color: #e6f7ff;
+    background: var(--x-selected);
 }
 
 .avatar {
-    width: 40px;
-    height: 40px;
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
     border-radius: 50%;
-    margin-right: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.session-info {
-    width: calc(100% - 50px);
+.avatar--user {
+    background: var(--x-divider);
+    color: var(--x-text-secondary);
+}
+
+.session-item.active .avatar--user {
+    background: var(--x-surface);
+}
+
+.avatar--agent {
+    background: var(--x-ink);
 }
 
 .session-time {
-    font-size: 14px;
-    color: #272727;
-    float: left;
-    height: 30px;
-    line-height: 30px;
-    width: calc(100% - 30px);
-    /* Leave room for the message count */
+    flex: 1;
+    min-width: 0;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--x-text);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
 .message-count {
-    font-size: 14px;
-    color: #fff;
-    background-color: #b4b4b4;
-    border-radius: 20px;
-    float: left;
-    width: 20px;
-    height: 20px;
-    line-height: 20px;
-    margin-top: 5px;
-    margin-left: 5px;
+    min-width: 22px;
+    padding: 0 6px;
+    box-sizing: border-box;
+    border-radius: var(--x-radius-pill);
+    background: var(--x-surface);
+    border: 1px solid var(--x-border);
+    color: var(--x-text-secondary);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 18px;
+    text-align: center;
+}
+
+.chat-pane {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
 }
 
 .chat-content {
     flex: 1;
-    padding: 20px;
+    min-height: 0;
+    padding: 20px 24px;
     overflow-y: auto;
 }
 
 .message-item {
     display: flex;
-    margin-bottom: 20px;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 16px;
 }
 
 .message-item.user-message {
@@ -495,64 +568,93 @@ export default {
 }
 
 .message-content {
-    max-width: 60%;
-    padding: 10px 15px;
-    border-radius: 8px;
-    background-color: #f0f0f0;
-    margin: 0 10px;
+    max-width: 70%;
+    padding: 10px 14px;
+    border-radius: 14px;
+    border-top-left-radius: 4px;
+    background: var(--x-canvas);
+    color: var(--x-text);
+    font-size: 14px;
+    line-height: 1.55;
     text-align: left;
-    line-height: 20px;
-    position: relative;
     display: flex;
     align-items: center;
-}
-
-.audio-icon {
-    font-size: 20px;
-    cursor: pointer;
-    margin: 0 5px;
-    color: #1890ff;
+    gap: 8px;
+    word-break: break-word;
 }
 
 .user-message .message-content {
-    background-color: #1890ff;
-    color: white;
+    background: var(--x-ink);
+    color: var(--x-on-ink);
+    border-top-left-radius: 14px;
+    border-top-right-radius: 4px;
     flex-direction: row-reverse;
 }
 
-.user-message .audio-icon {
-    color: white;
+.tool-message .message-content {
+    background: var(--x-surface);
+    border: 1px solid var(--x-border);
+}
+
+.audio-btn {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--x-surface);
+    color: var(--x-ink);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.audio-btn:hover,
+.audio-btn:focus-visible {
+    box-shadow: 0 0 0 3px var(--x-focus-ring);
+    outline: none;
+}
+
+.user-message .audio-btn {
+    background: rgba(255, 255, 255, 0.16);
+    color: var(--x-on-ink);
+}
+
+.audio-icon {
+    font-size: 18px;
 }
 
 .content-wrapper {
     width: 100%;
+    min-width: 0;
 }
 
 .text-content {
     display: block;
+    white-space: pre-wrap;
+}
+
+.content-wrapper .text-content {
     margin-bottom: 4px;
 }
 
 .tool-call-text {
-    color: #1890ff;
-    font-family: 'Courier New', monospace;
-    font-weight: 500;
-    font-size: 12px;
     display: block;
     margin-top: 4px;
+    font-family: var(--x-font-mono);
+    font-size: 12px;
+    color: var(--x-text-secondary);
 }
 
 .user-message .tool-call-text {
-    color: #e6f7ff;
-}
-
-.tool-message .message-content {
-    background-color: #f0f0f0;
+    color: var(--x-night-text);
 }
 
 .tool-result-wrapper {
     position: relative;
-    padding-right: 20px;
+    padding-right: 28px;
 }
 
 .tool-result-collapsed {
@@ -561,24 +663,41 @@ export default {
     white-space: nowrap;
 }
 
+.tool-result-expanded {
+    white-space: pre-wrap;
+}
+
 .tool-toggle-btn {
     position: absolute;
     right: 0;
-    top: 0;
-    cursor: pointer;
-    color: #1890ff;
+    top: -2px;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: inherit;
     font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.tool-toggle-btn:hover {
-    color: #40a9ff;
+.tool-toggle-btn:hover,
+.tool-toggle-btn:focus-visible {
+    background: var(--x-divider);
+    color: var(--x-text);
+    outline: none;
 }
 
 .loading,
 .no-more {
     text-align: center;
-    padding: 10px 10px 30px 10px;
-    color: #999;
+    padding: 10px 10px 24px;
+    font-size: 12px;
+    color: var(--x-text-muted);
 }
 
 .no-session-selected {
@@ -586,44 +705,83 @@ export default {
     justify-content: center;
     align-items: center;
     height: 100%;
-    color: #999;
+    font-size: 14px;
+    color: var(--x-text-muted);
 }
 
 .time-divider {
-    text-align: center;
-    margin: 10px 0;
-    color: #999;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 12px 0 16px;
     font-size: 12px;
+    color: var(--x-text-muted);
+    white-space: nowrap;
 }
 
 .time-divider::before,
 .time-divider::after {
     content: '';
-    display: inline-block;
-    width: 30%;
+    flex: 1;
     height: 1px;
-    background-color: #eee;
-    vertical-align: middle;
-    margin: 0 10px;
+    background: var(--x-divider);
 }
 
 .download-buttons {
-    padding: 20px;
     display: flex;
-    gap: 10px;
-    border-top: 1px solid #eee;
-    background-color: white;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 12px 24px;
+    border-top: 1px solid var(--x-border);
+    background: var(--x-surface);
 }
 
-.download-buttons .el-button {
-    flex: 1;
+.download-buttons .el-button + .el-button {
+    margin-left: 0;
+}
+
+@media (max-width: 768px) {
+    .chat-container {
+        flex-direction: column;
+    }
+
+    .session-list {
+        width: 100%;
+        max-height: 168px;
+        border-right: 0;
+        border-bottom: 1px solid var(--x-border);
+    }
+
+    .chat-content {
+        padding: 16px;
+    }
+
+    .message-content {
+        max-width: 82%;
+    }
+
+    .download-buttons {
+        padding: 12px 16px;
+        justify-content: stretch;
+    }
+
+    .download-buttons .el-button {
+        flex: 1 1 100%;
+        white-space: normal;
+        word-break: normal;
+        overflow-wrap: anywhere;
+        height: auto;
+        min-height: 32px;
+        line-height: 1.4;
+    }
 }
 </style>
 
 <style>
 .chat-history-dialog {
-    min-width: 700px;
-    max-width: 85vw;
+    min-width: min(700px, calc(100vw - 32px));
+    max-width: min(85vw, calc(100vw - 32px));
     /* Fallback: keep the dialog from shrinking to content height if the size="large" height does not apply */
     height: calc(100vh - 20px) !important;
 }
@@ -635,5 +793,17 @@ export default {
     flex-direction: column;
     /* Override the size="large" default of 100vh - 130px so the body reaches the dialog bottom; flex: 1 fills the space */
     max-height: calc(100vh - 74px) !important;
+}
+
+@media (max-width: 768px) {
+    .chat-history-dialog {
+        width: calc(100vw - 32px) !important;
+        max-width: calc(100vw - 32px);
+    }
+
+    /* The title can wrap on narrow screens; let flex size the body instead of a fixed offset */
+    .chat-history-dialog .el-dialog__body {
+        max-height: none !important;
+    }
 }
 </style>

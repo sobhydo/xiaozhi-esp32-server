@@ -1,83 +1,110 @@
 <template>
   <div class="welcome">
     <HeaderBar />
-    <div class="main-wrapper">
-      <el-card class="main-card" shadow="never">
-        <div class="operation-header">
-          <h2 class="page-title">{{ $t('dictManagement.pageTitle') }}</h2>
-          <div class="right-operations">
-            <el-input :placeholder="$t('dictManagement.searchPlaceholder')" v-model="search" class="search-input"
-              @keyup.enter.native="handleSearch" clearable />
-            <CustomButton icon="el-icon-search" type="confirm" @click="handleSearch">
-              {{ $t('dictManagement.search') }}
-            </CustomButton>
-          </div>
+
+    <main class="page">
+      <header class="page-header">
+        <div class="page-heading">
+          <h1 class="page-title">{{ $t('dictManagement.pageTitle') }}</h1>
+          <p class="page-description">{{ $t('console.dictDescription') }}</p>
         </div>
-        <div class="content-panel">
-          <!-- Left: dictionary type list -->
-          <div class="dict-type-panel">
-            <div class="dict-type-header">
-              <h4 class="dict-type-title">{{ $t('dictManagement.dictTypeCategory') }}</h4>
-              <div>
-                <el-button icon="el-icon-plus" size="mini" @click="showAddDictTypeDialog" />
-                <el-button icon="el-icon-delete" size="mini" @click="batchDeleteDictType" />
-              </div>
-            </div>
-            <div class="dict-type-checkbox" v-loading="dictTypeLoading">
-              <el-checkbox class="dict-type-all" :indeterminate="isIndeterminate" v-model="checkAll" @change="handleCheckAllChange">{{ $t('common.selectAll') }}</el-checkbox>
-              <el-checkbox-group v-model="checkedDictTypesIds" @change="handleDictTypeSelectionChange">
-                <div 
-                  class="dict-type-item" 
-                  :class="{ 'dict-type-active': selectedDictType?.id === item.id }"
-                  v-for="item in dictTypeList" 
-                  :key="item.id"
-                >
-                  <el-checkbox :label="item.dictName" :key="item.id">
-                  </el-checkbox>
-                  <div class="dict-type-item-content" @click="handleDictTypeRowClick(item)">
-                    <span class="dict-type-name">{{item.dictName}}</span>
-                    <el-button class="dict-type-edit-btn" type="text" icon="el-icon-edit" size="mini" @click.stop="editDictType(item)"/>
-                  </div>
-                </div>
-              </el-checkbox-group>
+        <div class="page-actions">
+          <el-button type="primary" icon="el-icon-plus" @click="showAddDictDataDialog">
+            {{ $t('dictManagement.addDictData') }}
+          </el-button>
+        </div>
+      </header>
+
+      <div class="dict-layout">
+        <!-- Left: dictionary type list -->
+        <aside class="dict-type-panel">
+          <div class="dict-type-header">
+            <h2 class="dict-type-title">{{ $t('dictManagement.dictTypeCategory') }}</h2>
+            <div class="dict-type-tools">
+              <el-tooltip :content="$t('dictManagement.addDictType')" placement="top">
+                <el-button type="text" class="icon-btn" icon="el-icon-plus"
+                  :aria-label="$t('dictManagement.addDictType')" @click="showAddDictTypeDialog" />
+              </el-tooltip>
+              <el-tooltip :content="$t('dictManagement.batchDeleteDictType')" placement="top">
+                <el-button type="text" class="icon-btn icon-btn--danger" icon="el-icon-delete"
+                  :aria-label="$t('dictManagement.batchDeleteDictType')" @click="batchDeleteDictType" />
+              </el-tooltip>
             </div>
           </div>
-          <!-- Right: dictionary data list -->
-          <div class="content-area">
-            <CustomTable :data="dictDataList" :columns="tableColumns" :loading="dictDataLoading" :show-selection="true"
-              :show-operations="true" :operations-label="$t('dictManagement.operation')" :total="total"
-              :current-page="currentPage" :page-size="pageSize" :page-size-options="pageSizeOptions"
-              @size-change="handlePageSizeChange" @page-change="goToPage">
-              <template slot="selection" slot-scope="scope">
-                <el-checkbox v-model="scope.row.selected"></el-checkbox>
-              </template>
-              <template slot="operations" slot-scope="scope">
-                <el-button type="text" size="mini" @click="editDictData(scope.row)">
+          <div class="dict-type-checkbox" v-loading="dictTypeLoading">
+            <el-checkbox class="dict-type-all" :indeterminate="isIndeterminate" v-model="checkAll"
+              @change="handleCheckAllChange">{{ $t('common.selectAll') }}</el-checkbox>
+            <el-checkbox-group v-model="checkedDictTypesIds" @change="handleDictTypeSelectionChange">
+              <div
+                class="dict-type-item"
+                :class="{ 'dict-type-active': selectedDictType?.id === item.id }"
+                v-for="item in dictTypeList"
+                :key="item.id"
+              >
+                <el-checkbox :label="item.dictName" :key="item.id">
+                </el-checkbox>
+                <button type="button" class="dict-type-item-content"
+                  :aria-current="selectedDictType?.id === item.id ? 'true' : null"
+                  @click="handleDictTypeRowClick(item)">
+                  <span class="dict-type-name">{{ item.dictName }}</span>
+                  <span v-if="item.dictType" class="dict-type-code">{{ item.dictType }}</span>
+                </button>
+                <el-button class="dict-type-edit-btn icon-btn" type="text" icon="el-icon-edit"
+                  :aria-label="$t('dictManagement.editDictType')" @click.stop="editDictType(item)" />
+              </div>
+            </el-checkbox-group>
+          </div>
+        </aside>
+
+        <!-- Right: dictionary data list -->
+        <section class="dict-card">
+          <div class="card-header">
+            <h2 class="card-title">{{ selectedDictType ? selectedDictType.dictName : $t('dictManagement.pageTitle') }}</h2>
+            <div class="search-group">
+              <el-input :placeholder="$t('dictManagement.searchPlaceholder')"
+                :aria-label="$t('dictManagement.searchPlaceholder')" v-model="search" class="search-input"
+                prefix-icon="el-icon-search" @keyup.enter.native="handleSearch" clearable />
+              <el-button class="btn-search" @click="handleSearch">
+                {{ $t('dictManagement.search') }}
+              </el-button>
+            </div>
+          </div>
+          <CustomTable class="dict-table" :data="dictDataList" :columns="tableColumns" :loading="dictDataLoading"
+            :show-selection="true" :show-operations="true" :operations-label="$t('dictManagement.operation')"
+            :operations-width="150" :total="total" :current-page="currentPage" :page-size="pageSize"
+            :page-size-options="pageSizeOptions" @size-change="handlePageSizeChange" @page-change="goToPage">
+            <template slot="selection" slot-scope="scope">
+              <el-checkbox v-model="scope.row.selected" :aria-label="scope.row.dictLabel"></el-checkbox>
+            </template>
+            <template slot="dictValue" slot-scope="scope">
+              <span class="mono">{{ scope.row.dictValue }}</span>
+            </template>
+            <template slot="operations" slot-scope="scope">
+              <div class="row-actions">
+                <el-button type="text" size="mini" class="action-btn" @click="editDictData(scope.row)">
                   {{ $t('dictManagement.edit') }}
                 </el-button>
-                <el-button type="text" size="mini" @click="deleteDictData(scope.row)">
+                <el-button type="text" size="mini" class="action-btn action-btn--danger"
+                  @click="deleteDictData(scope.row)">
                   {{ $t('dictManagement.delete') }}
                 </el-button>
-              </template>
-              <template slot="footer-btns">
-                <div class="ctrl_btn">
-                  <CustomButton :icon="isAllDictDataSelected ? 'el-icon-circle-close' : 'el-icon-circle-check'"
-                    size="small" @click="selectAllDictData">
-                    {{ isAllDictDataSelected ? $t('dictManagement.deselectAll') : $t('dictManagement.selectAll') }}
-                  </CustomButton>
-                  <CustomButton type="add" icon="el-icon-plus" size="small" @click="showAddDictDataDialog">
-                    {{ $t('dictManagement.addDictData') }}
-                  </CustomButton>
-                  <CustomButton size="small" type="delete" icon="el-icon-delete" @click="batchDeleteDictData">
-                    {{ $t('dictManagement.batchDeleteDictData') }}
-                  </CustomButton>
-                </div>
-              </template>
-            </CustomTable>
-          </div>
-        </div>
-      </el-card>
-    </div>
+              </div>
+            </template>
+            <template slot="footer-btns">
+              <div class="batch-actions">
+                <CustomButton :icon="isAllDictDataSelected ? 'el-icon-circle-close' : 'el-icon-circle-check'"
+                  size="small" @click="selectAllDictData">
+                  {{ isAllDictDataSelected ? $t('dictManagement.deselectAll') : $t('dictManagement.selectAll') }}
+                </CustomButton>
+                <CustomButton size="small" type="delete" icon="el-icon-delete" @click="batchDeleteDictData">
+                  {{ $t('dictManagement.batchDeleteDictData') }}
+                </CustomButton>
+              </div>
+            </template>
+          </CustomTable>
+        </section>
+      </div>
+    </main>
 
     <!-- Dictionary type edit dialog component -->
     <DictTypeDialog :visible.sync="dictTypeDialogVisible" :title="dictTypeDialogTitle" :dictTypeData="dictTypeForm"
@@ -86,7 +113,7 @@
     <!-- Dictionary data edit dialog component -->
     <DictDataDialog :visible.sync="dictDataDialogVisible" :title="dictDataDialogTitle" :dictData="dictDataForm"
       :dictTypeId="selectedDictType?.id" @save="saveDictData" />
-    <el-footer style="flex-shrink:unset;">
+    <el-footer>
       <version-footer />
     </el-footer>
   </div>
@@ -183,17 +210,20 @@ export default {
         {
           prop: 'dictLabel',
           label: this.$t('dictManagement.dictLabel'),
-          align: 'center'
+          align: 'left',
+          minWidth: 140
         },
         {
           prop: 'dictValue',
           label: this.$t('dictManagement.dictValue'),
-          align: 'center'
+          align: 'left',
+          minWidth: 140
         },
         {
           prop: 'sort',
           label: this.$t('dictManagement.sort'),
-          align: 'center'
+          align: 'left',
+          minWidth: 80
         }
       ]
     },
@@ -383,198 +413,386 @@ export default {
 
 <style lang="scss" scoped>
 .welcome {
-  min-width: 900px;
-  min-height: 506px;
   height: 100vh;
-  display: flex;
-  position: relative;
-  flex-direction: column;
-  background-size: cover;
-  background: #eff4ff;
-  -webkit-background-size: cover;
-  -o-background-size: cover;
-  overflow: hidden;
-}
-
-.main-wrapper {
-  height: calc(100vh - 63px - 35px);
-  padding: 20px 22px 0;
-  position: relative;
+  min-height: 600px;
   display: flex;
   flex-direction: column;
-  box-sizing: border-box;
+  background: var(--x-canvas);
+  text-align: left;
 }
 
-.content-panel {
+.page {
   flex: 1;
-  gap: 16px;
-  padding: 0 20px;
-  display: flex;
   min-height: 0;
-}
-
-.dict-type-panel {
-  width: 340px;
+  width: 100%;
+  max-width: 1280px;
+  padding: 32px 32px 0;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  margin-bottom: 20px;
-  box-shadow: 0 0 12px rgba(74, 124, 253, 0.12);
-  border-radius: 6px;
-  .dict-type-checkbox {
-    flex: 1;
-    padding: 16px 10px;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-    .dict-type-all {
-      margin-left: 10px;
-    }
-    ::v-deep .el-checkbox-group {
-      width: 100%;
-      gap: 10px;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      .el-checkbox__label {
-        display: none;
-      }
-    }
-    .dict-type-item {
-      padding: 0 10px;
-      padding-right: 0;
-      width: 100%;
-      display: flex;
-      align-items: center;
-      cursor: pointer;
-      box-sizing: border-box;
-      border-radius: 4px;
-      &:hover {
-       background: #4998ff;
-        .dict-type-name, .dict-type-edit-btn {
-          color: #ffffff;
-        }
-      }
-      .dict-type-item-content {
-        flex: 1;
-        padding: 8px 0;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-      }
-      .dict-type-name {
-        margin-left: 10px;
-        font-size: 14px;
-      }
-      .dict-type-edit-btn {
-        color: #303133;
-        padding: 6px 10px;
-        font-size: 14px;
-      }
-    }
-    .dict-type-active {
-      background-color: #4998ff;
-      .dict-type-name, .dict-type-edit-btn {
-        color: #ffffff;
-      }
-    }
-  }
+  gap: 20px;
+}
+
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.page-heading {
+  min-width: 0;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+  color: var(--x-text);
+}
+
+.page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dict-layout {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 20px;
+}
+
+// Dictionary type list
+.dict-type-panel {
+  width: 260px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--x-surface);
+  border: 1px solid var(--x-border);
+  border-radius: var(--x-radius-card);
+  overflow: hidden;
 }
 
 .dict-type-header {
   display: flex;
-  padding: 10px 16px;
-  border-bottom: 1px solid #ebeef5;
-  display: flex;
   justify-content: space-between;
   align-items: center;
-  .dict-type-title {
-    margin: 0;
-    font-weight: 500;
+  gap: 8px;
+  padding: 10px 10px 10px 16px;
+  border-bottom: 1px solid var(--x-border);
+}
+
+.dict-type-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--x-text);
+}
+
+.dict-type-tools {
+  display: flex;
+  gap: 2px;
+}
+
+.icon-btn {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  margin: 0 !important;
+  color: var(--x-text-muted);
+  font-size: 15px;
+
+  &:hover,
+  &:focus {
+    background: var(--x-canvas);
+    color: var(--x-text);
   }
-  > div {
-    .el-button {
-      border-radius: 6px;
-      padding: 7px 8px;
+
+  &--danger:hover,
+  &--danger:focus {
+    background: var(--x-danger-bg);
+    color: var(--x-danger-text);
+  }
+}
+
+.dict-type-checkbox {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  .dict-type-all {
+    padding: 8px 10px;
+    margin-right: 0;
+    color: var(--x-text-muted);
+
+    ::v-deep .el-checkbox__label {
+      font-size: 13px;
     }
   }
-}
 
-.content-area {
-  flex: 1;
-  height: 100%;
-  min-width: 600px;
-  display: flex;
-  flex-direction: column;
-  padding: 0 0 20px;
-  box-sizing: border-box;
-}
-
-.main-card {
-  background: white;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  border: none;
-  border-radius: 15px;
-  overflow: hidden;
-
-  ::v-deep .el-card__body {
-    padding: 0;
+  ::v-deep .el-checkbox-group {
     display: flex;
     flex-direction: column;
-    flex: 1;
+    gap: 2px;
+  }
+
+  // Item checkboxes keep their label for screen readers only
+  ::v-deep .el-checkbox-group .el-checkbox__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
     overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
   }
 }
 
-.operation-header {
+.dict-type-item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
-  flex-shrink: 0;
+  gap: 4px;
+  padding-left: 10px;
+  border-radius: var(--x-radius-control);
+  transition: background 0.15s;
+
+  .el-checkbox {
+    margin-right: 0;
+  }
+
+  &:hover {
+    background: var(--x-surface-raised);
+  }
+
+  &.dict-type-active {
+    background: var(--x-selected);
+
+    .dict-type-name {
+      font-weight: 600;
+    }
+  }
+
+  .dict-type-edit-btn {
+    flex-shrink: 0;
+  }
 }
 
-.page-title {
-  font-weight: 500;
-  font-size: 24px;
-  margin: 0;
-}
-
-.right-operations {
+.dict-type-item-content {
+  flex: 1;
+  min-width: 0;
   display: flex;
-  gap: 10px;
-  margin-left: auto;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  padding: 7px 4px;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 8px;
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--x-focus-ring);
+  }
+}
+
+.dict-type-name {
+  max-width: 100%;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--x-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dict-type-code {
+  max-width: 100%;
+  font-family: var(--x-font-mono);
+  font-size: 11px;
+  color: var(--x-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// Dictionary data card
+.dict-card {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--x-surface);
+  border: 1px solid var(--x-border);
+  border-radius: var(--x-radius-card);
+  overflow: hidden;
+}
+
+.card-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--x-border);
+}
+
+.card-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--x-text);
+}
+
+.search-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .search-input {
   width: 240px;
+  max-width: 100%;
 }
 
-.ctrl_btn {
+::v-deep .search-input .el-input__inner {
+  height: 34px;
+  line-height: 34px;
+}
+
+::v-deep .search-input .el-input__icon {
+  line-height: 34px;
+  color: var(--x-text-muted);
+}
+
+.btn-search {
+  height: 34px;
+  padding: 0 14px;
+}
+
+/* Table sits flush inside the card; CustomTable's own frame is removed */
+.dict-table {
+  ::v-deep .table-container {
+    border: 0;
+    border-radius: 0;
+  }
+
+  ::v-deep .table-footer {
+    padding: 10px 16px;
+    border-top: 1px solid var(--x-border);
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  ::v-deep .el-table th.el-table__cell > .cell {
+    white-space: nowrap;
+  }
+
+  ::v-deep .el-table th.el-table__cell > .cell,
+  ::v-deep .el-table td.el-table__cell > .cell {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+}
+
+.batch-actions {
   display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  ::v-deep .el-button + .el-button {
+    margin-left: 0;
+  }
 }
 
-:deep(.el-table .el-button--text) {
-  color: #7079aa;
+.mono {
+  font-family: var(--x-font-mono);
+  font-size: 13px;
+  color: var(--x-text-secondary);
 }
 
-:deep(.el-table .el-button--text:hover) {
-  color: #5a64b5;
+.row-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  white-space: nowrap;
 }
 
-:deep(.el-checkbox__inner) {
-  background-color: #ffffff !important;
-  border-color: #cccccc !important;
+.action-btn {
+  height: 28px;
+  padding: 0 8px;
+  margin: 0 !important;
+  color: var(--x-text-secondary);
+  font-size: 13px;
+
+  &:hover,
+  &:focus {
+    background: var(--x-canvas);
+    color: var(--x-text);
+  }
+
+  &--danger:hover,
+  &--danger:focus {
+    background: var(--x-danger-bg);
+    color: var(--x-danger-text);
+  }
 }
 
-:deep(.el-checkbox__inner:hover) {
-  border-color: #cccccc !important;
+.el-footer {
+  height: auto !important;
+  padding: 0;
 }
 
-:deep(.el-checkbox__input.is-checked .el-checkbox__inner) {
-  background-color: #5f70f3 !important;
-  border-color: #5f70f3 !important;
+@media (max-width: 900px) {
+  .welcome {
+    height: auto;
+    min-height: calc(100vh - var(--x-topbar-height));
+  }
+
+  .dict-layout {
+    flex: none;
+    flex-direction: column;
+  }
+
+  .dict-type-panel {
+    width: 100%;
+    max-height: 280px;
+  }
+
+  .dict-card {
+    flex: none;
+    height: 560px;
+  }
+}
+
+@media (max-width: 768px) {
+  .page {
+    padding: 16px 16px 0;
+    gap: 16px;
+  }
+
+  .search-group {
+    width: 100%;
+  }
+
+  .search-input {
+    flex: 1;
+    width: auto;
+  }
 }
 </style>

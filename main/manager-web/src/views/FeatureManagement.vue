@@ -1,112 +1,107 @@
 <template>
   <div class="welcome">
     <HeaderBar />
-    <div class="main-wrapper">
-      <div class="content-panel">
-        <div class="content-area">
-          <el-card class="feature-card" shadow="never">
-            <div class="config-header">
-              <h2 class="page-title">{{ $t('header.featureManagement') }}</h2>
-              <div class="header-actions">
-                <CustomButton :icon="isAllSelected ? 'el-icon-circle-close' : 'el-icon-circle-check'" size="medium" @click="!isSaving && toggleSelectAll()" :disabled="isSaving">
-                  {{ isAllSelected ? $t('featureManagement.deselectAll') : $t('featureManagement.selectAll') }}
-                </CustomButton>
-                <CustomButton icon="el-icon-refresh" size="medium" @click="handleReset" :disabled="isSaving">
-                  {{ $t('featureManagement.reset') }}
-                </CustomButton>
-                <CustomButton icon="el-icon-setting" size="medium" type="confirm" @click="handleSave" :disabled="isSaving">
-                  {{ isSaving ? $t('featureManagement.saving') : $t('featureManagement.save') }}
-                </CustomButton>
-              </div>
-            </div>
-            <div class="divider"></div>
 
-            <!-- Feature group container - left/right layout -->
-            <div class="feature-groups-container">
-              <!-- Feature management group -->
-              <div v-if="featureManagementFeatures.length > 0" class="feature-group">
-                <div class="group-title">
-                  <img src="@/assets/setting/menu.png" alt="" width="28" height="28">
-                  <div class="group-header">
-                    <span class="group-name">{{ $t('featureManagement.groupName.featureManagement') }}</span>
-                    <span class="module-count">{{ $t('featureManagement.moduleCount', { count: featureManagementFeatures.length }) }}</span>
-                  </div>
-                </div>
-                <p class="group-description">{{ $t('featureManagement.groupDescription.featureManagement') }}</p>
-                <div class="features-grid">
-                  <div
-                    v-for="feature in featureManagementFeatures"
-                    :key="feature.id"
-                    class="feature-card-item"
-                    :class="{ 'feature-enabled': feature.enabled, 'feature-disabled': isSaving }"
-                    @click="!isSaving && toggleFeature(feature)"
-                  >
-                    <img :src="featureIcons[feature.id]" alt="" width="60" height="60">
-                    <div class="feature-content">
-                      <div class="feature-header">
-                        <h3 class="feature-name">{{ $t(`feature.${feature.id}.name`) }}</h3>
-                        <div class="feature-checkbox-container">
-                          <el-checkbox
-                            v-model="feature.enabled"
-                            @change="!isSaving && toggleFeature(feature)"
-                            class="feature-checkbox"
-                            :disabled="isSaving"
-                          />
-                        </div>
-                      </div>
-                      <p class="feature-description">{{ $t(`feature.${feature.id}.description`) }}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Voice management group -->
-              <div v-if="voiceManagementFeatures.length > 0" class="feature-group">
-                <div class="group-title">
-                  <img src="@/assets/setting/agent.png" alt="" width="28" height="28">
-                  <div class="group-header">
-                    <span class="group-name">{{ $t('featureManagement.groupName.voiceManagement') }}</span>
-                    <span class="module-count">{{ $t('featureManagement.moduleCount', { count: voiceManagementFeatures.length }) }}</span>
-                  </div>
-                </div>
-                <p class="group-description">{{ $t('featureManagement.groupDescription.voiceManagement') }}</p>
-                <div class="features-grid">
-                  <div
-                    v-for="feature in voiceManagementFeatures"
-                    :key="feature.id"
-                    class="feature-card-item"
-                    :class="{ 'feature-enabled': feature.enabled, 'feature-disabled': isSaving }"
-                    @click="!isSaving && toggleFeature(feature)"
-                  >
-                    <img :src="voiceManagementIcons[feature.id]" alt="" width="60" height="60">
-                    <div class="feature-content">
-                      <div class="feature-header">
-                        <h3 class="feature-name">{{ $t(`feature.${feature.id}.name`) }}</h3>
-                        <div class="feature-checkbox-container">
-                          <el-checkbox
-                            v-model="feature.enabled"
-                            @change="!isSaving && toggleFeature(feature)"
-                            class="feature-checkbox"
-                            :disabled="isSaving"
-                          />
-                        </div>
-                      </div>
-                      <p class="feature-description">{{ $t(`feature.${feature.id}.description`) }}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div v-if="filteredFeatures.length === 0" class="empty-state">
-              <el-empty :description="$t('featureManagement.noFeatures')">
-                <p class="empty-tip">{{ $t('featureManagement.contactAdmin') }}</p>
-              </el-empty>
-            </div>
-          </el-card>
+    <main class="page">
+      <header class="page-header">
+        <div class="page-heading">
+          <h1 class="page-title">{{ $t('header.featureManagement') }}</h1>
+          <p class="page-description">{{ $t('console.featuresDescription') }}</p>
         </div>
+        <div class="page-actions">
+          <el-button :icon="isAllSelected ? 'el-icon-circle-close' : 'el-icon-circle-check'" @click="!isSaving && toggleSelectAll()" :disabled="isSaving">
+            {{ isAllSelected ? $t('featureManagement.deselectAll') : $t('featureManagement.selectAll') }}
+          </el-button>
+          <el-button icon="el-icon-refresh" @click="handleReset" :disabled="isSaving">
+            {{ $t('featureManagement.reset') }}
+          </el-button>
+          <el-button type="primary" icon="el-icon-check" @click="handleSave" :disabled="isSaving" :loading="isSaving">
+            {{ isSaving ? $t('featureManagement.saving') : $t('featureManagement.save') }}
+          </el-button>
+        </div>
+      </header>
+
+      <!-- Feature groups -->
+      <div class="feature-groups-container">
+        <section v-if="featureManagementFeatures.length > 0" class="feature-group">
+          <header class="group-head">
+            <div class="group-header">
+              <h2 class="group-name">{{ $t('featureManagement.groupName.featureManagement') }}</h2>
+              <span class="module-count">{{ $t('featureManagement.moduleCount', { count: featureManagementFeatures.length }) }}</span>
+            </div>
+            <p class="group-description">{{ $t('featureManagement.groupDescription.featureManagement') }}</p>
+          </header>
+          <ul class="feature-list">
+            <li
+              v-for="feature in featureManagementFeatures"
+              :key="feature.id"
+              class="feature-row"
+              :class="{ 'feature-enabled': feature.enabled, 'feature-disabled': isSaving }"
+            >
+              <span class="feature-icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path v-for="(d, n) in featureIconPaths[feature.id] || featureIconPaths.default" :key="n" :d="d" />
+                </svg>
+              </span>
+              <label class="feature-content" :for="'feature-switch-' + feature.id">
+                <span class="feature-name">{{ $t(`feature.${feature.id}.name`) }}</span>
+                <span class="feature-description">{{ $t(`feature.${feature.id}.description`) }}</span>
+              </label>
+              <el-switch
+                :id="'feature-switch-' + feature.id"
+                :value="feature.enabled"
+                :disabled="isSaving"
+                class="feature-switch"
+                @change="!isSaving && toggleFeature(feature)"
+              />
+            </li>
+          </ul>
+        </section>
+
+        <section v-if="voiceManagementFeatures.length > 0" class="feature-group">
+          <header class="group-head">
+            <div class="group-header">
+              <h2 class="group-name">{{ $t('featureManagement.groupName.voiceManagement') }}</h2>
+              <span class="module-count">{{ $t('featureManagement.moduleCount', { count: voiceManagementFeatures.length }) }}</span>
+            </div>
+            <p class="group-description">{{ $t('featureManagement.groupDescription.voiceManagement') }}</p>
+          </header>
+          <ul class="feature-list">
+            <li
+              v-for="feature in voiceManagementFeatures"
+              :key="feature.id"
+              class="feature-row"
+              :class="{ 'feature-enabled': feature.enabled, 'feature-disabled': isSaving }"
+            >
+              <span class="feature-icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path v-for="(d, n) in featureIconPaths[feature.id] || featureIconPaths.default" :key="n" :d="d" />
+                </svg>
+              </span>
+              <label class="feature-content" :for="'feature-switch-' + feature.id">
+                <span class="feature-name">{{ $t(`feature.${feature.id}.name`) }}</span>
+                <span class="feature-description">{{ $t(`feature.${feature.id}.description`) }}</span>
+              </label>
+              <el-switch
+                :id="'feature-switch-' + feature.id"
+                :value="feature.enabled"
+                :disabled="isSaving"
+                class="feature-switch"
+                @change="!isSaving && toggleFeature(feature)"
+              />
+            </li>
+          </ul>
+        </section>
       </div>
-    </div>
+
+      <div v-if="filteredFeatures.length === 0" class="empty-state">
+        <el-empty :description="$t('featureManagement.noFeatures')" :image-size="80">
+          <p class="empty-tip">{{ $t('featureManagement.contactAdmin') }}</p>
+        </el-empty>
+      </div>
+    </main>
 
     <el-footer>
       <VersionFooter />
@@ -118,22 +113,12 @@
 import HeaderBar from "@/components/HeaderBar.vue";
 import VersionFooter from "@/components/VersionFooter.vue";
 import featureManager from "@/utils/featureManager.js";
-import CustomButton from "@/components/CustomButton.vue";
-
-import voiceprintIcon from '@/assets/setting/voiceprint.png'
-import voiceCloneIcon from '@/assets/setting/voiceclone.png'
-import knowledgeBaseIcon from '@/assets/setting/knowledgeBase.png'
-import mcpAccessPointIcon from '@/assets/setting/mcpAccessPoint.png'
-import addressBookIcon from '@/assets/setting/addressBook.png'
-import vadIcon from '@/assets/setting/vad.png'
-import asrIcon from '@/assets/setting/asr.png'
 
 export default {
   name: "FeatureManagement",
   components: {
     HeaderBar,
-    VersionFooter,
-    CustomButton
+    VersionFooter
   },
   data() {
     return {
@@ -141,17 +126,16 @@ export default {
       featureManagementFeatures: [],
       voiceManagementFeatures: [],
       isSaving: false, // Saving-state lock
-      // Feature module icon mapping
-      featureIcons: {
-        'voiceprintRecognition': voiceprintIcon,
-        'voiceClone': voiceCloneIcon,
-        'knowledgeBase': knowledgeBaseIcon,
-        'mcpAccessPoint': mcpAccessPointIcon,
-        'addressBook': addressBookIcon,
-      },
-      voiceManagementIcons: {
-        'vad': vadIcon,
-        'asr': asrIcon,
+      // Stroke icon paths (24px grid) for each feature module
+      featureIconPaths: {
+        voiceprintRecognition: ['M2 12h2', 'M6 8v8', 'M10 5v14', 'M14 9v6', 'M18 7v10', 'M22 12h-2'],
+        voiceClone: ['M9 3a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z', 'M3 10v1a6 6 0 0 0 12 0v-1', 'M9 17v4', 'M18 8h3', 'M18 12h3', 'M18 16h3'],
+        knowledgeBase: ['M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2V5z', 'M4 19a2 2 0 0 1 2-2h13', 'M9 7h6'],
+        mcpAccessPoint: ['M9 2v5', 'M15 2v5', 'M6 7h12v4a6 6 0 0 1-12 0V7z', 'M12 17v5'],
+        addressBook: ['M6 3h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6V3z', 'M3 8h3', 'M3 16h3', 'M13 11a2 2 0 1 0 0-4 2 2 0 0 0 0 4z', 'M9.5 16a3.5 3.5 0 0 1 7 0'],
+        vad: ['M3 12h4l3-8 4 16 3-8h4'],
+        asr: ['M12 3a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z', 'M5 10v1a7 7 0 0 0 14 0v-1', 'M12 18v3'],
+        default: ['M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z']
       },
     }
   },
@@ -357,271 +341,216 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import '@/styles/global.scss';
-
 .welcome {
-  min-width: 900px;
-  min-height: 506px;
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
-  position: relative;
   flex-direction: column;
-  background-size: cover;
-  background: #eff4ff;
-  -webkit-background-size: cover;
-  -o-background-size: cover;
-  overflow: hidden;
+  background: var(--x-canvas);
+  text-align: left;
 }
 
-.operation-bar {
+.page {
+  flex: 1;
+  width: 100%;
+  max-width: 1280px;
+  padding: 32px;
+  box-sizing: border-box;
   display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
   justify-content: space-between;
-  align-items: center;
-  padding: 22px 24px;
-}
-
-.page-title {
-  font-weight: 500;
-  font-size: 24px;
-  margin: 0;
-}
-
-.config-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 0 16px 0;
-}
-
-.header-icon {
-  width: 40px;
-  height: 40px;
-  background: #5778ff;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 12px;
-}
-
-.header-icon img {
-  width: 20px;
-  height: 20px;
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-left: auto;
-}
-
-.divider {
-  height: 1px;
-  background: #f3f1f1;
-  margin-bottom: 20px;
-}
-
-.main-wrapper {
-  height: calc(100vh - 63px - 35px);
-  margin: 20px 22px 0;
-  border-radius: 15px;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  overflow: auto;
-}
-
-.content-panel {
-  flex: 1;
-  display: flex;
-  overflow: hidden;
-  height: 100%;
-  border-radius: 15px;
-  background: transparent;
-  border: 1px solid #fff;
-}
-
-.content-area {
-  flex: 1;
-  height: 100%;
-  min-width: 600px;
-  overflow: auto;
-  background-color: white;
-  display: flex;
-  flex-direction: column;
-}
-
-.feature-card {
-  background: white;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  border: none;
-  box-shadow: none;
-  overflow: hidden;
-}
-
-.feature-card ::v-deep .el-card__body {
-  padding: 14px 20px;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  overflow: auto;
-  @include scrollbar-style;
-}
-
-.features-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 16px;
 }
 
-.feature-card-item {
-  display: flex;
-  padding: 20px;
-  border-radius: 10px;
-  border: 2px solid #e0e0e0;
-  background-color: white;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  user-select: none;
-  position: relative;
-}
-
-.feature-card-item:hover {
-  border-color: #869bf0;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-  transform: translateY(-2px);
-}
-
-.feature-card-item.feature-enabled {
-  border: 2px solid transparent;
-  background: linear-gradient(white, white) padding-box,
-              linear-gradient(to right, #4a7cfd, #8154fc) border-box;
-  box-shadow: 0 4px 10px rgba(95, 112, 243, 0.2);
-  transform: translateY(-2px);
-}
-.feature-content {
-  width: 100%;
-  margin-left: 16px;
-}
-
-.feature-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: 6px;
-}
-.feature-checkbox-container {
-  margin-top: 4px;
-  display: flex;
-  align-items: center;
-  margin-left: 30px;
-}
-
-.feature-checkbox ::v-deep .el-checkbox__input {
-  transform: scale(1.5);
-}
-
-.feature-checkbox ::v-deep .el-checkbox__input.is-checked .el-checkbox__inner {
-  background-color: #5778ff;
-  border-color: #5778ff;
-}
-
-.feature-checkbox ::v-deep .el-checkbox__input.is-checked + .el-checkbox__label {
-  color: #5778ff;
-}
-
-.feature-name {
-  white-space: normal;
-  word-break: break-word;
-  overflow-wrap: break-word;
-  font-size: 18px;
-  line-height: 1.4;
-  font-weight: 600;
-  color: #333;
-  margin: 0;
-  transition: color 0.3s ease;
-}
-
-.feature-description {
-  font-size: 14px;
-  line-height: 1.6;
-  color: #666;
-  margin: 0;
-  transition: color 0.3s ease;
-  text-align: left;
-}
-
-/* Feature group container - left/right layout */
-.feature-groups-container {
-  display: flex;
-  gap: 32px;
-  align-items: flex-start;
-  position: relative;
-}
-
-/* Divider between groups */
-.feature-groups-container::before {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: 0;
-  bottom: 0;
-  width: 1px;
-  height: 550px;
-  background: #e0e0e0;
-  opacity: 0.5;
-  transform: translateX(-50%);
-}
-
-/* Group styles */
-.feature-group {
-  flex: 1;
+.page-heading {
   min-width: 0;
-  margin-bottom: 32px;
 }
 
-.group-title {
-  margin-top: 0;
-  display: flex;
-  align-items: center;
-  font-size: 18px;
-  line-height: 18px;
+.page-title {
+  margin: 0;
+  font-size: 24px;
   font-weight: 600;
-  color: #303133;
-  margin-bottom: 0;
-  text-align: left;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+  color: var(--x-text);
 }
-.group-name {
-  margin-left: 10px;
+
+.page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  .el-button + .el-button {
+    margin-left: 0;
+  }
+}
+
+.feature-groups-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  gap: 20px;
+  align-items: start;
+}
+
+.feature-group {
+  min-width: 0;
+  background: var(--x-surface);
+  border: 1px solid var(--x-border);
+  border-radius: var(--x-radius-card);
+  overflow: hidden;
+}
+
+.group-head {
+  padding: 16px 20px 14px;
+  border-bottom: 1px solid var(--x-border);
 }
 
 .group-header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  gap: 8px 10px;
+}
+
+.group-name {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--x-text);
 }
 
 .module-count {
-  margin-left: 13px;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: var(--x-radius-pill);
+  background: var(--x-divider);
+  color: var(--x-text-muted);
   font-size: 12px;
-  background: #ebebfe;
-  color: #5778ff;
-  padding: 2px 10px;
-  border-radius: 10px;
+  font-weight: 500;
+  line-height: 20px;
 }
 
 .group-description {
-  margin-top: 6px;
-  text-align: left;
-  font-size: 14px;
-  font-weight: 500;
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--x-text-muted);
 }
 
-.features-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 16px;
+.feature-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.feature-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--x-divider);
+  transition: background 0.15s;
+
+  &:last-child {
+    border-bottom: 0;
+  }
+
+  &:hover {
+    background: var(--x-surface-raised);
+  }
+
+  &.feature-disabled {
+    opacity: 0.7;
+  }
+}
+
+.feature-icon {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: var(--x-canvas);
+  color: var(--x-text-muted);
+  transition: background 0.15s, color 0.15s;
+
+  .feature-enabled & {
+    background: var(--x-ink);
+    color: var(--x-on-ink);
+  }
+}
+
+.feature-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  cursor: pointer;
+
+  .feature-disabled & {
+    cursor: not-allowed;
+  }
+}
+
+.feature-name {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--x-text);
+  overflow-wrap: break-word;
+}
+
+.feature-description {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--x-text-muted);
+}
+
+.feature-switch {
+  flex-shrink: 0;
+}
+
+.empty-state {
+  background: var(--x-surface);
+  border: 1px solid var(--x-border);
+  border-radius: var(--x-radius-card);
+}
+
+.empty-tip {
+  margin: 0;
+  font-size: 13px;
+  color: var(--x-text-muted);
+}
+
+.el-footer {
+  height: auto !important;
+  padding: 0;
+}
+
+@media (max-width: 768px) {
+  .page {
+    padding: 16px;
+    gap: 16px;
+  }
+
+  .feature-groups-container {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .group-head,
+  .feature-row {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
 }
 </style>

@@ -7,26 +7,29 @@
       @cancel="cancel"
       @confirm="confirm">
       <div class="password-form">
-        <div class="form-label">
-          <span class="required">*</span>
-          {{ $t('changePassword.oldPasswordLabel') }}
+        <div class="form-field">
+          <label class="form-label" for="change-password-old">
+            <span class="required" aria-hidden="true">*</span>
+            {{ $t('changePassword.oldPasswordLabel') }}
+          </label>
+          <el-input id="change-password-old" :placeholder="$t('changePassword.oldPasswordPlaceholder')" v-model="oldPassword"
+            type="password" autocomplete="current-password" show-password />
         </div>
-        <div class="input-46" style="margin-top: 12px;">
-          <el-input :placeholder="$t('changePassword.oldPasswordPlaceholder')" v-model="oldPassword" type="password" show-password />
+        <div class="form-field">
+          <label class="form-label" for="change-password-new">
+            <span class="required" aria-hidden="true">*</span>
+            {{ $t('changePassword.newPasswordLabel') }}
+          </label>
+          <el-input id="change-password-new" :placeholder="$t('changePassword.newPasswordPlaceholder')" v-model="newPassword"
+            type="password" autocomplete="new-password" show-password />
         </div>
-        <div class="form-label" style="margin-top: 12px;">
-          <span class="required">*</span>
-          {{ $t('changePassword.newPasswordLabel') }}
-        </div>
-        <div class="input-46" style="margin-top: 12px;">
-          <el-input :placeholder="$t('changePassword.newPasswordPlaceholder')" v-model="newPassword" type="password" show-password />
-        </div>
-        <div class="form-label" style="margin-top: 12px;">
-          <span class="required">*</span>
-          {{ $t('changePassword.confirmPasswordLabel') }}
-        </div>
-        <div class="input-46" style="margin-top: 12px;">
-          <el-input :placeholder="$t('changePassword.confirmPasswordPlaceholder')" v-model="confirmNewPassword" type="password" show-password />
+        <div class="form-field">
+          <label class="form-label" for="change-password-confirm">
+            <span class="required" aria-hidden="true">*</span>
+            {{ $t('changePassword.confirmPasswordLabel') }}
+          </label>
+          <el-input id="change-password-confirm" :placeholder="$t('changePassword.confirmPasswordPlaceholder')"
+            v-model="confirmNewPassword" type="password" autocomplete="new-password" show-password />
         </div>
       </div>
     </CustomDialog>
@@ -111,19 +114,29 @@ export default {
 }
 </script>
 
-<style scoped>
-
-.form-label {
+<style lang="scss" scoped>
+.password-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   text-align: left;
 }
 
-.required {
-  color: red;
-  display: inline-block;
+.form-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 20px;
+  color: var(--x-text);
 }
 
-.input-46 {
-  background: #f6f8fb;
-  border-radius: 15px;
+.required {
+  margin-right: 2px;
+  color: var(--x-danger);
+}
+
+::v-deep .el-dialog {
+  max-width: calc(100vw - 32px);
 }
 </style>

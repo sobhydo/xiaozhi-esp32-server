@@ -32,12 +32,22 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.mac-address-wrapper {
+  font-variant-numeric: tabular-nums;
+}
+
 .mac-address-wrapper:hover .mac-address-mask {
   filter: none;
 }
 
 .mac-address-mask {
   filter: blur(4px);
-  transition: filter 0.3s;
+  transition: filter 0.2s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mac-address-mask {
+    transition: none;
+  }
 }
 </style>

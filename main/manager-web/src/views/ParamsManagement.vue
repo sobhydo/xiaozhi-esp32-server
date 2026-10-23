@@ -1,187 +1,192 @@
 <template>
   <div class="welcome">
     <HeaderBar />
-    <div class="main-wrapper">
-      <div class="content-panel">
-        <div class="content-area">
-          <el-card class="params-card" shadow="never">
-            <div class="operation-header">
-              <div class="title-block">
-                <h2 class="page-title">{{ $t('paramManagement.pageTitle') }}</h2>
-                <span class="total-hint">{{ $t('paramManagement.totalRecords', { total: filteredTotal }) }}</span>
-              </div>
-              <div class="right-operations">
-                <el-input
-                  :placeholder="$t('paramManagement.searchPlaceholder')"
-                  v-model="searchCode"
-                  class="search-input"
-                  @keyup.enter.native="handleSearch"
-                  @clear="handleSearch"
-                  clearable
-                />
-                <CustomButton icon="el-icon-search" type="confirm" @click="handleSearch">
-                  {{ $t('paramManagement.search') }}
-                </CustomButton>
-              </div>
-            </div>
 
-            <!-- Top-level categories -->
-            <div class="group-tabs" v-loading="loading && !allParams.length">
-              <button
-                v-for="tab in categoryTabs"
-                :key="tab.key"
-                type="button"
-                class="group-tab"
-                :class="{ active: activeCategory === tab.key }"
-                @click="selectCategory(tab.key)"
+    <main class="page">
+      <header class="page-header">
+        <div class="page-heading">
+          <h1 class="page-title">{{ $t('paramManagement.pageTitle') }}</h1>
+          <p class="page-description">{{ $t('paramManagement.totalRecords', { total: filteredTotal }) }}</p>
+        </div>
+        <div class="page-actions">
+          <el-button icon="el-icon-refresh" @click="fetchParams">
+            {{ $t('paramManagement.refresh') }}
+          </el-button>
+          <el-button type="primary" icon="el-icon-plus" @click="showAddDialog">
+            {{ $t('paramManagement.add') }}
+          </el-button>
+        </div>
+      </header>
+
+      <section class="params-card">
+        <div class="card-toolbar">
+          <!-- Top-level categories -->
+          <div class="group-tabs" role="tablist" :aria-label="$t('paramManagement.pageTitle')"
+            v-loading="loading && !allParams.length">
+            <button
+              v-for="tab in categoryTabs"
+              :key="tab.key"
+              type="button"
+              role="tab"
+              class="group-tab"
+              :class="{ active: activeCategory === tab.key }"
+              :aria-selected="activeCategory === tab.key ? 'true' : 'false'"
+              @click="selectCategory(tab.key)"
+            >
+              <span class="group-tab-label">{{ tab.label }}</span>
+              <span class="group-tab-count">{{ tab.count }}</span>
+            </button>
+          </div>
+          <div class="search-group">
+            <el-input
+              :placeholder="$t('paramManagement.searchPlaceholder')"
+              :aria-label="$t('paramManagement.searchPlaceholder')"
+              v-model="searchCode"
+              class="search-input"
+              prefix-icon="el-icon-search"
+              @keyup.enter.native="handleSearch"
+              @clear="handleSearch"
+              clearable
+            />
+            <el-button class="btn-search" @click="handleSearch">
+              {{ $t('paramManagement.search') }}
+            </el-button>
+          </div>
+        </div>
+
+        <!-- Second-level subcategories -->
+        <div class="sub-tabs" v-if="subCategoryTabs.length > 1">
+          <button
+            v-for="tab in subCategoryTabs"
+            :key="tab.key"
+            type="button"
+            class="sub-tab"
+            :class="{ active: activeSubCategory === tab.key }"
+            :aria-pressed="activeSubCategory === tab.key ? 'true' : 'false'"
+            @click="selectSubCategory(tab.key)"
+          >
+            {{ tab.label }}
+            <em>{{ tab.count }}</em>
+          </button>
+        </div>
+
+        <div class="params-body" v-loading="loading">
+          <template v-if="displaySections.length">
+            <el-collapse v-model="activeCollapse" class="params-collapse">
+              <el-collapse-item
+                v-for="section in displaySections"
+                :key="section.key"
+                :name="section.key"
               >
-                <span class="group-tab-label">{{ tab.label }}</span>
-                <span class="group-tab-count">{{ tab.count }}</span>
-              </button>
-            </div>
-
-            <!-- Second-level subcategories -->
-            <div class="sub-tabs" v-if="subCategoryTabs.length > 1">
-              <button
-                v-for="tab in subCategoryTabs"
-                :key="tab.key"
-                type="button"
-                class="sub-tab"
-                :class="{ active: activeSubCategory === tab.key }"
-                @click="selectSubCategory(tab.key)"
-              >
-                {{ tab.label }}
-                <em>{{ tab.count }}</em>
-              </button>
-            </div>
-
-            <div class="params-body" v-loading="loading">
-              <template v-if="displaySections.length">
-                <el-collapse v-model="activeCollapse" class="params-collapse">
-                  <el-collapse-item
-                    v-for="section in displaySections"
-                    :key="section.key"
-                    :name="section.key"
+                <template slot="title">
+                  <div class="section-title">
+                    <span class="section-name">{{ section.label }}</span>
+                    <span class="section-count">{{ section.items.length }}</span>
+                    <span v-if="section.hint" class="section-hint">{{ section.hint }}</span>
+                  </div>
+                </template>
+                <div class="table-scroll">
+                  <el-table
+                    :data="section.items"
+                    class="params-table"
+                    size="small"
+                    :header-cell-class-name="'params-table-header'"
                   >
-                    <template slot="title">
-                      <div class="section-title">
-                        <span class="section-name">{{ section.label }}</span>
-                        <span class="section-count">{{ section.items.length }}</span>
-                        <span v-if="section.hint" class="section-hint">{{ section.hint }}</span>
-                      </div>
-                    </template>
-                    <el-table
-                      :data="section.items"
-                      class="params-table"
-                      size="small"
-                      :header-cell-class-name="'params-table-header'"
+                    <el-table-column width="72" align="center" :label="$t('paramManagement.select')">
+                      <template slot-scope="scope">
+                        <el-checkbox v-model="scope.row.selected" :aria-label="scope.row.paramCode"
+                          @change="syncSelectAllState" />
+                      </template>
+                    </el-table-column>
+                    <el-table-column
+                      prop="paramCode"
+                      :label="$t('paramManagement.paramCode')"
+                      min-width="220"
+                      show-overflow-tooltip
                     >
-                      <el-table-column width="48" align="center" :label="$t('paramManagement.select')">
-                        <template slot-scope="scope">
-                          <el-checkbox v-model="scope.row.selected" @change="syncSelectAllState" />
-                        </template>
-                      </el-table-column>
-                      <el-table-column
-                        prop="paramCode"
-                        :label="$t('paramManagement.paramCode')"
-                        min-width="220"
-                        show-overflow-tooltip
-                      >
-                        <template slot-scope="scope">
-                          <code class="param-code">{{ scope.row.paramCode }}</code>
-                        </template>
-                      </el-table-column>
-                      <el-table-column
-                        :label="$t('paramManagement.valueType')"
-                        width="90"
-                        align="center"
-                      >
-                        <template slot-scope="scope">
-                          <span class="type-tag" :class="'type-' + (scope.row.valueType || 'string')">
-                            {{ scope.row.valueType || 'string' }}
+                      <template slot-scope="scope">
+                        <code class="param-code">{{ scope.row.paramCode }}</code>
+                      </template>
+                    </el-table-column>
+                    <el-table-column
+                      :label="$t('paramManagement.valueType')"
+                      width="90"
+                    >
+                      <template slot-scope="scope">
+                        <span class="type-tag">{{ scope.row.valueType || 'string' }}</span>
+                      </template>
+                    </el-table-column>
+                    <el-table-column
+                      :label="$t('paramManagement.paramValue')"
+                      min-width="180"
+                      show-overflow-tooltip
+                    >
+                      <template slot-scope="scope">
+                        <div class="value-cell" v-if="isSensitiveParam(scope.row.paramCode)">
+                          <span class="value-text">
+                            {{ scope.row.showValue ? formatValue(scope.row.paramValue) : maskSensitiveValue(scope.row.paramValue) }}
                           </span>
-                        </template>
-                      </el-table-column>
-                      <el-table-column
-                        :label="$t('paramManagement.paramValue')"
-                        min-width="180"
-                        show-overflow-tooltip
-                      >
-                        <template slot-scope="scope">
-                          <div class="value-cell" v-if="isSensitiveParam(scope.row.paramCode)">
-                            <span class="value-text">
-                              {{ scope.row.showValue ? formatValue(scope.row.paramValue) : maskSensitiveValue(scope.row.paramValue) }}
-                            </span>
-                            <el-button size="mini" type="text" @click="toggleSensitiveValue(scope.row)">
-                              {{ scope.row.showValue ? $t('paramManagement.hide') : $t('paramManagement.view') }}
-                            </el-button>
-                          </div>
-                          <span v-else class="value-text">{{ formatValue(scope.row.paramValue) }}</span>
-                        </template>
-                      </el-table-column>
-                      <el-table-column
-                        prop="remark"
-                        :label="$t('paramManagement.remark')"
-                        min-width="200"
-                        show-overflow-tooltip
-                      />
-                      <el-table-column
-                        :label="$t('paramManagement.operation')"
-                        width="120"
-                        align="center"
-                        fixed="right"
-                      >
-                        <template slot-scope="scope">
-                          <el-button size="mini" type="text" @click="editParam(scope.row)">
+                          <el-button size="mini" type="text" class="action-btn" @click="toggleSensitiveValue(scope.row)">
+                            {{ scope.row.showValue ? $t('paramManagement.hide') : $t('paramManagement.view') }}
+                          </el-button>
+                        </div>
+                        <span v-else class="value-text">{{ formatValue(scope.row.paramValue) }}</span>
+                      </template>
+                    </el-table-column>
+                    <el-table-column
+                      prop="remark"
+                      :label="$t('paramManagement.remark')"
+                      min-width="200"
+                      show-overflow-tooltip
+                    />
+                    <el-table-column
+                      :label="$t('paramManagement.operation')"
+                      width="130"
+                      align="right"
+                    >
+                      <template slot-scope="scope">
+                        <div class="row-actions">
+                          <el-button size="mini" type="text" class="action-btn" @click="editParam(scope.row)">
                             {{ $t('paramManagement.edit') }}
                           </el-button>
-                          <el-button size="mini" type="text" @click="deleteParam(scope.row)">
+                          <el-button size="mini" type="text" class="action-btn action-btn--danger"
+                            @click="deleteParam(scope.row)">
                             {{ $t('paramManagement.delete') }}
                           </el-button>
-                        </template>
-                      </el-table-column>
-                    </el-table>
-                  </el-collapse-item>
-                </el-collapse>
-              </template>
-              <div v-else class="empty-state">
-                {{ $t('paramManagement.emptyResult') }}
-              </div>
-            </div>
-
-            <div class="table-footer">
-              <div class="ctrl_btn">
-                <CustomButton
-                  :icon="isAllSelected ? 'el-icon-circle-close' : 'el-icon-circle-check'"
-                  size="small"
-                  @click="handleSelectAll"
-                >
-                  {{ isAllSelected ? $t('paramManagement.deselectAll') : $t('paramManagement.selectAll') }}
-                </CustomButton>
-                <CustomButton icon="el-icon-plus" type="add" size="small" @click="showAddDialog">
-                  {{ $t('paramManagement.add') }}
-                </CustomButton>
-                <CustomButton size="small" type="delete" icon="el-icon-delete" @click="deleteSelectedParams">
-                  {{ $t('paramManagement.delete') }}
-                </CustomButton>
-                <CustomButton
-                  icon="el-icon-refresh"
-                  size="small"
-                  @click="fetchParams"
-                >
-                  {{ $t('paramManagement.refresh') }}
-                </CustomButton>
-              </div>
-              <div class="footer-meta">
-                <span>{{ $t('paramManagement.selectedCount', { count: selectedCount }) }}</span>
-                <span class="sep">·</span>
-                <span>{{ $t('paramManagement.groupHint') }}</span>
-              </div>
-            </div>
-          </el-card>
+                        </div>
+                      </template>
+                    </el-table-column>
+                  </el-table>
+                </div>
+              </el-collapse-item>
+            </el-collapse>
+          </template>
+          <div v-else class="empty-state">
+            {{ $t('paramManagement.emptyResult') }}
+          </div>
         </div>
-      </div>
-    </div>
+
+        <div class="table-footer">
+          <div class="batch-actions">
+            <CustomButton
+              :icon="isAllSelected ? 'el-icon-circle-close' : 'el-icon-circle-check'"
+              size="small"
+              @click="handleSelectAll"
+            >
+              {{ isAllSelected ? $t('paramManagement.deselectAll') : $t('paramManagement.selectAll') }}
+            </CustomButton>
+            <CustomButton size="small" type="delete" icon="el-icon-delete" @click="deleteSelectedParams">
+              {{ $t('paramManagement.delete') }}
+            </CustomButton>
+          </div>
+          <div class="footer-meta">
+            <span>{{ $t('paramManagement.selectedCount', { count: selectedCount }) }}</span>
+            <span class="sep" aria-hidden="true">·</span>
+            <span>{{ $t('paramManagement.groupHint') }}</span>
+          </div>
+        </div>
+      </section>
+    </main>
 
     <param-dialog
       ref="paramDialog"
@@ -734,196 +739,221 @@ export default {
 
 <style lang="scss" scoped>
 .welcome {
-  min-width: 900px;
-  min-height: 506px;
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
-  position: relative;
   flex-direction: column;
-  background: #eff4ff;
-  overflow: hidden;
+  background: var(--x-canvas);
+  text-align: left;
 }
 
-.main-wrapper {
-  height: calc(100vh - 63px - 35px);
-  padding: 20px 22px 0;
-  position: relative;
-  display: flex;
-  flex-direction: column;
+.page {
+  flex: 1;
+  width: 100%;
+  max-width: 1280px;
+  padding: 32px;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.operation-header {
+.page-header {
   display: flex;
-  align-items: center;
+  flex-wrap: wrap;
+  align-items: flex-end;
   justify-content: space-between;
-  padding: 0 0 12px 0;
   gap: 16px;
 }
 
-.title-block {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
+.page-heading {
+  min-width: 0;
 }
 
 .page-title {
-  font-weight: 500;
-  font-size: 24px;
   margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+  color: var(--x-text);
 }
 
-.total-hint {
-  color: #8b93b5;
-  font-size: 13px;
-}
-
-.right-operations {
+.page-actions {
   display: flex;
-  gap: 10px;
-  margin-left: auto;
-}
+  flex-wrap: wrap;
+  gap: 8px;
 
-.search-input {
-  width: 280px;
-}
-
-.content-panel {
-  display: flex;
-  overflow: hidden;
-  height: 100%;
-  border-radius: 15px;
-  background: transparent;
-  border: 1px solid #fff;
-}
-
-.content-area {
-  flex: 1;
-  height: 100%;
-  min-width: 600px;
-  overflow: hidden;
-  background-color: white;
-  display: flex;
-  flex-direction: column;
+  .el-button + .el-button {
+    margin-left: 0;
+  }
 }
 
 .params-card {
-  background: white;
-  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  border: none;
-  box-shadow: none;
+  background: var(--x-surface);
+  border: 1px solid var(--x-border);
+  border-radius: var(--x-radius-card);
   overflow: hidden;
+}
 
-  ::v-deep .el-card__body {
-    padding: 14px 20px;
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    overflow: hidden;
-    min-height: 0;
-  }
+.card-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--x-border);
 }
 
 .group-tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  padding-bottom: 10px;
+  gap: 4px;
+  min-width: 0;
 }
 
 .group-tab {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  border: 1px solid #e4e8f5;
-  background: #f7f9ff;
-  color: #5a648f;
-  border-radius: 8px;
-  padding: 7px 12px;
+  min-height: 34px;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: var(--x-radius-control);
+  background: transparent;
+  color: var(--x-text-secondary);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
-  font-size: 13px;
-  transition: all 0.15s ease;
+  transition: background 0.15s, color 0.15s;
 
   &:hover {
-    border-color: #b7c3ef;
-    color: #3f4c88;
+    background: var(--x-surface-raised);
+    color: var(--x-text);
   }
 
   &.active {
-    background: linear-gradient(135deg, #6b8cff, #7a6dff);
-    border-color: transparent;
-    color: #fff;
-    box-shadow: 0 4px 12px rgba(107, 140, 255, 0.28);
+    background: var(--x-selected);
+    color: var(--x-text);
 
     .group-tab-count {
-      background: rgba(255, 255, 255, 0.22);
-      color: #fff;
+      background: var(--x-ink);
+      color: var(--x-on-ink);
     }
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--x-focus-ring);
   }
 }
 
 .group-tab-count {
-  min-width: 22px;
-  padding: 0 6px;
+  min-width: 20px;
   height: 20px;
-  line-height: 20px;
-  border-radius: 10px;
-  background: #e8ecfb;
-  color: #5a648f;
+  padding: 0 6px;
+  box-sizing: border-box;
+  border-radius: var(--x-radius-pill);
+  background: var(--x-divider);
+  color: var(--x-text-muted);
   font-size: 12px;
+  font-weight: 600;
+  line-height: 20px;
   text-align: center;
+}
+
+.search-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.search-input {
+  width: 260px;
+  max-width: 100%;
+}
+
+::v-deep .search-input .el-input__inner {
+  height: 34px;
+  line-height: 34px;
+}
+
+::v-deep .search-input .el-input__icon {
+  line-height: 34px;
+  color: var(--x-text-muted);
+}
+
+.btn-search {
+  height: 34px;
+  padding: 0 14px;
 }
 
 .sub-tabs {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  padding: 0 0 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--x-divider);
 }
 
 .sub-tab {
-  border: none;
-  background: transparent;
-  color: #7079aa;
-  font-size: 12px;
-  padding: 4px 10px;
-  border-radius: 14px;
+  height: 28px;
+  padding: 0 12px;
+  border: 1px solid var(--x-border);
+  border-radius: var(--x-radius-pill);
+  background: var(--x-surface);
+  color: var(--x-text-secondary);
+  font: inherit;
+  font-size: 13px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
 
   em {
     font-style: normal;
     margin-left: 4px;
-    opacity: 0.7;
+    color: var(--x-text-muted);
   }
 
   &:hover {
-    background: #eef2ff;
+    border-color: var(--x-border-control);
+    color: var(--x-text);
   }
 
   &.active {
-    background: #e8ecfb;
-    color: #4d59a8;
-    font-weight: 600;
+    background: var(--x-ink);
+    border-color: var(--x-ink);
+    color: var(--x-on-ink);
+
+    em {
+      color: var(--x-on-ink);
+      opacity: 0.75;
+    }
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--x-focus-ring);
   }
 }
 
 .params-body {
-  flex: 1;
-  min-height: 0;
-  overflow: auto;
-  padding-right: 4px;
+  min-height: 160px;
+  padding: 16px;
 }
 
 .params-collapse {
   border: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 
   ::v-deep .el-collapse-item {
-    margin-bottom: 10px;
-    border: 1px solid #eef1fb;
-    border-radius: 10px;
+    border: 1px solid var(--x-border);
+    border-radius: 12px;
     overflow: hidden;
   }
 
@@ -931,10 +961,13 @@ export default {
     height: 44px;
     line-height: 44px;
     padding: 0 14px;
-    background: #f8faff;
+    background: var(--x-surface-raised);
     border-bottom: 1px solid transparent;
-    font-weight: 500;
-    color: #3f4a75;
+    color: var(--x-text);
+  }
+
+  ::v-deep .el-collapse-item__arrow {
+    color: var(--x-text-muted);
   }
 
   ::v-deep .el-collapse-item__wrap {
@@ -946,7 +979,7 @@ export default {
   }
 
   ::v-deep .el-collapse-item.is-active .el-collapse-item__header {
-    border-bottom-color: #eef1fb;
+    border-bottom-color: var(--x-divider);
   }
 }
 
@@ -954,60 +987,93 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
-  width: 100%;
+  min-width: 0;
   padding-right: 8px;
 }
 
 .section-name {
   font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .section-count {
-  font-size: 12px;
-  color: #7b84ad;
-  background: #eef1fb;
-  border-radius: 10px;
-  padding: 0 8px;
+  flex-shrink: 0;
   height: 20px;
+  padding: 0 8px;
+  border-radius: var(--x-radius-pill);
+  background: var(--x-divider);
+  color: var(--x-text-muted);
+  font-size: 12px;
+  font-weight: 500;
   line-height: 20px;
 }
 
 .section-hint {
   font-size: 12px;
-  color: #9aa3c7;
+  color: var(--x-text-muted);
+}
+
+.table-scroll {
+  overflow-x: auto;
 }
 
 .params-table {
   width: 100%;
+  min-width: 760px;
 
-  ::v-deep .params-table-header {
-    background: #fcfdff;
-    color: #6a739c;
-    font-weight: 500;
+  &::before {
+    display: none;
+  }
+}
+
+::v-deep .params-table {
+  th.el-table__cell {
+    padding: 6px 0;
+    white-space: nowrap;
+    background: var(--x-surface);
+    border-bottom: 1px solid var(--x-divider);
+  }
+
+  td.el-table__cell {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--x-divider);
+  }
+
+  .cell {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  th.el-table__cell > .cell {
+    white-space: nowrap;
+  }
+
+  .el-table__row:last-child td.el-table__cell {
+    border-bottom: 0;
   }
 }
 
 .param-code {
-  font-family: Consolas, 'SF Mono', Monaco, Menlo, monospace;
+  font-family: var(--x-font-mono);
   font-size: 12px;
-  color: #3d4a7a;
-  background: #f3f6ff;
+  color: var(--x-text);
+  background: var(--x-canvas);
   padding: 2px 6px;
-  border-radius: 4px;
+  border-radius: 6px;
 }
 
 .type-tag {
   display: inline-block;
+  padding: 0 8px;
+  border: 1px solid var(--x-border);
+  border-radius: var(--x-radius-pill);
+  color: var(--x-text-secondary);
+  font-family: var(--x-font-mono);
   font-size: 11px;
-  padding: 1px 6px;
-  border-radius: 4px;
-  background: #eef1f8;
-  color: #6a739c;
-
-  &.type-number { background: #e8f5ff; color: #2f7db8; }
-  &.type-boolean { background: #e9f8ef; color: #2f8a55; }
-  &.type-json,
-  &.type-array { background: #f6efff; color: #7a4fb3; }
+  line-height: 18px;
 }
 
 .value-cell {
@@ -1017,48 +1083,96 @@ export default {
 }
 
 .value-text {
-  color: #4a5378;
+  color: var(--x-text-secondary);
   word-break: break-all;
+}
+
+.row-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+  white-space: nowrap;
+}
+
+.action-btn {
+  height: 28px;
+  padding: 0 8px;
+  margin: 0 !important;
+  color: var(--x-text-secondary);
+  font-size: 13px;
+
+  &:hover,
+  &:focus {
+    background: var(--x-canvas);
+    color: var(--x-text);
+  }
+
+  &--danger:hover,
+  &--danger:focus {
+    background: var(--x-danger-bg);
+    color: var(--x-danger-text);
+  }
 }
 
 .empty-state {
   padding: 64px 0;
   text-align: center;
-  color: #9aa3c7;
+  color: var(--x-text-muted);
   font-size: 14px;
 }
 
 .table-footer {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding-top: 12px;
-  border-top: 1px solid #eef1fb;
-  margin-top: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--x-border);
 }
 
-.ctrl_btn {
+.batch-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0;
+  gap: 8px;
+
+  ::v-deep .el-button + .el-button {
+    margin-left: 0;
+  }
 }
 
 .footer-meta {
-  color: #8b93b5;
+  color: var(--x-text-muted);
   font-size: 12px;
-  white-space: nowrap;
 
   .sep {
     margin: 0 6px;
   }
 }
 
-:deep(.el-table .el-button--text) {
-  color: #7079aa;
+.el-footer {
+  height: auto !important;
+  padding: 0;
 }
 
-:deep(.el-table .el-button--text:hover) {
-  color: #5a64b5;
+@media (max-width: 768px) {
+  .page {
+    padding: 16px;
+    gap: 16px;
+  }
+
+  .search-group {
+    width: 100%;
+  }
+
+  .search-input {
+    flex: 1;
+    width: auto;
+  }
+
+  .params-body {
+    padding: 12px;
+  }
 }
 </style>

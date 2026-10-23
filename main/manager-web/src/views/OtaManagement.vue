@@ -1,71 +1,83 @@
 <template>
     <div class="welcome">
         <HeaderBar />
-        <div class="main-wrapper">
-            <div class="content-panel">
-                <div class="content-area">
-                    <el-card class="params-card" shadow="never">
-                        <div class="operation-header">
-                            <h2 class="page-title">{{ $t('otaManagement.firmwareManagement') }}</h2>
-                            <div class="right-operations">
-                                <el-input :placeholder="$t('otaManagement.searchPlaceholder')" v-model="searchName"
-                                    class="search-input" @keyup.enter.native="handleSearch" clearable />
-                                <CustomButton icon="el-icon-search" type="confirm" @click="handleSearch">
-                                    {{ $t('otaManagement.search') }}
-                                </CustomButton>
-                            </div>
-                        </div>
-                        <CustomTable ref="paramsTable" :data="paramsList" :columns="tableColumns" :loading="loading"
-                            :show-selection="true" :show-operations="true" :operations-label="$t('otaManagement.action')"
-                            :total="total" :current-page="currentPage" :page-size="pageSize"
-                            :page-size-options="pageSizeOptions" @size-change="handlePageSizeChange"
-                            @page-change="goToPage">
-                            <template slot="selection" slot-scope="scope">
-                                <el-checkbox v-model="scope.row.selected"></el-checkbox>
-                            </template>
-                            <template slot="type" slot-scope="scope">
-                                {{ getFirmwareTypeName(scope.row.type) }}
-                            </template>
-                            <template slot="size" slot-scope="scope">
-                                {{ formatFileSize(scope.row.size) }}
-                            </template>
-                            <template slot="createDate" slot-scope="scope">
-                                {{ formatDate(scope.row.createDate) }}
-                            </template>
-                            <template slot="updateDate" slot-scope="scope">
-                                {{ formatDate(scope.row.updateDate) }}
-                            </template>
-                            <template slot="operations" slot-scope="scope">
-                                <el-button size="mini" type="text"
-                                    @click="downloadFirmware(scope.row)">{{ $t('otaManagement.download') }}</el-button>
-                                <el-button size="mini" type="text" @click="editParam(scope.row)">
-                                    {{ $t('otaManagement.edit') }}
-                                </el-button>
-                                <el-button size="mini" type="text" @click="deleteParam(scope.row)">
-                                    {{ $t('otaManagement.delete') }}
-                                </el-button>
-                            </template>
-                            <template slot="footer-btns">
-                                <div class="ctrl_btn">
-                                    <CustomButton
-                                        :icon="isAllSelected ? 'el-icon-circle-close' : 'el-icon-circle-check'"
-                                        size="small" @click="handleSelectAll">
-                                        {{ isAllSelected ? $t('otaManagement.deselectAll') : $t('otaManagement.selectAll') }}
-                                    </CustomButton>
-                                    <CustomButton type="add" icon="el-icon-plus" size="small" @click="showAddDialog">
-                                        {{ $t('otaManagement.addNew') }}
-                                    </CustomButton>
-                                    <CustomButton size="small" type="delete" icon="el-icon-delete"
-                                        @click="deleteSelectedParams">
-                                        {{ $t('otaManagement.delete') }}
-                                    </CustomButton>
-                                </div>
-                            </template>
-                        </CustomTable>
-                    </el-card>
+
+        <main class="admin-page">
+            <header class="page-header">
+                <div class="page-heading">
+                    <h1 class="page-title">{{ $t('otaManagement.firmwareManagement') }}</h1>
+                    <p class="page-description">{{ $t('console.otaDescription') }}</p>
                 </div>
-            </div>
-        </div>
+                <div class="page-actions">
+                    <el-button type="primary" icon="el-icon-plus" @click="showAddDialog">
+                        {{ $t('otaManagement.addNew') }}
+                    </el-button>
+                </div>
+            </header>
+
+            <section class="table-card">
+                <div class="table-toolbar">
+                    <div class="search-group">
+                        <el-input :placeholder="$t('otaManagement.searchPlaceholder')"
+                            :aria-label="$t('otaManagement.searchPlaceholder')" v-model="searchName" class="search-input"
+                            prefix-icon="el-icon-search" @keyup.enter.native="handleSearch" clearable />
+                        <el-button class="btn-search" @click="handleSearch">{{ $t('otaManagement.search') }}</el-button>
+                    </div>
+                    <div class="toolbar-actions">
+                        <el-button size="small" @click="handleSelectAll">
+                            {{ isAllSelected ? $t('otaManagement.deselectAll') : $t('otaManagement.selectAll') }}
+                        </el-button>
+                        <el-button size="small" class="btn-danger-outline" @click="deleteSelectedParams">
+                            {{ $t('otaManagement.delete') }}
+                        </el-button>
+                    </div>
+                </div>
+                <CustomTable ref="paramsTable" class="flush-table" :data="paramsList" :columns="tableColumns"
+                    :loading="loading" :show-selection="true" :show-operations="true"
+                    :operations-label="$t('otaManagement.action')" :operations-width="210" :total="total"
+                    :current-page="currentPage" :page-size="pageSize" :page-size-options="pageSizeOptions"
+                    @size-change="handlePageSizeChange" @page-change="goToPage">
+                    <template slot="selection" slot-scope="scope">
+                        <el-checkbox v-model="scope.row.selected"></el-checkbox>
+                    </template>
+                    <template slot="firmwareName" slot-scope="scope">
+                        <span class="cell-strong">{{ scope.row.firmwareName }}</span>
+                    </template>
+                    <template slot="type" slot-scope="scope">
+                        {{ getFirmwareTypeName(scope.row.type) }}
+                    </template>
+                    <template slot="version" slot-scope="scope">
+                        <span class="mono">{{ scope.row.version }}</span>
+                    </template>
+                    <template slot="size" slot-scope="scope">
+                        {{ formatFileSize(scope.row.size) }}
+                    </template>
+                    <template slot="remark" slot-scope="scope">
+                        <span class="muted">{{ scope.row.remark }}</span>
+                    </template>
+                    <template slot="createDate" slot-scope="scope">
+                        {{ formatDate(scope.row.createDate) }}
+                    </template>
+                    <template slot="updateDate" slot-scope="scope">
+                        {{ formatDate(scope.row.updateDate) }}
+                    </template>
+                    <template slot="operations" slot-scope="scope">
+                        <div class="row-actions">
+                            <el-button size="mini" type="text" class="row-action" @click="downloadFirmware(scope.row)">
+                                {{ $t('otaManagement.download') }}
+                            </el-button>
+                            <el-button size="mini" type="text" class="row-action" @click="editParam(scope.row)">
+                                {{ $t('otaManagement.edit') }}
+                            </el-button>
+                            <el-button size="mini" type="text" class="row-action row-action--danger"
+                                @click="deleteParam(scope.row)">
+                                {{ $t('otaManagement.delete') }}
+                            </el-button>
+                        </div>
+                    </template>
+                </CustomTable>
+            </section>
+        </main>
 
         <!-- Add/edit firmware dialog -->
         <firmware-dialog ref="firmwareDialog" :title="dialogTitle" :visible.sync="dialogVisible" :form="firmwareForm"
@@ -81,12 +93,11 @@ import Api from "@/apis/api";
 import FirmwareDialog from "@/components/FirmwareDialog.vue";
 import HeaderBar from "@/components/HeaderBar.vue";
 import VersionFooter from "@/components/VersionFooter.vue";
-import CustomButton from "@/components/CustomButton.vue";
 import CustomTable from "@/components/CustomTable.vue";
 import { formatDate, formatFileSize } from "@/utils/format";
 
 export default {
-    components: { HeaderBar, FirmwareDialog, VersionFooter, CustomButton, CustomTable },
+    components: { HeaderBar, FirmwareDialog, VersionFooter, CustomTable },
     data() {
         return {
             searchName: "",
@@ -121,13 +132,13 @@ export default {
     methods: {
         initTableColumns() {
             this.tableColumns = [
-                { prop: 'firmwareName', label: this.$t('otaManagement.firmwareName'), align: 'center' },
-                { prop: 'type', label: this.$t('otaManagement.firmwareType'), align: 'center' },
-                { prop: 'version', label: this.$t('otaManagement.version'), align: 'center' },
-                { prop: 'size', label: this.$t('otaManagement.fileSize'), align: 'center' },
-                { prop: 'remark', label: this.$t('otaManagement.remark'), align: 'center' },
-                { prop: 'createDate', label: this.$t('otaManagement.createTime'), align: 'center' },
-                { prop: 'updateDate', label: this.$t('otaManagement.updateTime'), align: 'center' }
+                { prop: 'firmwareName', label: this.$t('otaManagement.firmwareName'), align: 'left', minWidth: 140 },
+                { prop: 'type', label: this.$t('otaManagement.firmwareType'), align: 'left', minWidth: 120 },
+                { prop: 'version', label: this.$t('otaManagement.version'), align: 'left', minWidth: 80 },
+                { prop: 'size', label: this.$t('otaManagement.fileSize'), align: 'left', minWidth: 80 },
+                { prop: 'remark', label: this.$t('otaManagement.remark'), align: 'left', minWidth: 110 },
+                { prop: 'createDate', label: this.$t('otaManagement.createTime'), align: 'left', minWidth: 150 },
+                { prop: 'updateDate', label: this.$t('otaManagement.updateTime'), align: 'left', minWidth: 150 }
             ];
         },
         handlePageSizeChange(val) {
@@ -343,97 +354,280 @@ export default {
 
 <style lang="scss" scoped>
 .welcome {
-    min-width: 900px;
-    min-height: 506px;
     height: 100vh;
+    min-height: 560px;
     display: flex;
-    position: relative;
     flex-direction: column;
-    background-size: cover;
-    background: #eff4ff;
-    -webkit-background-size: cover;
-    -o-background-size: cover;
-    overflow: hidden;
+    background: var(--x-canvas);
+    text-align: left;
 }
 
-.main-wrapper {
-    height: calc(100vh - 63px - 35px);
-    padding: 20px 22px 0;
-    position: relative;
-    display: flex;
-    flex-direction: column;
+.admin-page {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    max-width: 1280px;
+    padding: 32px 32px 0;
     box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
 
-.operation-header {
+.page-header {
     display: flex;
-    align-items: center;
+    flex-wrap: wrap;
+    align-items: flex-end;
     justify-content: space-between;
-    padding: 0 0 16px 0;
+    gap: 16px;
+}
+
+.page-heading {
+    min-width: 0;
 }
 
 .page-title {
-    font-weight: 500;
-    font-size: 24px;
     margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.3;
+    color: var(--x-text);
 }
 
-.right-operations {
+.page-actions {
     display: flex;
-    gap: 10px;
-    margin-left: auto;
-}
+    flex-wrap: wrap;
+    gap: 8px;
 
-.search-input {
-    width: 240px;
-}
-
-.content-panel {
-    display: flex;
-    overflow: hidden;
-    height: 100%;
-    border-radius: 15px;
-    background: transparent;
-    border: 1px solid #fff;
-}
-
-.content-area {
-    flex: 1;
-    height: 100%;
-    min-width: 600px;
-    overflow: auto;
-    background-color: white;
-    display: flex;
-    flex-direction: column;
-}
-
-.params-card {
-    background: white;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    border: none;
-    box-shadow: none;
-    overflow: hidden;
-
-    ::v-deep .el-card__body {
-        padding: 14px 20px;
-        display: flex;
-        flex-direction: column;
-        flex: 1;
-        overflow: hidden;
+    .el-button + .el-button {
+        margin-left: 0;
     }
 }
 
-.ctrl_btn {
+.table-card {
+    flex: 1;
+    min-height: 0;
     display: flex;
+    flex-direction: column;
+    background: var(--x-surface);
+    border: 1px solid var(--x-border);
+    border-radius: var(--x-radius-card);
+    overflow: hidden;
 }
 
-:deep(.el-table .el-button--text) {
-    color: #7079aa;
+.table-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--x-border);
 }
 
-:deep(.el-table .el-button--text:hover) {
-    color: #5a64b5;
+.search-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.search-input {
+    width: 280px;
+    max-width: 100%;
+
+    ::v-deep .el-input__inner {
+        height: 34px;
+        line-height: 34px;
+    }
+
+    ::v-deep .el-input__icon {
+        line-height: 34px;
+        color: var(--x-text-muted);
+    }
+}
+
+.btn-search {
+    height: 34px;
+    padding: 0 14px;
+}
+
+.toolbar-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+
+    .el-button + .el-button {
+        margin-left: 0;
+    }
+}
+
+.btn-danger-outline {
+    color: var(--x-danger-text);
+    border-color: var(--x-border-control);
+    border-color: color-mix(in srgb, var(--x-danger) 30%, transparent);
+
+    &:not(.is-disabled):hover,
+    &:not(.is-disabled):focus {
+        color: var(--x-danger-text);
+        background: var(--x-danger-bg);
+        border-color: color-mix(in srgb, var(--x-danger) 45%, transparent);
+    }
+}
+
+/* Table sits flush inside the card; CustomTable's own frame is removed */
+.flush-table {
+    ::v-deep .table-container {
+        border: 0;
+        border-radius: 0;
+    }
+
+    ::v-deep .table-footer {
+        padding: 10px 16px;
+        border-top: 1px solid var(--x-border);
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    ::v-deep .el-table th.el-table__cell > .cell {
+        white-space: nowrap;
+    }
+
+    ::v-deep .el-table th.el-table__cell > .cell,
+    ::v-deep .el-table td.el-table__cell > .cell {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    ::v-deep .el-checkbox__inner {
+        border-color: var(--x-text-disabled);
+        border-radius: 4px;
+    }
+}
+
+.cell-strong {
+    font-weight: 500;
+    color: var(--x-text);
+}
+
+.mono {
+    font-family: var(--x-font-mono);
+    font-size: 13px;
+    color: var(--x-text-secondary);
+}
+
+.muted {
+    color: var(--x-text-muted);
+}
+
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 8px;
+    border-radius: var(--x-radius-pill);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 18px;
+
+    &--success {
+        background: var(--x-success-bg);
+        color: var(--x-success-text);
+
+        .status-pill-dot {
+            background: var(--x-success);
+        }
+    }
+
+    &--danger {
+        background: var(--x-danger-bg);
+        color: var(--x-danger-text);
+
+        .status-pill-dot {
+            background: var(--x-danger);
+        }
+    }
+}
+
+.status-pill-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+
+.row-actions {
+    display: flex;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+    justify-content: center;
+    gap: 2px;
+
+    .el-button + .el-button {
+        margin-left: 0;
+    }
+}
+
+.row-action {
+    padding: 6px 8px;
+    font-size: 13px;
+    color: var(--x-text-secondary);
+
+    &:hover,
+    &:focus {
+        color: var(--x-text);
+        background: var(--x-canvas);
+    }
+
+    &--danger,
+    &--danger:hover,
+    &--danger:focus {
+        color: var(--x-danger-text);
+    }
+
+    &--danger:hover,
+    &--danger:focus {
+        background: var(--x-danger-bg);
+    }
+}
+
+.el-footer {
+    height: auto !important;
+    padding: 0;
+}
+
+@media (max-width: 900px) {
+    .welcome {
+        height: auto;
+        min-height: calc(100vh - var(--x-topbar-height));
+    }
+
+    .table-card {
+        flex: none;
+        height: 600px;
+    }
+}
+
+@media (max-width: 768px) {
+    .admin-page {
+        padding: 16px 16px 0;
+        gap: 16px;
+    }
+
+    .search-group {
+        width: 100%;
+    }
+
+    .search-input {
+        flex: 1;
+        width: auto;
+    }
+
+    .flush-table ::v-deep .table-footer {
+        justify-content: flex-start;
+        overflow-x: auto;
+    }
 }
 </style>

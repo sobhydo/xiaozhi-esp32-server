@@ -1,37 +1,53 @@
 <template>
   <div class="welcome">
     <HeaderBar />
-    <div class="main-wrapper">
-      <div class="content-panel">
-        <div class="content-area">
-          <el-card class="params-card" shadow="never">
-            <div class="operation-header">
-              <h2 class="page-title">{{ $t('serverSideManager.pageTitle') }}</h2>
-            </div>
-            <el-card class="server-list-card">
-              <div v-for="(item, index) in paramsList" :key="index" class="server-list" v-loading="loading">
-                <div class="server-card">
-                  <div class="server-info">
-                    <span class="server-label">{{ $t('serverSideManager.wsAddress') }}</span>
-                    <span class="server-value">{{ item.address }}</span>
-                  </div>
-                  <el-button class="copy-button" type="text" size="small" @click="copyAddress(item.address)">{{ $t('common.copyAddress') }}</el-button>
-                </div>
-                <el-divider />
-                <div class="header-actions">
-                  <CustomButton icon="el-icon-refresh-right" size="small" @click="emitAction(item, actionMap.restart)">{{
-                    $t('serverSideManager.restart') }}</CustomButton>
-                  <CustomButton icon="el-icon-setting" size="small" type="confirm" @click="emitAction(item, actionMap.update_config)">
-                    {{ $t('serverSideManager.updateConfig') }}
-                  </CustomButton>
-                </div>
-                <el-empty v-if="paramsList.length === 0 && !loading" :description="$t('common.noData')"></el-empty>
+
+    <main class="page">
+      <header class="page-header">
+        <div class="page-heading">
+          <h1 class="page-title">{{ $t('serverSideManager.pageTitle') }}</h1>
+          <p class="page-description">{{ $t('console.serverDescription') }}</p>
+        </div>
+      </header>
+
+      <div class="server-list" v-loading="loading">
+        <section v-for="(item, index) in paramsList" :key="index" class="server-card">
+          <div class="server-main">
+            <span class="server-icon" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="7" rx="2" />
+                <rect x="3" y="13" width="18" height="7" rx="2" />
+                <path d="M7 7.5h.01M7 16.5h.01" />
+              </svg>
+            </span>
+            <div class="server-info">
+              <span class="server-label">{{ $t('serverSideManager.wsAddress') }}</span>
+              <div class="server-address">
+                <code class="server-value">{{ item.address }}</code>
+                <el-tooltip :content="$t('common.copyAddress')" placement="top">
+                  <el-button class="copy-button" type="text" icon="el-icon-copy-document"
+                    :aria-label="$t('common.copyAddress')" @click="copyAddress(item.address)" />
+                </el-tooltip>
               </div>
-            </el-card>
-          </el-card>
+            </div>
+          </div>
+          <div class="header-actions">
+            <el-button icon="el-icon-refresh-right" size="small" @click="emitAction(item, actionMap.restart)">
+              {{ $t('serverSideManager.restart') }}
+            </el-button>
+            <el-button icon="el-icon-setting" size="small" type="primary" @click="emitAction(item, actionMap.update_config)">
+              {{ $t('serverSideManager.updateConfig') }}
+            </el-button>
+          </div>
+        </section>
+        <div v-if="paramsList.length === 0" class="empty-card">
+          <p v-if="!loading" class="empty-text">
+            {{ $t('common.noData') }}
+          </p>
         </div>
       </div>
-    </div>
+    </main>
     <el-footer>
       <version-footer />
     </el-footer>
@@ -40,12 +56,11 @@
 
 <script>
 import Api from "@/apis/api";
-import CustomButton from "@/components/CustomButton.vue";
 import HeaderBar from "@/components/HeaderBar.vue";
 import VersionFooter from "@/components/VersionFooter.vue";
 
 export default {
-  components: { HeaderBar, VersionFooter, CustomButton },
+  components: { HeaderBar, VersionFooter },
   data() {
     return {
       paramsList: [],
@@ -130,143 +145,168 @@ export default {
 
 <style lang="scss" scoped>
 .welcome {
-  min-width: 900px;
-  min-height: 506px;
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
-  position: relative;
   flex-direction: column;
-  background-size: cover;
-  background: #eff4ff;
-  -webkit-background-size: cover;
-  -o-background-size: cover;
-  overflow: hidden;
+  background: var(--x-canvas);
+  text-align: left;
 }
 
-.main-wrapper {
-  height: calc(100vh - 63px - 35px);
-  padding: 20px 22px 0;
-  position: relative;
+.page {
+  flex: 1;
+  width: 100%;
+  max-width: 1280px;
+  padding: 32px;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  box-sizing: border-box;
+  gap: 20px;
+}
+
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.page-heading {
+  min-width: 0;
 }
 
 .page-title {
-  font-weight: 500;
-  font-size: 24px;
   margin: 0;
-}
-
-.content-panel {
-  display: flex;
-  overflow: hidden;
-  height: 100%;
-  border-radius: 15px;
-  background: transparent;
-  border: 1px solid #fff;
-}
-
-.content-area {
-  flex: 1;
-  height: 100%;
-  min-width: 600px;
-  overflow: auto;
-  background-color: white;
-  display: flex;
-  flex-direction: column;
-}
-
-.params-card {
-  background: white;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  border: none;
-  box-shadow: none;
-  overflow: hidden;
-
-  ::v-deep .el-card__body {
-    padding: 14px 20px;
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    overflow: hidden;
-  }
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+  color: var(--x-text);
 }
 
 .server-list {
-  padding: 16px 20px;
-  border-radius: 10px;
-  box-shadow: 0 0 8px #ececec;
-}
-
-.server-list-card {
-  flex: 1;
-  border: none;
-  border-radius: 8px;
-  box-shadow: none;
-
-  ::v-deep .el-card__body {
-    gap: 20px;
-    overflow: auto;
-    padding: 16px;
-    height: 100%;
-    box-sizing: border-box;
-  }
-
-  ::v-deep .el-divider {
-    margin: 16px 0 !important;
-    background: #ecf2fb !important;
-  }
-}
-
-.header-actions {
   display: flex;
-  justify-content: flex-end;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 120px;
 }
 
-.operation-header {
-  height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 0 16px 0;
-  box-sizing: border-box;
+.server-card,
+.empty-card {
+  background: var(--x-surface);
+  border: 1px solid var(--x-border);
+  border-radius: var(--x-radius-card);
 }
 
 .server-card {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  padding: 16px;
-  border-radius: 10px;
-  background: rgba(239, 243, 252, 0.4);
-  border: 1px solid #ecf2fb;
+  gap: 16px;
+  padding: 16px 20px;
+}
+
+.server-main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  flex: 1 1 320px;
+}
+
+.server-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: var(--x-canvas);
+  color: var(--x-text);
 }
 
 .server-info {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
 }
 
 .server-label {
-  font-size: 16px;
+  font-size: 12px;
   font-weight: 500;
+  color: var(--x-text-muted);
+}
+
+.server-address {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .server-value {
-  margin-top: 10px;
+  font-family: var(--x-font-mono);
   font-size: 14px;
+  color: var(--x-text);
+  word-break: break-all;
 }
 
-.server-actions {
-  display: flex;
-  gap: 8px;
-}
 .copy-button {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  font-size: 15px;
+  color: var(--x-text-muted);
+
+  &:hover,
+  &:focus {
+    background: var(--x-canvas);
+    color: var(--x-text);
+  }
+}
+
+.header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  .el-button + .el-button {
+    margin-left: 0;
+  }
+}
+
+.empty-card {
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty-text {
+  margin: 0;
   font-size: 14px;
-  color: #5778ff;
+  color: var(--x-text-muted);
+}
+
+.el-footer {
+  height: auto !important;
+  padding: 0;
+}
+
+@media (max-width: 768px) {
+  .page {
+    padding: 16px;
+    gap: 16px;
+  }
+
+  .server-card {
+    padding: 16px;
+  }
 }
 </style>

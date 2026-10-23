@@ -187,95 +187,62 @@ export default {
 </script>
 
 <style scoped lang="scss">
+::v-deep .el-dialog {
+  max-width: calc(100vw - 32px);
+}
+
 .param-dialog-wrapper {
   .param-form {
     .form-item {
-      margin-bottom: 28px;
+      margin-bottom: 18px;
+
       :deep(.el-form-item__label) {
-        color: #475569;
+        color: var(--x-text);
         font-weight: 500;
-        padding-right: 14px;
-        text-align: right;
-        font-size: 15px;
-        letter-spacing: 0.2px;
-        line-height: 44px;
-      }
-    }
-
-    .custom-input {
-      :deep(.el-input__inner) {
-        background-color: #ffffff;
-        border-radius: 8px;
-        border: 1px solid #e2e8f0;
-        height: 44px;
-        padding: 0 14px;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         font-size: 14px;
-        color: #334155;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-
-        &:focus {
-          border-color: #3b82f6;
-          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-          background-color: #ffffff;
-        }
-
-        &::placeholder {
-          color: #94a3b8;
-          font-weight: 400;
-        }
+        padding-right: 16px;
       }
     }
 
     .custom-select {
       width: 100%;
-
-      :deep(.el-input__inner) {
-        background-color: #ffffff;
-        border-radius: 8px;
-        border: 1px solid #e2e8f0;
-        height: 44px;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        font-size: 14px;
-        color: #334155;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-
-        &:focus {
-          border-color: #3b82f6;
-          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-          background-color: #ffffff;
-        }
-
-        &::placeholder {
-          color: #94a3b8;
-          font-weight: 400;
-        }
-      }
     }
 
-    .custom-textarea {
-      :deep(.el-textarea__inner) {
-        background-color: #ffffff;
-        border-radius: 8px;
-        border: 1px solid #e2e8f0;
-        padding: 10px 14px;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    .custom-textarea :deep(.el-textarea__inner) {
+      font-family: var(--x-font-mono);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .remark-item {
+      margin-bottom: 0;
+
+      .custom-textarea :deep(.el-textarea__inner) {
+        font-family: var(--x-font);
         font-size: 14px;
-        color: #334155;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-        line-height: 1.5;
-
-        &:focus {
-          border-color: #3b82f6;
-          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-          background-color: #ffffff;
-        }
-
-        &::placeholder {
-          color: #94a3b8;
-          font-weight: 400;
-        }
       }
+    }
+  }
+}
+
+@media (max-width: 600px) {
+  .param-dialog-wrapper {
+    ::v-deep .el-form-item__label {
+      float: none;
+      display: block;
+      width: auto !important;
+      text-align: left;
+      line-height: 1.5;
+      padding-bottom: 6px;
+    }
+
+    ::v-deep .el-form-item__label-wrap {
+      float: none;
+      margin-left: 0 !important;
+    }
+
+    ::v-deep .el-form-item__content {
+      margin-left: 0 !important;
     }
   }
 }

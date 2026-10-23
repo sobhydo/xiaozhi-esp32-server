@@ -1,101 +1,95 @@
 <template>
   <div class="welcome">
     <HeaderBar />
-    <div class="main-wrapper">
-      <div class="content-panel">
-        <div class="content-area">
-          <el-card class="params-card" shadow="never">
-            <div class="operation-header">
-              <h2 class="page-title">{{ $t('voiceClone.title') }}</h2>
-              <div class="right-operations">
-                <el-input :placeholder="$t('voiceClone.searchPlaceholder')" v-model="searchName" class="search-input"
-                  @keyup.enter.native="handleSearch" clearable />
-                <CustomButton type="confirm" icon="el-icon-search" @click="handleSearch">{{ $t('voiceClone.search') }}</CustomButton>
-              </div>
-            </div>
-            <div v-loading="loading" class="voice-clone-grid">
-              <div v-for="item in voiceCloneList" :key="item.id" class="voice-clone-card">
-                <div class="card-top">
-                  <img src="@/assets/setting/voiceclone.png" alt="" width="80px" height="80px">
-                  <div class="card-info">
-                    <div class="info-left">
-                      <div class="info-title">
-                        <el-input v-show="item.isEdit" v-model="item.name" size="mini" maxlength="64"
-                          show-word-limit @keyup.enter.native="onNameEnter(item)"
-                          ref="nameInput" />
-                        <span v-show="!item.isEdit" class="name-text" :title="item.name">{{ item.name || '-' }}</span>
-                      </div>
-                      <div class="info-grid">
-                        <div class="info-row">
-                          <span class="info-label">{{ $t('voiceClone.voiceId') }}</span>
-                          <span class="info-value" :title="item.voiceId">{{ item.voiceId || '-' }}</span>
-                        </div>
-                        <div class="info-row">
-                          <span class="info-label">{{ $t('voiceClone.languages') }}</span>
-                          <span class="info-value">{{ item.languages || '-' }}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="info-right" :class="{ 'info-right--centered': !item.hasVoice }">
-                       <el-tooltip :content="getTooltipContent(item)" placement="top" effect="light">
-                          <div class="status-button" :class="getStatusButtonClass(item)">
-                            <span>{{ getTrainStatusText(item) }}</span>
-                          </div>
-                       </el-tooltip>
-                      <div v-if="item.hasVoice" class="voice-wave" :class="{ 'is-playing': playingRowId === item.id }">
-                        <span class="wave-bar"></span>
-                        <span class="wave-bar"></span>
-                        <span class="wave-bar"></span>
-                        <span class="wave-bar"></span>
-                        <span class="wave-bar"></span>
-                        <span class="wave-bar"></span>
-                        <span class="wave-bar"></span>
-                        <span class="wave-bar"></span>
-                        <span class="wave-bar"></span>
-                        <span class="wave-bar"></span>
-                        <span class="wave-bar"></span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
 
-                <div class="card-actions">
-                  <el-button v-if="item.hasVoice" size="mini" type="text" icon="el-icon-video-play"
-                    @click="handlePlay(item)">
-                    {{ playingRowId === item.id ? $t('voiceClone.stop') : $t('voiceClone.play') }}
-                  </el-button>
-                  <el-button size="mini" type="text" icon="el-icon-upload2" @click="handleUpload(item)">
-                    {{ $t('voiceClone.upload') }}
-                  </el-button>
-                  <el-button v-if="item.hasVoice" size="mini" type="text" icon="el-icon-copy-document"
-                    @click="handleClone(item)" :loading="item._cloning">
-                    {{ $t('voiceClone.clone') }}
-                  </el-button>
-                  <el-button size="mini" type="text"
-                    :icon="item.isEdit ? 'el-icon-check' : 'el-icon-edit'"
-                    @click="handleEditButtonClick(item)">
-                    {{ item.isEdit ? $t('button.save') : $t('common.edit') }}
-                  </el-button>
-                </div>
-              </div>
-
-              <div v-if="!loading && voiceCloneList.length === 0" class="empty-state">
-                {{ $t('voiceClone.noVoiceCloneAssigned') }}
-              </div>
-            </div>
-
-            <CustomPagination
-              :total="total"
-              :current-page="currentPage"
-              :page-size="pageSize"
-              :page-size-options="pageSizeOptions"
-              @size-change="handlePageSizeChange"
-              @page-change="goToPage"
-            />
-          </el-card>
+    <main class="page">
+      <header class="page-header">
+        <div class="page-heading">
+          <h1 class="page-title">{{ $t('voiceClone.title') }}</h1>
+          <p class="page-description">{{ $t('console.voiceCloneDescription') }}</p>
         </div>
-      </div>
-    </div>
+        <div class="page-actions">
+          <el-input :placeholder="$t('voiceClone.searchPlaceholder')" :aria-label="$t('voiceClone.searchPlaceholder')"
+            v-model="searchName" class="search-input" prefix-icon="el-icon-search"
+            @keyup.enter.native="handleSearch" clearable />
+          <el-button @click="handleSearch">{{ $t('voiceClone.search') }}</el-button>
+        </div>
+      </header>
+
+      <section class="list-card">
+        <div v-loading="loading" class="voice-clone-grid">
+          <article v-for="item in voiceCloneList" :key="item.id" class="voice-clone-card">
+            <div class="card-head">
+              <div class="voice-icon" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="9" y="3" width="6" height="11" rx="3" />
+                  <path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
+                </svg>
+              </div>
+              <div class="info-title">
+                <el-input v-show="item.isEdit" v-model="item.name" size="mini" maxlength="64"
+                  show-word-limit :aria-label="$t('voiceClone.name')" @keyup.enter.native="onNameEnter(item)"
+                  ref="nameInput" />
+                <h2 v-show="!item.isEdit" class="name-text" :title="item.name">{{ item.name || '-' }}</h2>
+              </div>
+              <el-tooltip :content="getTooltipContent(item)" placement="top" effect="light">
+                <span class="status-pill" :class="getStatusButtonClass(item)" tabindex="0">
+                  <span class="status-pill-dot" aria-hidden="true"></span>{{ getTrainStatusText(item) }}
+                </span>
+              </el-tooltip>
+            </div>
+
+            <dl class="info-grid">
+              <dt>{{ $t('voiceClone.voiceId') }}</dt>
+              <dd class="mono" :title="item.voiceId">{{ item.voiceId || '-' }}</dd>
+              <dt>{{ $t('voiceClone.languages') }}</dt>
+              <dd>{{ item.languages || '-' }}</dd>
+            </dl>
+
+            <div v-if="item.hasVoice" class="voice-wave" :class="{ 'is-playing': playingRowId === item.id }"
+              aria-hidden="true">
+              <span v-for="n in 24" :key="n" class="wave-bar"></span>
+            </div>
+
+            <div class="card-actions">
+              <el-button v-if="item.hasVoice" size="mini" type="text" class="row-action"
+                :icon="playingRowId === item.id ? 'el-icon-video-pause' : 'el-icon-video-play'"
+                @click="handlePlay(item)">
+                {{ playingRowId === item.id ? $t('voiceClone.stop') : $t('voiceClone.play') }}
+              </el-button>
+              <el-button size="mini" type="text" class="row-action" icon="el-icon-upload2" @click="handleUpload(item)">
+                {{ $t('voiceClone.upload') }}
+              </el-button>
+              <el-button v-if="item.hasVoice" size="mini" type="text" class="row-action" icon="el-icon-copy-document"
+                @click="handleClone(item)" :loading="item._cloning">
+                {{ $t('voiceClone.clone') }}
+              </el-button>
+              <el-button size="mini" type="text" class="row-action"
+                :icon="item.isEdit ? 'el-icon-check' : 'el-icon-edit'"
+                @click="handleEditButtonClick(item)">
+                {{ item.isEdit ? $t('button.save') : $t('common.edit') }}
+              </el-button>
+            </div>
+          </article>
+
+          <div v-if="!loading && voiceCloneList.length === 0" class="empty-state">
+            {{ $t('voiceClone.noVoiceCloneAssigned') }}
+          </div>
+        </div>
+
+        <div class="card-footer">
+          <CustomPagination
+            :total="total"
+            :current-page="currentPage"
+            :page-size="pageSize"
+            :page-size-options="pageSizeOptions"
+            @size-change="handlePageSizeChange"
+            @page-change="goToPage"
+          />
+        </div>
+      </section>
+    </main>
 
     <el-footer>
       <version-footer />
@@ -363,280 +357,268 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-@import '@/styles/global.scss';
-
 .welcome {
-  min-width: 900px;
-  min-height: 506px;
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
-  position: relative;
   flex-direction: column;
-  background-size: cover;
-  background: #eff4ff;
-  -webkit-background-size: cover;
-  -o-background-size: cover;
-  overflow: hidden;
+  background: var(--x-canvas);
+  text-align: left;
 }
 
-.main-wrapper {
-  height: calc(100vh - 63px - 35px);
-  padding: 20px 22px 0;
-  position: relative;
-  display: flex;
-  flex-direction: column;
+.page {
+  flex: 1;
+  width: 100%;
+  max-width: 1280px;
+  padding: 32px;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.operation-header {
+.page-header {
   display: flex;
-  align-items: center;
+  flex-wrap: wrap;
+  align-items: flex-end;
   justify-content: space-between;
-  padding: 0 0 16px 0;
+  gap: 16px;
+}
+
+.page-heading {
+  min-width: 0;
 }
 
 .page-title {
-  font-weight: 500;
-  font-size: 24px;
   margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+  color: var(--x-text);
 }
 
-.right-operations {
+.page-actions {
   display: flex;
-  gap: 10px;
-  margin-left: auto;
-}
+  flex-wrap: wrap;
+  gap: 8px;
 
-.search-input {
-  width: 240px;
-}
-
-.content-panel {
-  display: flex;
-  overflow: hidden;
-  height: 100%;
-  border-radius: 15px;
-  background: transparent;
-  border: 1px solid #fff;
-}
-
-.content-area {
-  flex: 1;
-  height: 100%;
-  min-width: 600px;
-  overflow: auto;
-  background-color: white;
-  display: flex;
-  flex-direction: column;
-}
-
-.params-card {
-  background: white;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  border: none;
-  box-shadow: none;
-  overflow: hidden;
-
-  ::v-deep .el-card__body {
-    padding: 14px 20px;
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    overflow: hidden;
+  .el-button + .el-button {
+    margin-left: 0;
   }
 }
 
-.status-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px 10px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 500;
+.search-input {
+  width: 280px;
+  max-width: 100%;
 }
 
-.status-waiting {
-  background-color: #f5f7fa;
-  color: #909399;
-  border: 1px solid #e4e7ed;
-}
-
-.status-success {
-  background-color: #f6ffed;
-  color: #52c41a;
-  border: 1px solid #b7eb8f;
-}
-
-.status-failed {
-  background-color: #fff2f0;
-  color: #ff4d4f;
-  border: 1px solid #ffccc7;
+.list-card {
+  background: var(--x-surface);
+  border: 1px solid var(--x-border);
+  border-radius: var(--x-radius-card);
+  overflow: hidden;
 }
 
 .voice-clone-grid {
-  padding: 10px 16px;
-  margin-bottom: 20px;
-  height: calc(100% - 90px);
+  padding: 16px;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 16px;
   align-content: start;
   min-height: 200px;
-  overflow: auto;
-  @include scrollbar-style;
 }
 
 .voice-clone-card {
   display: flex;
-  flex-direction: column; 
-  gap: 14px;
-  padding: 16px 16px 8px;
-  background: #fff;
-  box-shadow: 0 0 10px 0 #e8ecf5;
-  border-radius: 8px;
-  transition: box-shadow 0.2s, border-color 0.2s;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--x-surface);
+  border: 1px solid var(--x-border);
+  border-radius: var(--x-radius-card);
+  transition: border-color 0.15s ease;
 
   &:hover {
-    border-color: #c0caff;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    border-color: var(--x-border-control);
   }
 }
 
-.card-top {
+.card-head {
   display: flex;
+  align-items: center;
   gap: 12px;
+  padding: 16px 16px 12px;
 }
 
-.voice-wave {
+.voice-icon {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background: var(--x-divider);
+  color: var(--x-text-secondary);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  flex: 1;
-  min-height: 40px;
-  width: 100%;
-  padding: 0 4px;
-
-  .wave-bar {
-    width: 3px;
-    height: 50%;
-    max-height: 80px;
-    background: linear-gradient(to top, #a5b4fc 0%, #c4b5fd 100%);
-    border-radius: 2px;
-    transform-origin: center;
-    animation: voice-wave 1.2s ease-in-out infinite paused;
-
-    &:nth-child(1) { animation-delay: -0s; }
-    &:nth-child(2) { animation-delay: -0.12s; }
-    &:nth-child(3) { animation-delay: -0.24s; }
-    &:nth-child(4) { animation-delay: -0.36s; }
-    &:nth-child(5) { animation-delay: -0.48s; }
-    &:nth-child(6) { animation-delay: -0.6s; }
-    &:nth-child(7) { animation-delay: -0.72s; }
-    &:nth-child(8) { animation-delay: -0.84s; }
-    &:nth-child(9) { animation-delay: -0.96s; }
-    &:nth-child(10) { animation-delay: -1.08s; }
-    &:nth-child(11) { animation-delay: -1.2s; }
-  }
-
-  &.is-playing .wave-bar {
-    animation-play-state: running;
-  }
-}
-
-@keyframes voice-wave {
-  0%, 100% { transform: scaleY(0.2); }
-  50% { transform: scaleY(0.95); }
-}
-
-.card-info {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  gap: 12px;
-}
-
-.info-left {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-evenly;
-}
-
-.info-right {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 10px;
-  flex-shrink: 0;
-  min-width: 100px;
 }
 
 .info-title {
+  flex: 1;
   min-width: 0;
-  font-size: 16px;
-  font-weight: 500;
-  color: #303133;
 
   .name-text {
-    line-height: 28px;
-    text-align: left;
-    display: block;
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 22px;
+    color: var(--x-text);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 }
 
-.info-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: var(--x-radius-pill);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  white-space: nowrap;
+  background: var(--x-divider);
+  color: var(--x-text-secondary);
+  outline: none;
+
+  &:focus-visible {
+    box-shadow: 0 0 0 3px var(--x-focus-ring);
+  }
+
+  .status-pill-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--x-text-muted);
+  }
+
+  &.status-success {
+    background: var(--x-success-bg);
+    color: var(--x-success-text);
+
+    .status-pill-dot {
+      background: var(--x-success);
+    }
+  }
+
+  &.status-failed {
+    background: var(--x-danger-bg);
+    color: var(--x-danger-text);
+
+    .status-pill-dot {
+      background: var(--x-danger);
+    }
+  }
 }
 
-.info-row {
+.info-grid {
+  margin: 0;
+  padding: 0 16px 14px;
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  row-gap: 6px;
+  column-gap: 16px;
+  font-size: 13px;
+  line-height: 20px;
+
+  dt {
+    color: var(--x-text-muted);
+    white-space: nowrap;
+  }
+
+  dd {
+    margin: 0;
+    color: var(--x-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mono {
+    font-family: var(--x-font-mono);
+    font-size: 12px;
+    color: var(--x-text-secondary);
+  }
+}
+
+.voice-wave {
   display: flex;
   align-items: center;
-  font-size: 13px;
-  line-height: 1.5;
+  justify-content: space-between;
+  gap: 3px;
+  height: 32px;
+  margin: 0 16px 14px;
+  padding: 0 12px;
+  border-radius: var(--x-radius-control);
+  background: var(--x-surface-raised);
+
+  .wave-bar {
+    flex: 1;
+    max-width: 3px;
+    height: 50%;
+    background: var(--x-border-control);
+    border-radius: 2px;
+    transform-origin: center;
+    animation: voice-wave 1.2s ease-in-out infinite paused;
+
+    @for $i from 1 through 24 {
+      &:nth-child(#{$i}) {
+        animation-delay: #{-0.1s * ($i - 1)};
+      }
+    }
+  }
+
+  &.is-playing .wave-bar {
+    background: var(--x-ink);
+    animation-play-state: running;
+  }
 }
 
-.info-label {
-  margin-right: 10px;
-  color: #909399;
-  flex-shrink: 0;
-}
-
-.info-value {
-  color: #303133;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+@keyframes voice-wave {
+  0%, 100% { transform: scaleY(0.3); }
+  50% { transform: scaleY(1.5); }
 }
 
 .card-actions {
+  margin-top: auto;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 4px 8px;
-  padding-top: 10px;
-  border-top: 1px solid #f0f2f5;
+  gap: 0;
+  padding: 6px;
+  border-top: 1px solid var(--x-divider);
 
-  ::v-deep .el-button {
-    display: flex;
-    align-items: center;
+  .el-button + .el-button {
+    margin-left: 0;
+  }
+}
+
+.row-action {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px;
+  font-size: 13px;
+  color: var(--x-text-secondary);
+
+  ::v-deep [class*="el-icon-"] + span {
+    margin-left: 4px;
   }
 
-  ::v-deep .el-button--text {
-    color: #7079aa;
-  }
-
-  ::v-deep .el-button--text:hover {
-    color: #5a64b5;
+  &:hover,
+  &:focus {
+    color: var(--x-text);
+    background: var(--x-canvas);
   }
 }
 
@@ -646,7 +628,46 @@ export default {
   align-items: center;
   justify-content: center;
   padding: 60px 0;
-  color: #909399;
+  color: var(--x-text-muted);
   font-size: 14px;
+}
+
+.card-footer {
+  padding: 10px 16px;
+  border-top: 1px solid var(--x-border);
+
+  overflow-x: auto;
+
+  ::v-deep .pagination-wrapper {
+    display: flex;
+    justify-content: flex-end;
+  }
+}
+
+.el-footer {
+  height: auto !important;
+  padding: 0;
+}
+
+@media (max-width: 768px) {
+  .page {
+    padding: 16px;
+    gap: 16px;
+  }
+
+  .page-actions,
+  .search-input {
+    width: 100%;
+  }
+
+  .search-input {
+    flex: 1;
+    width: auto;
+  }
+
+  .voice-clone-grid {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 12px;
+  }
 }
 </style>

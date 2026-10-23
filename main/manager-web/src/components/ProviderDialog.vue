@@ -37,38 +37,38 @@
         <div class="field-config-header">
           <span class="field-config-title">{{ $t('providerDialog.fieldConfig') }}</span>
           <div class="field-config-actions">
-            <el-button type="primary" @click="addField" size="small" class="btn-add"
+            <el-button @click="addField" size="small" icon="el-icon-plus" class="btn-add"
               :disabled="hasIncompleteFields">
               {{ $t('providerDialog.add') }}
             </el-button>
-            <el-button type="primary" @click="toggleSelectAllFields" size="small" class="btn-select-all">
+            <el-button @click="toggleSelectAllFields" size="small" class="btn-select-all">
               {{ isAllFieldsSelected ? $t('providerDialog.deselectAll') : $t('providerDialog.selectAll') }}
             </el-button>
-            <el-button type="danger" @click="batchRemoveFields" size="small" class="btn-batch-delete">
+            <el-button @click="batchRemoveFields" size="small" icon="el-icon-delete" class="btn-batch-delete">
               {{ $t('providerDialog.batchDelete') }}
             </el-button>
           </div>
         </div>
-        <div class="divider"></div>
 
         <div class="fields-container">
-          <el-table :data="form.fields" style="width: 100%;" border size="medium" :key="tableKey">
-            <el-table-column :label="$t('modelConfig.select')" align="center" width="50">
+          <el-table :data="form.fields" class="fields-table" style="width: 100%;" size="small" :key="tableKey">
+            <el-table-column :label="$t('modelConfig.select')" align="center" width="72">
               <template slot-scope="scope">
-                <el-checkbox v-model="scope.row.selected" @change="handleFieldSelectChange"></el-checkbox>
+                <el-checkbox v-model="scope.row.selected" :aria-label="scope.row.key"
+                  @change="handleFieldSelectChange"></el-checkbox>
               </template>
             </el-table-column>
-            <el-table-column :label="$t('providerDialog.fieldKey')">
+            <el-table-column :label="$t('providerDialog.fieldKey')" min-width="140">
               <template slot-scope="scope">
                 <template v-if="scope.row.editing">
                   <el-input v-model="scope.row.key" :placeholder="$t('providerDialog.fieldKey')"></el-input>
                 </template>
                 <template v-else>
-                  {{ scope.row.key }}
+                  <span class="mono">{{ scope.row.key }}</span>
                 </template>
               </template>
             </el-table-column>
-            <el-table-column :label="$t('providerDialog.fieldLabel')">
+            <el-table-column :label="$t('providerDialog.fieldLabel')" min-width="140">
               <template slot-scope="scope">
                 <template v-if="scope.row.editing">
                   <el-input v-model="scope.row.label" :placeholder="$t('providerDialog.fieldLabel')"></el-input>
@@ -78,7 +78,7 @@
                 </template>
               </template>
             </el-table-column>
-            <el-table-column :label="$t('providerDialog.fieldType')">
+            <el-table-column :label="$t('providerDialog.fieldType')" min-width="120">
               <template slot-scope="scope">
                 <template v-if="scope.row.editing">
                   <el-select v-model="scope.row.type" :placeholder="$t('providerDialog.type')">
@@ -94,7 +94,7 @@
                 </template>
               </template>
             </el-table-column>
-            <el-table-column :label="$t('providerDialog.defaultValue')">
+            <el-table-column :label="$t('providerDialog.defaultValue')" min-width="140">
               <template slot-scope="scope">
                 <template v-if="scope.row.editing">
                   <el-input v-model="scope.row.default" :placeholder="$t('providerDialog.inputDefaultValue')"></el-input>
@@ -104,17 +104,22 @@
                 </template>
               </template>
             </el-table-column>
-            <el-table-column :label="$t('providerDialog.operation')" width="150" align="center">
+            <el-table-column :label="$t('providerDialog.operation')" width="150" align="right">
               <template slot-scope="scope">
-                <el-button v-if="!scope.row.editing" type="primary" size="mini" @click="startEditing(scope.row)">
-                  {{ $t('providerDialog.edit') }}
-                </el-button>
-                <el-button v-else type="success" size="mini" @click="stopEditing(scope.row)">
-                  {{ $t('providerDialog.complete') }}
-                </el-button>
-                <el-button type="danger" size="mini" @click="removeField(scope.$index)">
-                  {{ $t('providerDialog.delete') }}
-                </el-button>
+                <div class="row-actions">
+                  <el-button v-if="!scope.row.editing" type="text" size="mini" class="action-btn"
+                    @click="startEditing(scope.row)">
+                    {{ $t('providerDialog.edit') }}
+                  </el-button>
+                  <el-button v-else type="text" size="mini" class="action-btn action-btn--strong"
+                    @click="stopEditing(scope.row)">
+                    {{ $t('providerDialog.complete') }}
+                  </el-button>
+                  <el-button type="text" size="mini" class="action-btn action-btn--danger"
+                    @click="removeField(scope.$index)">
+                    {{ $t('providerDialog.delete') }}
+                  </el-button>
+                </div>
               </template>
             </el-table-column>
           </el-table>
@@ -341,39 +346,160 @@ export default {
 </script>
 
 <style scoped lang="scss">
+::v-deep .el-dialog {
+  max-width: calc(100vw - 32px);
+}
+
 .provider-dialog-wrapper {
   .provider-form {
     .form-row {
       display: flex;
-      gap: 20px;
-      margin-bottom: 20px;
+      flex-wrap: wrap;
+      column-gap: 20px;
     }
+
     .form-item {
       flex: 1;
-      margin-bottom: 0;
+      min-width: 260px;
+      margin-bottom: 18px;
     }
-    .custom-select {
-      width: 100%;
-    }
+
+    .custom-select,
     .custom-input-number {
       width: 100%;
     }
   }
+
   .field-config-header {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 15px;
+    gap: 12px;
+    margin: 8px 0 12px;
+    padding-top: 16px;
+    border-top: 1px solid var(--x-divider);
+
     .field-config-title {
-      font-size: 16px;
+      font-size: 14px;
       font-weight: 600;
-      color: #3d4566;
+      color: var(--x-text);
     }
   }
-  .divider {
-    height: 2px;
-    background: #e9e9e9;
-    margin-bottom: 22px;
+
+  .field-config-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+
+    .el-button + .el-button {
+      margin-left: 0;
+    }
+  }
+
+  .btn-batch-delete {
+    color: var(--x-danger-text);
+
+    &:not(.is-disabled):hover,
+    &:not(.is-disabled):focus {
+      color: var(--x-danger-text);
+      background: var(--x-danger-bg);
+      border-color: var(--x-danger-bg);
+    }
+  }
+
+  .fields-container {
+    border: 1px solid var(--x-border);
+    border-radius: 12px;
+    overflow-x: auto;
+  }
+
+  .fields-table {
+    min-width: 720px;
+
+    &::before {
+      display: none;
+    }
+
+    ::v-deep th.el-table__cell > .cell {
+      white-space: nowrap;
+    }
+
+    ::v-deep th.el-table__cell {
+      background: var(--x-surface-raised);
+      border-bottom: 1px solid var(--x-divider);
+    }
+
+    ::v-deep td.el-table__cell {
+      border-bottom: 1px solid var(--x-divider);
+    }
+
+    ::v-deep .el-table__row:last-child td.el-table__cell {
+      border-bottom: 0;
+    }
+  }
+
+  .mono {
+    font-family: var(--x-font-mono);
+    font-size: 13px;
+  }
+
+  .row-actions {
+    display: inline-flex;
+    justify-content: flex-end;
+    gap: 2px;
+    white-space: nowrap;
+  }
+
+  .action-btn {
+    height: 28px;
+    padding: 0 8px;
+    margin: 0 !important;
+    color: var(--x-text-secondary);
+    font-size: 13px;
+
+    &:hover,
+    &:focus {
+      background: var(--x-canvas);
+      color: var(--x-text);
+    }
+
+    &--strong {
+      color: var(--x-text);
+      font-weight: 600;
+    }
+
+    &--danger:hover,
+    &--danger:focus {
+      background: var(--x-danger-bg);
+      color: var(--x-danger-text);
+    }
+  }
+}
+
+@media (max-width: 600px) {
+  .provider-dialog-wrapper {
+    .provider-form .form-item {
+      min-width: 100%;
+    }
+
+    ::v-deep .provider-form > .form-row .el-form-item__label {
+      float: none;
+      display: block;
+      width: auto !important;
+      text-align: left;
+      line-height: 1.5;
+      padding-bottom: 6px;
+    }
+
+    ::v-deep .provider-form > .form-row .el-form-item__label-wrap {
+      float: none;
+      margin-left: 0 !important;
+    }
+
+    ::v-deep .provider-form > .form-row .el-form-item__content {
+      margin-left: 0 !important;
+    }
   }
 }
 </style>

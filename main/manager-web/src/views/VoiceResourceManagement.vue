@@ -1,52 +1,64 @@
 <template>
     <div class="welcome">
         <HeaderBar />
-        <div class="main-wrapper">
-            <div class="content-panel">
-                <div class="content-area">
-                    <el-card class="params-card" shadow="never">
-                        <div class="operation-header">
-                            <h2 class="page-title">{{ $t('voiceResource.title') }}</h2>
-                            <div class="right-operations">
-                                <el-input :placeholder="$t('voiceClone.searchPlaceholder')" v-model="searchName"
-                                    class="search-input" @keyup.enter.native="handleSearch" clearable />
-                                <CustomButton icon="el-icon-search" type="confirm"
-                                    @click="handleSearch">{{ $t('voiceClone.search') }}</CustomButton>
-                            </div>
-                        </div>
-                        <CustomTable ref="voiceTable" :data="voiceCloneList" :columns="tableColumns" :loading="loading"
-                            :show-selection="true" :show-operations="true" :operations-label="$t('voiceClone.action')"
-                            :total="total" :current-page="currentPage" :page-size="pageSize"
-                            :page-size-options="pageSizeOptions" @size-change="handlePageSizeChange"
-                            @page-change="goToPage">
-                            <template slot="trainStatus" slot-scope="scope">
-                                {{ getTrainStatusText(scope.row) }}
-                            </template>
-                            <template slot="createdAt" slot-scope="scope">
-                                {{ formatDate(scope.row.createDate) }}
-                            </template>
-                            <template slot="operations" slot-scope="scope">
-                                <el-button size="mini" type="text"
-                                    @click="deleteVoiceClone(scope.row)">{{ $t('voiceClone.delete') }}</el-button>
-                            </template>
-                            <template slot="footer-btns">
-                                <div class="ctrl_btn">
-                                    <CustomButton
-                                        :icon="isAllSelected ? 'el-icon-circle-close' : 'el-icon-circle-check'"
-                                        size="small" @click="handleSelectAll">
-                                        {{ isAllSelected ? $t('voiceClone.deselectAll') : $t('voiceClone.selectAll') }}
-                                    </CustomButton>
-                                    <CustomButton icon="el-icon-plus" type="add" size="small"
-                                        @click="showAddDialog">{{ $t('voiceClone.addNew') }}</CustomButton>
-                                    <CustomButton size="small" type="delete" icon="el-icon-delete"
-                                        @click="deleteSelectedVoiceClones">{{ $t('voiceClone.delete') }}</CustomButton>
-                                </div>
-                            </template>
-                        </CustomTable>
-                    </el-card>
+
+        <main class="page">
+            <header class="page-header">
+                <div class="page-heading">
+                    <h1 class="page-title">{{ $t('voiceResource.title') }}</h1>
+                    <p class="page-description">{{ $t('console.voiceResourceDescription') }}</p>
                 </div>
-            </div>
-        </div>
+                <div class="page-actions">
+                    <el-button type="primary" icon="el-icon-plus" @click="showAddDialog">
+                        {{ $t('voiceClone.addNew') }}
+                    </el-button>
+                </div>
+            </header>
+
+            <section class="table-card">
+                <div class="table-toolbar">
+                    <div class="search-group">
+                        <el-input :placeholder="$t('voiceClone.searchPlaceholder')"
+                            :aria-label="$t('voiceClone.searchPlaceholder')" v-model="searchName"
+                            class="search-input" prefix-icon="el-icon-search" @keyup.enter.native="handleSearch"
+                            clearable />
+                        <el-button size="small" @click="handleSearch">{{ $t('voiceClone.search') }}</el-button>
+                    </div>
+                    <div class="toolbar-actions">
+                        <el-button size="small" @click="handleSelectAll">
+                            {{ isAllSelected ? $t('voiceClone.deselectAll') : $t('voiceClone.selectAll') }}
+                        </el-button>
+                        <el-button size="small" class="btn-danger-outline" icon="el-icon-delete"
+                            @click="deleteSelectedVoiceClones">{{ $t('voiceClone.delete') }}</el-button>
+                    </div>
+                </div>
+                <CustomTable ref="voiceTable" class="resource-table" :data="voiceCloneList" :columns="tableColumns"
+                    :loading="loading" :show-selection="true" :show-operations="true"
+                    :operations-label="$t('voiceClone.action')" :operations-width="110"
+                    :total="total" :current-page="currentPage" :page-size="pageSize"
+                    :page-size-options="pageSizeOptions" @size-change="handlePageSizeChange"
+                    @page-change="goToPage">
+                    <template slot="voiceId" slot-scope="scope">
+                        <span class="mono">{{ scope.row.voiceId }}</span>
+                    </template>
+                    <template slot="name" slot-scope="scope">
+                        <span class="cell-strong">{{ scope.row.name }}</span>
+                    </template>
+                    <template slot="trainStatus" slot-scope="scope">
+                        <span class="status-pill" :class="getTrainStatusClass(scope.row)">
+                            <span class="status-pill-dot" aria-hidden="true"></span>{{ getTrainStatusText(scope.row) }}
+                        </span>
+                    </template>
+                    <template slot="createdAt" slot-scope="scope">
+                        {{ formatDate(scope.row.createDate) }}
+                    </template>
+                    <template slot="operations" slot-scope="scope">
+                        <el-button size="mini" type="text" class="row-action row-action--danger"
+                            @click="deleteVoiceClone(scope.row)">{{ $t('voiceClone.delete') }}</el-button>
+                    </template>
+                </CustomTable>
+            </section>
+        </main>
 
         <!-- Add voice resource dialog -->
         <voice-clone-dialog :title="$t('voiceClone.addVoiceClone')" :visible.sync="dialogVisible" :form="voiceCloneForm"
@@ -96,13 +108,13 @@ export default {
     methods: {
         initTableColumns() {
             this.tableColumns = [
-                { prop: 'voiceId', label: this.$t('voiceClone.voiceId'), align: 'center' },
-                { prop: 'name', label: this.$t('voiceClone.name'), align: 'center' },
-                { prop: 'userName', label: this.$t('voiceClone.userId'), align: 'center' },
-                { prop: 'modelName', label: this.$t('voiceClone.platformName'), align: 'center' },
-                { prop: 'languages', label: this.$t('voiceClone.languages'), align: 'center' },
-                { prop: 'trainStatus', label: this.$t('voiceClone.trainStatus'), align: 'center' },
-                { prop: 'createdAt', label: this.$t('voiceClone.createdAt'), align: 'center' }
+                { prop: 'voiceId', label: this.$t('voiceClone.voiceId'), align: 'left', minWidth: 140 },
+                { prop: 'name', label: this.$t('voiceClone.name'), align: 'left', minWidth: 120 },
+                { prop: 'userName', label: this.$t('voiceClone.userId'), align: 'left', minWidth: 120 },
+                { prop: 'modelName', label: this.$t('voiceClone.platformName'), align: 'left', minWidth: 120 },
+                { prop: 'languages', label: this.$t('voiceClone.languages'), align: 'left', minWidth: 110 },
+                { prop: 'trainStatus', label: this.$t('voiceClone.trainStatus'), align: 'left', minWidth: 180, showOverflowTooltip: false },
+                { prop: 'createdAt', label: this.$t('voiceClone.createdAt'), align: 'left', minWidth: 170 }
             ];
         },
         handlePageSizeChange(val) {
@@ -256,6 +268,13 @@ export default {
             }
         },
         formatDate,
+        getTrainStatusClass(row) {
+            if (!row.hasVoice) return '';
+            if (row.trainStatus === 1) return 'status-pill--warning';
+            if (row.trainStatus === 2) return 'status-pill--success';
+            if (row.trainStatus === 3) return 'status-pill--danger';
+            return '';
+        },
         getTrainStatusText(row) {
             if (!row.hasVoice) {
                 return this.$t('voiceClone.waitingUpload');
@@ -279,98 +298,252 @@ export default {
 
 <style lang="scss" scoped>
 .welcome {
-    min-width: 900px;
-    min-height: 506px;
     height: 100vh;
+    min-height: 560px;
     display: flex;
-    position: relative;
     flex-direction: column;
-    background-size: cover;
-    background: #eff4ff;
-    -webkit-background-size: cover;
-    -o-background-size: cover;
-    overflow: hidden;
+    background: var(--x-canvas);
+    text-align: left;
 }
 
-.main-wrapper {
-    // top 63px, bottom 35px
-    height: calc(100vh - 63px - 35px);
-    padding: 20px 22px 0;
-    position: relative;
-    display: flex;
-    flex-direction: column;
+.page {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    max-width: 1280px;
+    padding: 32px 32px 0;
     box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
 
-.operation-header {
+.page-header {
     display: flex;
-    align-items: center;
+    flex-wrap: wrap;
+    align-items: flex-end;
     justify-content: space-between;
-    padding: 0 0 16px 0;
+    gap: 16px;
+}
+
+.page-heading {
+    min-width: 0;
 }
 
 .page-title {
-    font-weight: 500;
-    font-size: 24px;
     margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.3;
+    color: var(--x-text);
 }
 
-.right-operations {
+.page-actions {
     display: flex;
-    gap: 10px;
-    margin-left: auto;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.table-card {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--x-surface);
+    border: 1px solid var(--x-border);
+    border-radius: var(--x-radius-card);
+    overflow: hidden;
+}
+
+.table-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--x-border);
+}
+
+.search-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 100%;
 }
 
 .search-input {
-    width: 240px;
-}
+    width: 300px;
+    max-width: 100%;
 
-.content-panel {
-    display: flex;
-    overflow: hidden;
-    height: 100%;
-    border-radius: 15px;
-    background: transparent;
-    border: 1px solid #fff;
-}
+    ::v-deep .el-input__inner {
+        height: 34px;
+        line-height: 34px;
+    }
 
-.content-area {
-    flex: 1;
-    height: 100%;
-    min-width: 600px;
-    overflow: auto;
-    background-color: white;
-    display: flex;
-    flex-direction: column;
-}
-
-.params-card {
-    background: white;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    border: none;
-    box-shadow: none;
-    overflow: hidden;
-
-    ::v-deep .el-card__body {
-        padding: 14px 20px;
-        display: flex;
-        flex-direction: column;
-        flex: 1;
-        overflow: hidden;
+    ::v-deep .el-input__icon {
+        line-height: 34px;
     }
 }
 
-.ctrl_btn {
+.toolbar-actions {
     display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+
+    .el-button + .el-button {
+        margin-left: 0;
+    }
 }
 
-:deep(.el-table .el-button--text) {
-    color: #7079aa;
+.btn-danger-outline {
+    color: var(--x-danger-text);
+    border-color: var(--x-border-control);
+    border-color: color-mix(in srgb, var(--x-danger) 30%, transparent);
+
+    &:not(.is-disabled):hover,
+    &:not(.is-disabled):focus {
+        color: var(--x-danger-text);
+        background: var(--x-danger-bg);
+        border-color: color-mix(in srgb, var(--x-danger) 45%, transparent);
+    }
 }
 
-:deep(.el-table .el-button--text:hover) {
-    color: #5a64b5;
+/* Table sits flush inside the card; CustomTable's own frame is removed */
+.resource-table {
+    ::v-deep .table-container {
+        border: 0;
+        border-radius: 0;
+    }
+
+    ::v-deep .table-footer {
+        padding: 10px 16px;
+        border-top: 1px solid var(--x-border);
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        gap: 8px;
+        overflow-x: auto;
+    }
+
+    ::v-deep .el-table th.el-table__cell > .cell {
+        white-space: nowrap;
+    }
+
+    ::v-deep .el-table th.el-table__cell > .cell,
+    ::v-deep .el-table td.el-table__cell > .cell {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+}
+
+.cell-strong {
+    font-weight: 500;
+    color: var(--x-text);
+}
+
+.mono {
+    font-family: var(--x-font-mono);
+    font-size: 12px;
+    color: var(--x-text-secondary);
+}
+
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 8px;
+    border-radius: var(--x-radius-pill);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 18px;
+    white-space: nowrap;
+    background: var(--x-divider);
+    color: var(--x-text-secondary);
+
+    .status-pill-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--x-text-muted);
+    }
+
+    &--success {
+        background: var(--x-success-bg);
+        color: var(--x-success-text);
+
+        .status-pill-dot {
+            background: var(--x-success);
+        }
+    }
+
+    &--warning {
+        background: var(--x-warning-bg);
+        color: var(--x-warning-text);
+
+        .status-pill-dot {
+            background: var(--x-warning);
+        }
+    }
+
+    &--danger {
+        background: var(--x-danger-bg);
+        color: var(--x-danger-text);
+
+        .status-pill-dot {
+            background: var(--x-danger);
+        }
+    }
+}
+
+.row-action {
+    padding: 6px 8px;
+    font-size: 13px;
+    color: var(--x-text-secondary);
+
+    &--danger,
+    &--danger:hover,
+    &--danger:focus {
+        color: var(--x-danger-text);
+    }
+
+    &--danger:hover,
+    &--danger:focus {
+        background: var(--x-danger-bg);
+    }
+}
+
+.el-footer {
+    height: auto !important;
+    padding: 0;
+}
+
+@media (max-width: 900px) {
+    .welcome {
+        height: auto;
+        min-height: calc(100vh - var(--x-topbar-height));
+    }
+
+    .table-card {
+        flex: none;
+        height: 560px;
+    }
+}
+
+@media (max-width: 768px) {
+    .page {
+        padding: 16px 16px 0;
+        gap: 16px;
+    }
+
+    .search-group {
+        width: 100%;
+    }
+
+    .search-input {
+        flex: 1;
+        width: auto;
+    }
 }
 </style>

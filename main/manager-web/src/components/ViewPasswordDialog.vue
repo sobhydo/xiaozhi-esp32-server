@@ -1,32 +1,16 @@
 <template>
-  <el-dialog :visible.sync="visible" width="400px" center>
-    <div
-      style="margin: 0 10px 10px;display: flex;align-items: center;gap: 10px;font-weight: 700;font-size: 20px;text-align: left;color: #3d4566;">
-      <div
-        style="width: 40px;height: 40px;border-radius: 50%;background: #5778ff;display: flex;align-items: center;justify-content: center;">
-        <img src="@/assets/login/shield.png" alt=""
-          style="width: 19px;height: 23px; filter: brightness(0) invert(1);" />
-      </div>
-      New User Password
+  <el-dialog :visible.sync="visible" width="400px" custom-class="view-password-dialog" :show-close="false">
+    <div slot="title" class="dialog-head">
+      <span class="head-icon" aria-hidden="true"><i class="el-icon-lock"></i></span>
+      <span class="head-title">New User Password</span>
     </div>
-    <div style="height: 1px;background: #e8f0ff;" />
-    <div style="margin: 22px 15px;">
-      <div style="font-weight: 400;font-size: 14px;text-align: left;color: #3d4566;">
-        <div style="color: red;display: inline-block;">*</div>
-        New User Password:
-      </div>
-      <div class="input-46" style="margin-top: 12px;">
-        <el-input v-model="password" type="text" :readonly="true" style="font-weight: bold; color: #333;" />
-      </div>
+    <div class="dialog-body">
+      <label class="field-label" for="view-password-input">New User Password</label>
+      <el-input id="view-password-input" v-model="password" type="text" :readonly="true" class="password-input" />
     </div>
-    <div style="display: flex;margin: 15px 15px;gap: 7px;">
-      <div class="dialog-btn" style="background: #e6ebff;border: 1px solid #adbdff;color: #5778ff;"
-        @click="closeDialog">
-        Close
-      </div>
-      <div class="dialog-btn" style="background: #5778ff;color: white;" @click="copyPassword">
-        Copy Password
-      </div>
+    <div slot="footer" class="dialog-actions">
+      <el-button @click="closeDialog">Close</el-button>
+      <el-button type="primary" icon="el-icon-document-copy" @click="copyPassword">Copy Password</el-button>
     </div>
   </el-dialog>
 </template>
@@ -53,39 +37,79 @@ export default {
 }
 </script>
 
-<style scoped>
-.input-46 {
-  border: 1px solid #e4e6ef;
-  background: #f6f8fb;
-  border-radius: 15px;
+<style lang="scss" scoped>
+::v-deep .view-password-dialog {
+  max-width: calc(100vw - 32px);
+
+  .el-dialog__header {
+    padding: 20px 24px 0;
+  }
+
+  .el-dialog__body {
+    padding: 16px 24px 8px;
+  }
+
+  .el-dialog__footer {
+    padding: 12px 24px 20px;
+  }
 }
 
-.dialog-btn {
-  cursor: pointer;
-  flex: 1;
-  border-radius: 23px;
-  height: 40px;
+.dialog-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+}
+
+.head-icon {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--x-selected);
+  color: var(--x-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.head-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--x-text);
+}
+
+.dialog-body {
+  text-align: left;
+}
+
+.field-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
   font-weight: 500;
-  font-size: 12px;
-  line-height: 40px;
-  text-align: center;
+  color: var(--x-text);
 }
 
-::v-deep .el-dialog {
-  border-radius: 15px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+.password-input ::v-deep .el-input__inner {
+  background: var(--x-surface-raised);
+  font-family: var(--x-font-mono);
+  font-weight: 600;
+  color: var(--x-text);
+  cursor: default;
 }
 
-::v-deep .el-dialog__headerbtn {
-  display: none;
-}
+.dialog-actions {
+  display: flex;
+  gap: 8px;
 
-::v-deep .el-dialog__body {
-  padding: 4px 6px;
-}
+  .el-button {
+    flex: 1;
+  }
 
-::v-deep .el-input__inner {
-  background-color: #f6f8fb !important;
-  cursor: default !important;
+  .el-button + .el-button {
+    margin-left: 0;
+  }
 }
 </style>

@@ -36,7 +36,7 @@ export const register = () => {
                       position: fixed;
                       bottom: 20px;
                       right: 20px;
-                      background: #409EFF;
+                      background: #18181b;
                       color: white;
                       padding: 12px 20px;
                       border-radius: 4px;
@@ -46,7 +46,7 @@ export const register = () => {
                     updateNotification.innerHTML = `
                       <div style="display: flex; align-items: center;">
                         <span style="margin-right: 10px;">A new version is available, click to refresh the app</span>
-                        <button style="background: white; color: #409EFF; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">Refresh</button>
+                        <button style="background: white; color: #18181b; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">Refresh</button>
                       </div>
                     `;
                     document.body.appendChild(updateNotification);

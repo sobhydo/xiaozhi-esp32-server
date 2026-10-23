@@ -1,9 +1,9 @@
 <template>
-  <div class="copyright">
+  <div class="copyright version-footer">
     <div class="footer-content">
       <span>{{ year }} {{ name }} {{ version }}</span>
       <template v-if="beianGaNum !== 'null'">
-        <span v-if="beianIcpNum !== 'null' || name">|</span>
+        <span v-if="beianIcpNum !== 'null' || name" class="sep" aria-hidden="true">·</span>
         <a :href="'http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=' + beianGaNum" target="_blank"
           rel="noopener" class="beian-link">
           <img
@@ -13,7 +13,7 @@
         </a>
       </template>
       <template v-if="beianIcpNum !== 'null'">
-        <span v-if="name">|</span>
+        <span v-if="name" class="sep" aria-hidden="true">·</span>
         <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener" class="beian-link">
           <span class="beian-text">{{ beianIcpNum }}</span>
         </a>
@@ -43,32 +43,67 @@ export default {
 </script>
 
 <style scoped>
+/* App.vue still has a global centered flex `.copyright` rule; neutralise it */
 .copyright {
-  padding: 10px 0;
+  display: block;
+  height: auto;
+  width: 100%;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18px;
+  color: var(--x-text-muted);
+  text-align: left;
 }
 
 .footer-content {
   display: flex;
+  justify-content: flex-start;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: center;
-  gap: 5px;
+  gap: 4px 8px;
+}
+
+.sep {
+  color: var(--x-border-control);
 }
 
 .beian-link {
-  text-decoration: none;
   display: inline-flex;
   align-items: center;
+  gap: 4px;
+  color: var(--x-text-muted);
+  text-decoration: none;
+}
+
+.beian-link:hover {
+  color: var(--x-text);
 }
 
 .beian-icon {
-  width: 16px;
-  height: 16px;
-  vertical-align: middle;
+  width: 12px;
+  height: 12px;
+  filter: grayscale(1);
+  opacity: 0.7;
 }
 
 .beian-text {
-  color: #000;
   font-size: 12px;
-  vertical-align: middle;
+}
+</style>
+
+<style>
+/* Pages wrap this footer in <el-footer>: a quiet line aligned with the page content */
+.el-footer:has(> .version-footer) {
+  width: 100%;
+  max-width: 1280px;
+  height: auto !important;
+  padding: 12px 32px 20px !important;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .el-footer:has(> .version-footer) {
+    padding: 12px 16px 16px !important;
+  }
 }
 </style>

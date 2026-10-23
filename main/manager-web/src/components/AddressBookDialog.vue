@@ -1,6 +1,6 @@
 <template>
   <el-dialog :title="title" :visible="dialogVisible" width="600px" class="address-book-dialog" @close="handleClose">
-    <el-form ref="addressBookForm" :model="form" :rules="rules" label-width="100px" size="medium">
+    <el-form ref="addressBookForm" :model="form" :rules="rules" label-position="top" size="medium">
       <el-form-item :label="$t('addressBookDialog.name')" prop="name">
         <el-input v-model="form.name" :placeholder="$t('addressBookDialog.namePlaceholder')" clearable></el-input>
       </el-form-item>
@@ -13,8 +13,6 @@
           v-model="form.status"
           :active-value="1"
           :inactive-value="0"
-          active-color="#13ce66"
-          inactive-color="#909399"
         />
       </el-form-item>
     </el-form>
@@ -118,57 +116,47 @@ export default {
 <style lang="scss" scoped>
 .address-book-dialog {
   ::v-deep .el-dialog {
-    border-radius: 20px;
-    overflow: hidden;
+    max-width: calc(100vw - 32px);
+  }
+
+  ::v-deep .el-dialog__header {
+    padding: 18px 24px 16px;
+    border-bottom: 1px solid var(--x-divider);
+    text-align: left;
   }
 
   ::v-deep .el-dialog__body {
-    padding: 20px 30px;
+    padding: 20px 24px;
+    text-align: left;
+  }
+
+  ::v-deep .el-dialog__footer {
+    padding: 14px 24px 18px;
+    border-top: 1px solid var(--x-divider);
   }
 
   ::v-deep .el-form-item {
-    margin-bottom: 20px;
+    margin-bottom: 18px;
+  }
+
+  ::v-deep .el-form-item:last-child {
+    margin-bottom: 4px;
   }
 
   ::v-deep .el-form-item__label {
-    font-weight: 500;
-    color: #34495e;
-    font-size: 14px;
-  }
-
-  ::v-deep .el-input {
-    .el-input__inner {
-      height: 36px;
-      font-size: 14px;
-      border-radius: 4px;
-      border: 1px solid #ddd;
-      transition: all 0.3s ease;
-
-      &:focus {
-        border-color: #5f70f3;
-        box-shadow: 0 0 0 2px rgba(95, 112, 243, 0.2);
-      }
-    }
-  }
-
-  ::v-deep .el-textarea {
-    .el-textarea__inner {
-      font-size: 14px;
-      border-radius: 4px;
-      border: 1px solid #ddd;
-      transition: all 0.3s ease;
-
-      &:focus {
-        border-color: #5f70f3;
-        box-shadow: 0 0 0 2px rgba(95, 112, 243, 0.2);
-      }
-    }
+    padding-bottom: 4px;
+    line-height: 20px;
+    font-size: 13px;
   }
 
   .dialog-footer {
     display: flex;
     justify-content: flex-end;
-    gap: 10px;
+    gap: 8px;
+
+    .el-button + .el-button {
+      margin-left: 0;
+    }
   }
 }
 </style>

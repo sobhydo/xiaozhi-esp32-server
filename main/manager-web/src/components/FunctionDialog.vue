@@ -1,162 +1,176 @@
 <template>
-  <el-drawer :visible.sync="dialogVisible" direction="rtl" size="80%" :wrapperClosable="false" :withHeader="false">
+  <el-drawer :visible.sync="dialogVisible" direction="rtl" size="80%" :wrapperClosable="false" :withHeader="false"
+    custom-class="function-drawer">
     <!-- Custom title area -->
     <div class="custom-header">
       <div class="header-left">
-        <h3 class="bold-title">{{ $t('functionDialog.title') }}</h3>
+        <h2 class="bold-title">{{ $t('functionDialog.title') }}</h2>
       </div>
-      <button class="custom-close-btn" @click="closeDialog">×</button>
+      <button type="button" class="custom-close-btn" :aria-label="$t('button.close')" @click="closeDialog">
+        <i class="el-icon-close" aria-hidden="true"></i>
+      </button>
     </div>
 
-    <div class="function-manager">
-      <!-- Left: unselected functions -->
-      <div class="function-column">
-        <div class="column-header">
-          <h4 class="column-title">{{ $t('functionDialog.unselectedFunctions') }}</h4>
-          <el-button type="text" @click="selectAll" class="select-all-btn">
-            {{ $t('functionDialog.selectAll') }}
-          </el-button>
-        </div>
-        <div class="function-list">
-          <div v-if="unselected.length">
-            <div v-for="func in unselected" :key="func.name" class="function-item">
-              <el-checkbox :label="func.name" v-model="selectedNames" @change="(val) => handleCheckboxChange(func, val)"
-                @click.native.stop></el-checkbox>
-              <div class="func-tag" @click="handleFunctionClick(func)">
-                <div class="color-dot"></div>
-                <span>{{ func.name }}</span>
+    <div class="drawer-body">
+      <div class="function-manager">
+        <!-- Left: unselected functions -->
+        <section class="function-column">
+          <div class="column-header">
+            <h3 class="column-title">
+              {{ $t('functionDialog.unselectedFunctions') }}
+              <span class="column-count">{{ unselected.length }}</span>
+            </h3>
+            <el-button type="text" @click="selectAll" class="select-all-btn">
+              {{ $t('functionDialog.selectAll') }}
+            </el-button>
+          </div>
+          <div class="function-list">
+            <template v-if="unselected.length">
+              <div v-for="func in unselected" :key="func.name" class="function-item">
+                <el-checkbox :label="func.name" v-model="selectedNames" :aria-label="func.name"
+                  @change="(val) => handleCheckboxChange(func, val)" @click.native.stop></el-checkbox>
+                <button type="button" class="func-tag" @click="handleFunctionClick(func)">
+                  <span class="func-name">{{ func.name }}</span>
+                </button>
+              </div>
+            </template>
+            <div v-else class="list-empty">
+              <el-empty :image-size="64" :description="$t('functionDialog.noMorePlugins')" />
+            </div>
+          </div>
+        </section>
+
+        <!-- Middle: selected functions -->
+        <section class="function-column">
+          <div class="column-header">
+            <h3 class="column-title">
+              {{ $t('functionDialog.selectedFunctions') }}
+              <span class="column-count">{{ selectedList.length }}</span>
+            </h3>
+            <el-button type="text" @click="deselectAll" class="select-all-btn">
+              {{ $t('functionDialog.selectAll') }}
+            </el-button>
+          </div>
+          <div class="function-list">
+            <template v-if="selectedList.length > 0">
+              <div v-for="func in selectedList" :key="func.name" class="function-item"
+                :class="{ 'is-active': currentFunction && currentFunction.name === func.name }">
+                <el-checkbox :label="func.name" v-model="selectedNames" :aria-label="func.name"
+                  @change="(val) => handleCheckboxChange(func, val)" @click.native.stop></el-checkbox>
+                <button type="button" class="func-tag" @click="handleFunctionClick(func)">
+                  <span class="func-name">{{ func.name }}</span>
+                  <i class="el-icon-arrow-right func-arrow" aria-hidden="true"></i>
+                </button>
+              </div>
+            </template>
+            <div v-else class="list-empty">
+              <el-empty :image-size="64" :description="$t('functionDialog.pleaseSelectPlugin')" />
+            </div>
+          </div>
+        </section>
+
+        <!-- Right: parameter config -->
+        <section class="params-column">
+          <div v-if="currentFunction" class="column-header">
+            <h3 class="column-title">
+              {{ $t('functionDialog.paramConfig') }} · <span class="column-title-strong">{{ currentFunction.name }}</span>
+            </h3>
+          </div>
+          <div v-if="currentFunction" class="params-container">
+            <el-form :model="currentFunction" class="param-form">
+              <!-- Iterate over fieldsMeta, not the keys of params -->
+              <div v-if="currentFunction.fieldsMeta.length == 0">
+                <el-empty :image-size="64" :description="currentFunction.name + $t('functionDialog.noNeedToConfig')" />
+              </div>
+              <el-form-item v-for="field in currentFunction.fieldsMeta" :key="field.key" :label="field.label"
+                class="param-item" :class="{ 'textarea-field': field.type === 'array' || field.type === 'json' }">
+                <template #label>
+                  <span class="param-label">{{ field.label }}</span>
+                  <el-tooltip effect="dark" :content="fieldRemark(field)" placement="top">
+                    <i class="el-icon-info info-icon" tabindex="0" :aria-label="fieldRemark(field)"></i>
+                  </el-tooltip>
+                </template>
+                <!-- ARRAY -->
+                <el-input v-if="field.type === 'array'" type="textarea" v-model="currentFunction.params[field.key]"
+                  @change="val => handleParamChange(currentFunction, field.key, val)" />
+
+                <!-- JSON -->
+                <el-input v-else-if="field.type === 'json'" type="textarea" :rows="6" placeholder="Please enter valid JSON"
+                  class="mono-input" v-model="textCache[field.key]" @blur="flushJson(field)" />
+
+                <!-- number -->
+                <el-input-number v-else-if="field.type === 'number'" :value="currentFunction.params[field.key]"
+                  @change="val => handleParamChange(currentFunction, field.key, val)" />
+
+                <!-- boolean -->
+                <el-switch v-else-if="field.type === 'boolean' || field.type === 'bool'"
+                  :value="currentFunction.params[field.key]"
+                  @change="val => handleParamChange(currentFunction, field.key, val)" />
+
+                <!-- string or fallback -->
+                <el-input v-else v-model="currentFunction.params[field.key]"
+                  @change="val => handleParamChange(currentFunction, field.key, val)" />
+              </el-form-item>
+            </el-form>
+          </div>
+          <div v-else class="empty-tip">{{ $t('functionDialog.pleaseSelectFunctionForParam') }}</div>
+        </section>
+      </div>
+
+      <!-- MCP area -->
+      <div class="mcp-access-point" v-if="featureStatus.mcpAccessPoint">
+        <div class="mcp-container">
+          <!-- Left area -->
+          <section class="mcp-left">
+            <div class="mcp-header">
+              <h3 class="bold-title">{{ $t('functionDialog.mcpAccessPoint') }}</h3>
+            </div>
+            <div class="url-header">
+              <div class="address-desc">
+                <span>{{ $t('functionDialog.mcpAddressDesc') }}</span>
+                <span class="doc-links">
+                  <a href="https://github.com/xinnan-tech/xiaozhi-esp32-server/blob/main/docs/mcp-endpoint-enable.md"
+                    target="_blank" rel="noopener" class="doc-link">{{ $t('functionDialog.howToDeployMcp') }}</a>
+                  <span class="doc-sep" aria-hidden="true">|</span>
+                  <a href="https://github.com/xinnan-tech/xiaozhi-esp32-server/blob/main/docs/mcp-endpoint-integration.md"
+                    target="_blank" rel="noopener" class="doc-link">{{ $t('functionDialog.howToIntegrateMcp') }}</a>
+                </span>
               </div>
             </div>
-          </div>
-          <div v-else style="display: flex; justify-content: center; align-items: center;">
-            <el-empty :description="$t('functionDialog.noMorePlugins')" />
-          </div>
-        </div>
-      </div>
-
-      <!-- Middle: selected functions -->
-      <div class="function-column">
-        <div class="column-header">
-          <h4 class="column-title">{{ $t('functionDialog.selectedFunctions') }}</h4>
-          <el-button type="text" @click="deselectAll" class="select-all-btn">
-            {{ $t('functionDialog.selectAll') }}
-          </el-button>
-        </div>
-        <div class="function-list">
-          <div v-if="selectedList.length > 0">
-            <div v-for="func in selectedList" :key="func.name" class="function-item">
-              <el-checkbox :label="func.name" v-model="selectedNames" @change="(val) => handleCheckboxChange(func, val)"
-                @click.native.stop></el-checkbox>
-              <div class="func-tag" @click="handleFunctionClick(func)">
-                <div class="color-dot"></div>
-                <span>{{ func.name }}</span>
-              </div>
-            </div>
-          </div>
-          <div v-else style="display: flex; justify-content: center; align-items: center;">
-            <el-empty :description="$t('functionDialog.pleaseSelectPlugin')" />
-          </div>
-        </div>
-      </div>
-
-      <!-- Right: parameter config -->
-      <div class="params-column">
-        <h4 v-if="currentFunction" class="column-title">
-          {{ $t('functionDialog.paramConfig') }} - {{ currentFunction.name }}
-        </h4>
-        <div v-if="currentFunction" class="params-container">
-          <el-form :model="currentFunction" class="param-form">
-            <!-- Iterate over fieldsMeta, not the keys of params -->
-            <div v-if="currentFunction.fieldsMeta.length == 0">
-              <el-empty :description="currentFunction.name + $t('functionDialog.noNeedToConfig')" />
-            </div>
-            <el-form-item v-for="field in currentFunction.fieldsMeta" :key="field.key" :label="field.label"
-              class="param-item" :class="{ 'textarea-field': field.type === 'array' || field.type === 'json' }">
-              <template #label>
-                <span style="font-size: 16px; margin-right: 6px;">{{ field.label }}</span>
-                <el-tooltip effect="dark" :content="fieldRemark(field)" placement="top">
-                  <img src="@/assets/home/info.png" alt="" class="info-icon">
-                </el-tooltip>
-              </template>
-              <!-- ARRAY -->
-              <el-input v-if="field.type === 'array'" type="textarea" v-model="currentFunction.params[field.key]"
-                @change="val => handleParamChange(currentFunction, field.key, val)" />
-
-              <!-- JSON -->
-              <el-input v-else-if="field.type === 'json'" type="textarea" :rows="6" placeholder="Please enter valid JSON"
-                v-model="textCache[field.key]" @blur="flushJson(field)" />
-
-              <!-- number -->
-              <el-input-number v-else-if="field.type === 'number'" :value="currentFunction.params[field.key]"
-                @change="val => handleParamChange(currentFunction, field.key, val)" />
-
-              <!-- boolean -->
-              <el-switch v-else-if="field.type === 'boolean' || field.type === 'bool'"
-                :value="currentFunction.params[field.key]"
-                @change="val => handleParamChange(currentFunction, field.key, val)" />
-
-              <!-- string or fallback -->
-              <el-input v-else v-model="currentFunction.params[field.key]"
-                @change="val => handleParamChange(currentFunction, field.key, val)" />
-            </el-form-item>
-          </el-form>
-        </div>
-        <div v-else class="empty-tip">{{ $t('functionDialog.pleaseSelectFunctionForParam') }}</div>
-      </div>
-    </div>
-
-    <!-- MCP area -->
-    <div class="mcp-access-point" v-if="featureStatus.mcpAccessPoint">
-      <div class="mcp-container">
-        <!-- Left area -->
-        <div class="mcp-left">
-          <div class="mcp-header">
-            <h3 class="bold-title">{{ $t('functionDialog.mcpAccessPoint') }}</h3>
-          </div>
-          <div class="url-header">
-            <div class="address-desc">
-              <span>{{ $t('functionDialog.mcpAddressDesc') }}</span>
-              <a href="https://github.com/xinnan-tech/xiaozhi-esp32-server/blob/main/docs/mcp-endpoint-enable.md"
-                target="_blank" class="doc-link">{{ $t('functionDialog.howToDeployMcp') }}</a> &nbsp;&nbsp;|&nbsp;&nbsp;
-              <a href="https://github.com/xinnan-tech/xiaozhi-esp32-server/blob/main/docs/mcp-endpoint-integration.md"
-                target="_blank" class="doc-link">{{ $t('functionDialog.howToIntegrateMcp') }}</a> &nbsp;
-            </div>
-          </div>
-          <el-input v-model="mcpUrl" readonly class="url-input">
-            <template #suffix>
+            <div class="url-row">
+              <el-input v-model="mcpUrl" readonly class="url-input" :aria-label="$t('functionDialog.mcpAccessPoint')" />
               <el-button @click="copyUrl" class="inner-copy-btn" icon="el-icon-document-copy">
                 {{ $t('functionDialog.copy') }}
               </el-button>
-            </template>
-          </el-input>
-        </div>
+            </div>
+          </section>
 
-        <!-- Right area -->
-        <div class="mcp-right">
-          <div class="mcp-header">
-            <h3 class="bold-title">{{ $t('functionDialog.accessPointStatus') }}</h3>
-          </div>
-          <div class="status-container">
-            <span class="status-indicator" :class="mcpStatus"></span>
-            <span class="status-text">{{
-              mcpStatus === 'connected' ? $t('functionDialog.connected') :
-                mcpStatus === 'loading' ? $t('functionDialog.loading') : $t('functionDialog.disconnected')
-            }}</span>
-            <button class="refresh-btn" @click="refreshStatus">
-              <span class="refresh-icon">↻</span>
-              <span>{{ $t('functionDialog.refresh') }}</span>
-            </button>
-          </div>
-          <div class="mcp-tools-list">
-            <div v-if="mcpTools.length > 0" class="tools-grid">
-              <el-button v-for="tool in mcpTools" :key="tool" size="small" class="tool-btn" plain>
-                {{ tool }}
+          <!-- Right area -->
+          <section class="mcp-right">
+            <div class="mcp-header">
+              <h3 class="bold-title">{{ $t('functionDialog.accessPointStatus') }}</h3>
+            </div>
+            <div class="status-container">
+              <span class="status-pill" :class="mcpStatus">
+                <span class="status-indicator" aria-hidden="true"></span>
+                <span class="status-text">{{
+                  mcpStatus === 'connected' ? $t('functionDialog.connected') :
+                    mcpStatus === 'loading' ? $t('functionDialog.loading') : $t('functionDialog.disconnected')
+                }}</span>
+              </span>
+              <el-button size="small" icon="el-icon-refresh" class="refresh-btn" @click="refreshStatus">
+                {{ $t('functionDialog.refresh') }}
               </el-button>
             </div>
-            <div v-else class="no-tools">
-              <span>{{ $t('functionDialog.noAvailableTools') }}</span>
+            <div class="mcp-tools-list">
+              <ul v-if="mcpTools.length > 0" class="tools-grid">
+                <li v-for="tool in mcpTools" :key="tool" class="tool-btn">{{ tool }}</li>
+              </ul>
+              <div v-else class="no-tools">
+                <span>{{ $t('functionDialog.noAvailableTools') }}</span>
+              </div>
             </div>
-          </div>
+          </section>
         </div>
       </div>
     </div>
@@ -467,162 +481,250 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.function-manager {
-  display: grid;
-  grid-template-columns: max-content max-content 1fr;
-  gap: 12px;
-  height: calc(58vh);
-}
-
 .custom-header {
-  position: relative;
+  flex-shrink: 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px;
-  border-bottom: 1px solid #EBEEF5;
+  gap: 12px;
+  padding: 18px 20px 16px 24px;
+  border-bottom: 1px solid var(--x-divider);
 
   .header-left {
     display: flex;
     align-items: center;
     gap: 16px;
+    min-width: 0;
   }
 
   .bold-title {
-    font-size: 18px;
-    font-weight: bold;
     margin: 0;
-  }
-
-  .select-all-btn {
-    padding: 0;
-    height: auto;
-    font-size: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--x-text);
   }
 }
 
-.function-column {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  width: auto;
-  height: 100%; 
-  padding: 10px;
-  border-right: 1px solid #EBEEF5;
-  scrollbar-width: none;
-  overflow-x: hidden;
-  box-sizing: border-box;
-}
-
-.mcp-access-point {
-  position: relative;
-  z-index: 1;
-  background: white;
-}
-
-.function-column::-webkit-scrollbar {
-  display: none;
-}
-
-.function-list {
-  overflow-y: auto;
-  overflow-x: hidden;
-  scrollbar-width: thin;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.function-item {
-  padding: 8px 12px;
-  margin: 4px 0;
-  width: 100%;
-  text-align: left;
+.custom-close-btn {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--x-radius-control);
+  border: 0;
+  background: transparent;
+  font-size: 16px;
+  color: var(--x-text-muted);
   cursor: pointer;
-  border-radius: 4px;
-  transition: background-color 0.2s;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  padding: 0;
+  transition: background 0.15s ease, color 0.15s ease;
 
-  &:hover {
-    background-color: #f5f7fa;
+  &:hover,
+  &:focus-visible {
+    color: var(--x-text);
+    background: var(--x-canvas);
+    outline: none;
   }
 }
 
-.params-column {
-  min-width: 280px;
-  padding: 10px;
+.drawer-body {
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
-  scrollbar-width: none;
+  padding: 20px 24px;
+  background: var(--x-canvas);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  text-align: left;
 }
 
-.params-column::-webkit-scrollbar {
-  display: none;
+.function-manager {
+  display: grid;
+  grid-template-columns: minmax(200px, 1fr) minmax(200px, 1fr) minmax(280px, 1.5fr);
+  gap: 16px;
+  height: 56vh;
+  min-height: 360px;
+}
+
+.function-column,
+.params-column {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--x-surface);
+  border: 1px solid var(--x-border);
+  border-radius: var(--x-radius-card);
+  overflow: hidden;
 }
 
 .column-header {
+  flex-shrink: 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 12px 0 16px;
+  border-bottom: 1px solid var(--x-divider);
+  box-sizing: border-box;
 }
 
 .column-title {
-  text-align: center;
-  width: 100%;
+  margin: 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--x-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.column-title-strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.column-count {
+  padding: 0 7px;
+  border-radius: var(--x-radius-pill);
+  background: var(--x-divider);
+  color: var(--x-text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+}
+
+.select-all-btn {
+  flex-shrink: 0;
+  padding: 6px 8px;
+  font-size: 13px;
+  color: var(--x-text-secondary);
+
+  &:hover,
+  &:focus {
+    color: var(--x-text);
+    background: var(--x-canvas);
+  }
+}
+
+.function-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.function-item {
+  padding: 0 4px 0 10px;
+  border-radius: var(--x-radius-control);
+  transition: background-color 0.15s ease;
+  display: flex;
+  align-items: center;
+
+  &:hover {
+    background-color: var(--x-surface-raised);
+  }
+
+  &.is-active {
+    background-color: var(--x-selected);
+  }
 }
 
 .func-tag {
+  flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
-  cursor: pointer;
-  flex-grow: 1;
+  gap: 8px;
+  min-height: 36px;
   margin-left: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  color: var(--x-text);
+  text-align: left;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: none;
+    text-decoration: underline;
+  }
 }
 
-.color-dot {
-  flex-shrink: 0;
-  width: 8px;
-  height: 8px;
-  background-color: #5778ff;
-  margin-right: 8px;
-  border-radius: 50%;
+.func-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.func-arrow {
+  font-size: 12px;
+  color: var(--x-text-muted);
+}
+
+.list-empty {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  ::v-deep .el-empty__description p {
+    color: var(--x-text-muted);
+  }
+}
+
+.params-container {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.param-label {
+  font-size: 13px;
+  margin-right: 4px;
+}
+
+.info-icon {
+  font-size: 14px;
+  color: var(--x-text-muted);
+  cursor: help;
+
+  &:hover,
+  &:focus-visible {
+    color: var(--x-text);
+    outline: none;
+  }
 }
 
 .param-form {
-  .param-item {
-    font-size: 16px;
-
-    &.textarea-field {
-      ::v-deep .el-form-item__content {
-        margin-left: 0 !important;
-        display: block;
-        width: 100%;
-      }
-
-      ::v-deep .el-form-item__label {
-        display: block;
-        width: 100% !important;
-        margin-bottom: 8px;
-      }
-    }
-  }
-
-  .param-input {
-    width: 100%;
-  }
-
   ::v-deep .el-form-item {
     display: flex;
     flex-direction: column;
-    margin-bottom: 12px;
+    margin-bottom: 16px;
 
     .el-form-item__label {
-      font-size: 14px !important;
-      color: #606266;
+      font-size: 13px !important;
+      line-height: 20px;
+      color: var(--x-text);
       text-align: left;
-      padding-right: 10px;
+      padding: 0 0 6px;
       flex-shrink: 0;
       width: auto !important;
     }
@@ -630,72 +732,46 @@ export default {
     .el-form-item__content {
       margin-left: 0 !important;
       flex-grow: 1;
+      line-height: 36px;
 
       .el-input__inner {
         text-align: left;
-        padding-left: 8px;
         width: 100%;
       }
     }
   }
-}
 
-.params-container {
-  padding: 16px;
-  border-radius: 4px;
-  min-width: 280px;
+  .mono-input ::v-deep .el-textarea__inner {
+    font-family: var(--x-font-mono);
+    font-size: 12px;
+  }
 }
 
 .empty-tip {
-  padding: 20px;
-  color: #909399;
-  text-align: center;
-}
-
-
-.drawer-footer {
-  position: absolute;
-  bottom: 0;
-  z-index: 2;
-  width: 100%;
-  border-top: 1px solid #e8e8e8;
-  padding: 10px 16px;
-  text-align: center;
-  background: #fff;
-}
-
-.info-icon {
-  width: 16px;
-  height: 16px;
-  margin-right: 1vh;
-}
-
-.custom-close-btn {
-  position: absolute;
-  top: 50%;
-  right: 10px;
-  transform: translateY(-50%);
-  width: 35px;
-  height: 35px;
-  border-radius: 50%;
-  border: 2px solid #cfcfcf;
-  background: none;
-  font-size: 30px;
-  font-weight: lighter;
-  color: #cfcfcf;
-  cursor: pointer;
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1;
-  padding: 0;
-  outline: none;
-  transition: all 0.3s;
+  padding: 20px;
+  color: var(--x-text-muted);
+  font-size: 13px;
+  text-align: center;
 }
 
-.custom-close-btn:hover {
-  color: #409EFF;
-  border-color: #409EFF;
+.drawer-footer {
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 24px 18px;
+  border-top: 1px solid var(--x-divider);
+  background: var(--x-surface);
+
+  .el-button + .el-button {
+    margin-left: 0;
+  }
 }
 
 ::v-deep .el-checkbox__label {
@@ -703,150 +779,130 @@ export default {
 }
 
 .mcp-access-point {
-  border-top: 1px solid #EBEEF5;
-  padding: 20px 24px;
-  text-align: left;
+  position: relative;
+  z-index: 1;
+  background: var(--x-surface);
+  border: 1px solid var(--x-border);
+  border-radius: var(--x-radius-card);
+  padding: 20px;
 }
 
-.mcp-header {
-  .bold-title {
-    font-size: 18px;
-    font-weight: bold;
-    margin: 5px 0 30px 0;
-  }
+.mcp-header .bold-title {
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--x-text);
 }
 
 .mcp-container {
   display: flex;
-  justify-content: space-between;
-  gap: 30px;
+  flex-wrap: wrap;
+  gap: 24px 32px;
 }
 
 .mcp-left,
 .mcp-right {
-  flex: 1;
-  padding-bottom: 50px;
+  flex: 1 1 320px;
+  min-width: 0;
 }
 
-.url-header {
-  margin-bottom: 8px;
-  color: black;
+.address-desc {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--x-text-secondary);
+}
 
-  h4 {
-    margin: 0 0 15px 0;
-    font-size: 16px;
-    font-weight: normal;
+.doc-links {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.doc-link {
+  color: var(--x-ink);
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-color: var(--x-border-control);
+
+  &:hover {
+    text-decoration-color: var(--x-ink);
   }
+}
 
-  .address-desc {
-    display: flex;
-    align-items: center;
-    font-size: 14px;
-    margin-bottom: 12px;
+.doc-sep {
+  color: var(--x-border-control);
+}
 
-    .doc-link {
-      color: #1677ff;
-      text-decoration: none;
-      margin-left: 4px;
-
-      &:hover {
-        text-decoration: underline;
-      }
-    }
-  }
+.url-row {
+  display: flex;
+  gap: 8px;
 }
 
 .url-input {
-  border-radius: 4px 0 0 4px;
-  font-size: 14px;
-  height: 36px;
-  box-sizing: border-box;
+  flex: 1;
+  min-width: 0;
 
   ::v-deep .el-input__inner {
-    background-color: #f5f5f5 !important;
-  }
-
-  ::v-deep .el-input__suffix {
-    right: 0;
-    display: flex;
-    align-items: center;
-    padding-right: 10px;
-
-    .inner-copy-btn {
-      pointer-events: auto;
-      border: none;
-      background: #1677ff;
-      color: white;
-      padding: 6px;
-      margin-top: 4px;
-      margin-left: 4px;
-    }
+    background-color: var(--x-surface-raised);
+    font-family: var(--x-font-mono);
+    font-size: 12px;
+    color: var(--x-text-secondary);
   }
 }
 
-.mcp-right {
-  h4 {
-    margin: 0 0 10px 0;
-    font-size: 16px;
-    font-weight: normal;
-    color: black;
-  }
+.inner-copy-btn {
+  flex-shrink: 0;
 }
 
 .status-container {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  gap: 10px;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  border-radius: var(--x-radius-pill);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 20px;
+  background: var(--x-divider);
+  color: var(--x-text-secondary);
 
   .status-indicator {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
-    margin-right: 8px;
+    background: var(--x-text-muted);
+  }
 
-    &.disconnected {
-      background-color: #909399;
-      /* Gray - disconnected */
+  &.connected {
+    background: var(--x-success-bg);
+    color: var(--x-success-text);
+
+    .status-indicator {
+      background: var(--x-success);
     }
+  }
 
-    &.connected {
-      background-color: #67C23A;
-      /* Green - connected */
-    }
+  &.loading {
+    background: var(--x-warning-bg);
+    color: var(--x-warning-text);
 
-    &.loading {
-      background-color: #E6A23C;
-      /* Orange - loading */
+    .status-indicator {
+      background: var(--x-warning);
       animation: pulse 1.5s infinite;
-    }
-  }
-
-  .status-text {
-    font-size: 14px;
-    margin-right: 10px;
-  }
-
-  .refresh-btn {
-    display: flex;
-    align-items: center;
-    padding: 2px 10px;
-    background: white;
-    color: black;
-    border: 1px solid #DCDFE6;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: all 0.3s;
-
-    &:hover {
-      background: #1677ff;
-      color: white;
-      border-color: #1677ff;
-    }
-
-    .refresh-icon {
-      margin-right: 6px;
-      font-size: 14px;
     }
   }
 }
@@ -866,33 +922,81 @@ export default {
 }
 
 .mcp-tools-list {
-  margin-top: 10px;
+  margin-top: 12px;
 
   .tools-grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 6px;
   }
 
   .tool-btn {
-    padding: 6px 12px;
-    border-color: #1677ff;
-    color: #1677ff;
-    background-color: white;
+    padding: 3px 10px;
+    border: 1px solid var(--x-border);
+    border-radius: var(--x-radius-pill);
+    background: var(--x-surface-raised);
+    color: var(--x-text-secondary);
+    font-family: var(--x-font-mono);
     font-size: 12px;
-
-    &:hover {
-      background-color: #1677ff;
-      color: white;
-      border-color: #1677ff;
-    }
+    line-height: 18px;
   }
 
   .no-tools {
-    text-align: center;
-    color: #909399;
-    font-size: 14px;
-    padding: 10px 0;
+    color: var(--x-text-muted);
+    font-size: 13px;
+    padding: 8px 0;
+  }
+}
+
+@media (max-width: 900px) {
+  .function-manager {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+    min-height: 0;
+  }
+
+  .function-list {
+    max-height: 260px;
+  }
+
+  .params-container {
+    max-height: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .custom-header {
+    padding: 14px 12px 12px 16px;
+  }
+
+  .drawer-body {
+    padding: 16px;
+  }
+
+  .drawer-footer {
+    padding: 12px 16px;
+  }
+
+  .url-row {
+    flex-wrap: wrap;
+  }
+}
+</style>
+
+<style lang="scss">
+.function-drawer .el-drawer__body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+@media (max-width: 900px) {
+  .el-drawer.function-drawer {
+    width: 100% !important;
   }
 }
 </style>

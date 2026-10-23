@@ -7,17 +7,16 @@
 
 <style lang="scss">
 #app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
+  font-family: var(--x-font);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
+  color: var(--x-text);
 }
 
 
 .copyright {
   padding: 0 !important;
-  color: rgb(0, 0, 0);
+  color: var(--x-text-muted);
   font-size: 12px;
   font-weight: 400;
   margin-top: auto;
@@ -28,9 +27,6 @@
   align-items: center;
 }
 
-.el-message {
-  top: 70px !important;
-}
 </style>
 <script>
 import CacheViewer from '@/components/CacheViewer.vue';
@@ -72,7 +68,7 @@ export default {
       // Print a hint message to the console
       console.info(
         '%c[' + this.$t('system.name') + '] ' + this.$t('cache.cdnEnabled'),
-        'color: #409EFF; font-weight: bold;'
+        'color: #18181b; font-weight: bold;'
       );
       console.info(
         'Press Alt+C or run checkCDNCacheStatus() in the console to view the CDN cache status'

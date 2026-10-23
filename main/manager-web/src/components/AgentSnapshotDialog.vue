@@ -41,6 +41,8 @@
                 v-if="scope.row.isLatestSnapshot"
                 class="latest-version-icon"
                 :title="$t('agentSnapshot.currentVersion')"
+                role="img"
+                :aria-label="$t('agentSnapshot.currentVersion')"
               ></span>
             </div>
           </template>
@@ -71,6 +73,7 @@
                 :key="field"
                 size="mini"
                 effect="plain"
+                class="field-tag"
               >
                 {{ fieldLabel(field) }}
               </el-tag>
@@ -78,12 +81,13 @@
             <span v-else class="field-tags-empty">—</span>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('agentSnapshot.actions')" width="190" fixed="right">
+        <el-table-column :label="$t('agentSnapshot.actions')" width="220" fixed="right">
           <template slot-scope="scope">
             <el-button
               v-if="canViewSnapshot(scope.row)"
               type="text"
               size="small"
+              class="row-action"
               @click="viewSnapshot(scope.row)"
             >
               {{ $t('agentSnapshot.view') }}
@@ -92,6 +96,7 @@
               v-if="canRestoreSnapshot(scope.row)"
               type="text"
               size="small"
+              class="row-action"
               @click="restoreSnapshot(scope.row)"
             >
               {{ $t('agentSnapshot.restore') }}
@@ -100,7 +105,7 @@
               v-if="canDeleteSnapshot(scope.row)"
               type="text"
               size="small"
-              class="snapshot-delete-button"
+              class="row-action snapshot-delete-button"
               :loading="deletingSnapshotId === scope.row.id"
               @click="deleteSnapshot(scope.row)"
             >
@@ -274,7 +279,7 @@
                 :old-string="item.beforeText"
                 :new-string="item.afterText"
                 :language="codeDiffLanguage(item)"
-                output-format="side-by-side"
+                :output-format="narrowViewport ? 'line-by-line' : 'side-by-side'"
                 diff-style="word"
                 :context="8"
                 max-height="320px"
@@ -283,7 +288,7 @@
               />
             </div>
             <div v-else class="diff-values" :class="{ 'is-complex': item.complex }">
-              <div class="diff-pane diff-before 1">
+              <div class="diff-pane diff-before">
                 <div class="diff-pane-title">{{ item.beforeTitle }}</div>
                 <div class="diff-value" :class="valueClass(item)">
                   <div
@@ -419,7 +424,7 @@
                 :old-string="item.beforeText"
                 :new-string="item.afterText"
                 :language="codeDiffLanguage(item)"
-                output-format="side-by-side"
+                :output-format="narrowViewport ? 'line-by-line' : 'side-by-side'"
                 diff-style="word"
                 :context="8"
                 max-height="320px"
@@ -428,7 +433,7 @@
               />
             </div>
             <div v-else class="diff-values" :class="{ 'is-complex': item.complex }">
-              <div class="diff-pane diff-before 2">
+              <div class="diff-pane diff-before">
                 <div class="diff-pane-title">{{ item.beforeTitle }}</div>
                 <div class="diff-value" :class="valueClass(item)">
                   <div
@@ -492,6 +497,7 @@
           {{ $t('button.cancel') }}
         </el-button>
         <el-button
+          type="primary"
           class="snapshot-footer-button snapshot-footer-confirm"
           :loading="restoring"
           :disabled="restoring || restorePreviewLoading || !restorePreviewSnapshot || restorePreviewDiffs.length === 0"
@@ -640,7 +646,8 @@ export default {
       historyTotal: 0,
       page: 1,
       limit: 10,
-      total: 0
+      total: 0,
+      narrowViewport: false
     };
   },
   computed: {
@@ -729,8 +736,30 @@ export default {
       }
     }
   },
+  mounted() {
+    // Side-by-side diffs are unreadable on phones; switch to a unified view
+    if (typeof window !== "undefined" && window.matchMedia) {
+      this.narrowViewportQuery = window.matchMedia("(max-width: 720px)");
+      this.narrowViewport = this.narrowViewportQuery.matches;
+      this.narrowViewportListener = (event) => {
+        this.narrowViewport = event.matches;
+      };
+      if (this.narrowViewportQuery.addEventListener) {
+        this.narrowViewportQuery.addEventListener("change", this.narrowViewportListener);
+      } else {
+        this.narrowViewportQuery.addListener(this.narrowViewportListener);
+      }
+    }
+  },
   beforeDestroy() {
     this.cancelPendingSnapshotRequests();
+    if (this.narrowViewportQuery && this.narrowViewportListener) {
+      if (this.narrowViewportQuery.removeEventListener) {
+        this.narrowViewportQuery.removeEventListener("change", this.narrowViewportListener);
+      } else {
+        this.narrowViewportQuery.removeListener(this.narrowViewportListener);
+      }
+    }
   },
   methods: {
     buildSingleConfigItems(snapshotData = {}, fieldOrder = []) {
@@ -2116,8 +2145,9 @@ export default {
   flex-direction: column;
   overflow: hidden;
   margin: 10px auto !important;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  max-width: calc(100vw - 32px);
+  border-radius: var(--x-radius-card);
+  box-shadow: var(--x-shadow-raised);
   height: calc(100vh - 20px);
   max-height: calc(100vh - 20px);
 }
@@ -2130,25 +2160,29 @@ export default {
 }
 
 ::v-deep .el-dialog__header {
-  padding: 16px 20px 12px;
-  background: linear-gradient(135deg, #e2eeff, #edeafe);
+  padding: 18px 24px 16px;
+  background: var(--x-surface);
+  border-bottom: 1px solid var(--x-divider);
   text-align: left;
 }
 
 ::v-deep .el-dialog__title {
-  color: #1a1a1a;
+  color: var(--x-text);
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .snapshot-dialog-title {
   display: inline-flex;
   align-items: center;
-  font-size: 18px;
+  gap: 10px;
+  padding-right: 40px;
+  font-size: 16px;
+  color: var(--x-text);
 
   > span {
-    line-height: 18px;
-    font-weight: 500;
+    line-height: 24px;
+    font-weight: 600;
   }
 }
 
@@ -2156,16 +2190,18 @@ export default {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
-  margin-right: 8px;
-  color: #4a7cfd;
-  font-size: 24px;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--x-selected);
+  color: var(--x-ink);
+  font-size: 15px;
   line-height: 1;
 }
 
 ::v-deep .el-dialog__headerbtn {
-  top: 12px;
+  top: 14px;
   right: 16px;
   display: flex;
   align-items: center;
@@ -2173,40 +2209,44 @@ export default {
   width: 32px;
   height: 32px;
   border: none;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  border-radius: var(--x-radius-control);
+  background: transparent;
 
   .el-dialog__close {
     position: static;
-    color: #666;
-    font-size: 18px;
+    color: var(--x-text-muted);
+    font-size: 16px;
     transform: none;
   }
 
-  &:hover {
-    background: #fff;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  &:hover,
+  &:focus-visible {
+    background: var(--x-canvas);
 
     .el-dialog__close {
-      color: #333;
+      color: var(--x-text);
     }
   }
 }
 
 ::v-deep .el-dialog__body {
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
-  padding: 20px;
+  padding: 20px 24px;
+  color: var(--x-text);
 }
 
 ::v-deep .el-dialog__footer {
-  padding: 12px 20px 16px;
+  padding: 14px 24px 18px;
+  border-top: 1px solid var(--x-divider);
 }
 
 .snapshot-dialog-footer {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
-  gap: 10px;
+  gap: 8px;
 }
 
 .snapshot-footer-button {
@@ -2214,57 +2254,9 @@ export default {
   align-items: center;
   justify-content: center;
   min-width: 96px;
-  height: 36px;
-  padding: 10px 20px;
-  border-radius: 4px;
-  font-size: 14px;
-  transition: all 0.3s ease;
 
   & + .snapshot-footer-button {
     margin-left: 0;
-  }
-}
-
-.snapshot-footer-cancel {
-  border: 1px solid #d7e1ff;
-  background: #f7f9ff;
-  color: #4a7cfd;
-
-  &:hover,
-  &:focus {
-    border-color: #4a7cfd;
-    background: #eef4ff;
-    color: #4a7cfd;
-    box-shadow: 0 2px 8px rgba(74, 124, 253, 0.14);
-    transform: translateY(-2px);
-  }
-}
-
-.snapshot-footer-confirm {
-  border: none;
-  background: linear-gradient(to right, #4a7cfd, #8154fc);
-  color: #fff;
-
-  &:hover,
-  &:focus {
-    border-color: transparent;
-    background: linear-gradient(to right, #4a7cfd, #8154fc);
-    color: #fff;
-    box-shadow: 0 2px 8px rgba(74, 124, 253, 0.3);
-    transform: translateY(-2px);
-    opacity: 0.88;
-  }
-
-  &.is-disabled,
-  &.is-disabled:hover,
-  &.is-disabled:focus {
-    border-color: transparent;
-    background: linear-gradient(to right, #a0b4fd, #b8a4fd);
-    color: rgba(255, 255, 255, 0.6);
-    box-shadow: none;
-    transform: none;
-    cursor: not-allowed;
-    opacity: 1;
   }
 }
 
@@ -2274,23 +2266,60 @@ export default {
 }
 
 .confirm-icon {
-  margin-right: 5px;
-  font-size: 16px;
+  margin-right: 6px;
+  font-size: 14px;
+}
+
+// Snapshot list
+.snapshot-table-wrapper {
+  min-height: 420px;
+  overflow: hidden;
+  border: 1px solid var(--x-border);
+  border-radius: 12px;
 }
 
 .snapshot-table {
   width: 100%;
-}
 
-.snapshot-table-wrapper {
-  min-height: 420px;
+  &::before {
+    display: none;
+  }
+
+  ::v-deep th.el-table__cell {
+    padding: 8px 0;
+  }
+
+  ::v-deep td.el-table__cell {
+    padding: 8px 0;
+  }
+
+  ::v-deep td.el-table__cell,
+  ::v-deep th.el-table__cell.is-leaf {
+    border-bottom-color: var(--x-divider);
+  }
+
+  ::v-deep .cell {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  ::v-deep .el-table__fixed-right::before {
+    display: none;
+  }
+
+  ::v-deep .el-table__empty-text {
+    color: var(--x-text-muted);
+  }
 }
 
 .version-cell {
   display: inline-flex;
-  gap: 6px;
+  gap: 8px;
   align-items: center;
   white-space: nowrap;
+  font-family: var(--x-font-mono);
+  font-weight: 500;
+  color: var(--x-text);
 }
 
 .latest-version-icon {
@@ -2298,16 +2327,42 @@ export default {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #67c23a;
-  box-shadow: 0 0 0 3px rgba(103, 194, 58, 0.12);
+  background: var(--x-success);
+  box-shadow: 0 0 0 3px var(--x-success-bg);
 }
 
-::v-deep .current-version-row {
-  background: #fbfffa;
+::v-deep .current-version-row > td.el-table__cell {
+  background: var(--x-surface-raised);
 }
 
-.snapshot-delete-button {
-  color: #f56c6c;
+.snapshot-table ::v-deep .el-table__fixed-right .cell,
+.snapshot-table ::v-deep td.el-table__cell:last-child .cell {
+  white-space: nowrap;
+}
+
+.row-action {
+  height: 28px;
+  padding: 0 8px;
+  margin-left: 0 !important;
+  font-size: 13px;
+  color: var(--x-text-secondary);
+
+  &:hover,
+  &:focus {
+    color: var(--x-text);
+    background: var(--x-canvas);
+  }
+}
+
+.snapshot-delete-button,
+.snapshot-delete-button:hover,
+.snapshot-delete-button:focus {
+  color: var(--x-danger-text);
+}
+
+.snapshot-delete-button:hover,
+.snapshot-delete-button:focus {
+  background: var(--x-danger-bg);
 }
 
 .field-tags {
@@ -2316,8 +2371,18 @@ export default {
   gap: 6px;
 }
 
+.field-tag {
+  height: 22px;
+  padding: 0 8px;
+  line-height: 20px;
+  border-color: var(--x-border);
+  background: var(--x-surface-raised);
+  color: var(--x-text-secondary);
+  font-size: 12px;
+}
+
 .field-tags-empty {
-  color: #a3a8b8;
+  color: var(--x-text-muted);
 }
 
 .pagination-row {
@@ -2326,13 +2391,41 @@ export default {
   margin-top: 16px;
 }
 
+// Detail / diff
 .snapshot-diff {
   min-height: 420px;
   padding-right: 2px;
 }
 
+// global.scss styles every `.is-light` (meant for light tooltips) with !important
 .restore-risk-alert {
-  margin-top: 14px;
+  margin-top: 12px;
+  border-radius: 12px;
+  box-shadow: none;
+  text-align: left;
+
+  &.el-alert--info.is-light {
+    background: var(--x-surface-raised) !important;
+    border: 1px solid var(--x-border) !important;
+    color: var(--x-text-secondary);
+  }
+
+  &.el-alert--warning.is-light {
+    background: var(--x-warning-bg) !important;
+    border: 1px solid transparent !important;
+    color: var(--x-warning-text);
+  }
+
+  &.el-alert--error.is-light {
+    background: var(--x-danger-bg) !important;
+    border: 1px solid transparent !important;
+    color: var(--x-danger-text);
+  }
+
+  ::v-deep .el-alert__title {
+    font-size: 13px;
+    line-height: 1.5;
+  }
 }
 
 .detail-summary {
@@ -2340,33 +2433,39 @@ export default {
   flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 16px;
-  color: #606266;
   font-size: 12px;
   text-align: left;
 }
 
 .detail-summary span {
-  padding: 4px 9px;
-  border-radius: 4px;
-  background: #f4f6ff;
-  color: #4d5b7c;
+  padding: 3px 10px;
+  border: 1px solid var(--x-border);
+  border-radius: var(--x-radius-pill);
+  background: var(--x-surface);
+  color: var(--x-text-secondary);
+  font-weight: 500;
+}
+
+.detail-summary span:first-child {
+  font-family: var(--x-font-mono);
+  color: var(--x-text);
 }
 
 .diff-item {
   margin-bottom: 16px;
   overflow: hidden;
-  border: 1px solid #e9e9e9;
-  border-radius: 8px;
-  background: #fff;
+  border: 1px solid var(--x-border);
+  border-radius: 12px;
+  background: var(--x-surface);
 }
 
 .diff-field {
   padding: 12px 16px;
-  border-bottom: 1px solid #e9e9e9;
-  background: #fafbff;
-  color: #3d4566;
-  font-size: 16px;
-  font-weight: 700;
+  border-bottom: 1px solid var(--x-divider);
+  background: var(--x-surface-raised);
+  color: var(--x-text);
+  font-size: 14px;
+  font-weight: 600;
   text-align: left;
 }
 
@@ -2386,7 +2485,7 @@ export default {
 }
 
 .diff-after {
-  border-left: 1px solid #e9e9e9;
+  border-left: 1px solid var(--x-divider);
 }
 
 .diff-values.is-single .diff-after {
@@ -2396,14 +2495,14 @@ export default {
 .diff-code-wrapper {
   padding: 0 14px 1px;
   text-align: left;
-  background: #fff;
+  background: var(--x-surface);
 }
 
 .diff-pane-title {
   margin-bottom: 8px;
-  color: #3d4566;
-  font-size: 14px;
-  font-weight: 600;
+  color: var(--x-text-muted);
+  font-size: 12px;
+  font-weight: 500;
   line-height: 1.4;
   text-align: left;
 }
@@ -2415,22 +2514,26 @@ export default {
   overflow: auto;
   padding: 9px 12px;
   margin: 0;
-  border-radius: 6px;
+  border-radius: var(--x-radius-control);
   font-size: 13px;
-  line-height: 1.45;
+  line-height: 1.5;
   word-break: break-word;
   text-align: left;
   @include scrollbar-style;
 }
 
 .diff-before .diff-value {
-  background: #fff8f8;
-  color: #663434;
+  background: var(--x-danger-bg);
+  color: var(--x-text);
 }
 
 .diff-after .diff-value {
-  background: #f7fbf4;
-  color: #2d5c3a;
+  background: var(--x-success-bg);
+  color: var(--x-text);
+}
+
+.diff-values.is-single .diff-after .diff-value {
+  background: var(--x-surface-raised);
 }
 
 .is-complex .diff-value {
@@ -2439,38 +2542,61 @@ export default {
 
 .diff-text {
   margin: 0;
-  font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+  font-family: var(--x-font-mono);
   font-size: 12px;
-  line-height: 1.45;
+  line-height: 1.5;
   white-space: pre-wrap;
   text-align: left;
 }
 
-::v-deep .code-diff-view,
-::v-deep .code-diff-view .blob-num,
-::v-deep .code-diff-view .blob-code-inner,
+// v-code-diff: map its GitHub palette onto the console tokens
+.diff-code-wrapper ::v-deep .code-diff-view[theme] {
+  --color-fg-default: var(--x-text);
+  --color-fg-subtle: var(--x-text-muted);
+  --color-canvas-default: var(--x-surface);
+  --color-canvas-subtle: var(--x-surface-raised);
+  --color-border-default: var(--x-border);
+  --color-border-muted: var(--x-divider);
+  --color-diff-blob-addition-num-text: var(--x-success-text);
+  --color-diff-blob-addition-fg: var(--x-text);
+  --color-diff-blob-addition-num-bg: color-mix(in srgb, var(--x-success) 14%, var(--x-surface));
+  --color-diff-blob-addition-line-bg: var(--x-success-bg);
+  --color-diff-blob-addition-word-bg: color-mix(in srgb, var(--x-success) 22%, var(--x-surface));
+  --color-diff-blob-deletion-num-text: var(--x-danger-text);
+  --color-diff-blob-deletion-fg: var(--x-text);
+  --color-diff-blob-deletion-num-bg: color-mix(in srgb, var(--x-danger) 14%, var(--x-surface));
+  --color-diff-blob-deletion-line-bg: var(--x-danger-bg);
+  --color-diff-blob-deletion-word-bg: color-mix(in srgb, var(--x-danger) 22%, var(--x-surface));
+  --color-diff-blob-hunk-num-bg: var(--x-selected);
+  --color-diffstat-addition-bg: var(--x-success);
+  --color-danger-emphasis: var(--x-danger);
+  --color-success-emphasis: var(--x-success);
+  border-color: var(--x-border);
+  border-radius: var(--x-radius-control);
+  @include scrollbar-style;
+}
+
 ::v-deep .code-diff-view .file-header {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
+  font-family: var(--x-font);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--x-text-secondary);
 }
 
-::v-deep .code-diff-view::-webkit-scrollbar {
-  width: 6px;
+::v-deep .code-diff-view .blob-num,
+::v-deep .code-diff-view .blob-code-inner {
+  font-family: var(--x-font-mono);
 }
 
-::v-deep .code-diff-view::-webkit-scrollbar-thumb {
-  background: #a1c9fd;
-  border-radius: 3px;
-}
-
-::v-deep .code-diff-view::-webkit-scrollbar-track {
-  background: #f0f3fe;
-  border-radius: 3px;
+::v-deep .code-diff-view .blob-num {
+  color: var(--x-text-muted);
 }
 
 ::v-deep .code-diff-view .blob-code-inner {
-  font-size: 13px;
-  line-height: 1.45;
+  font-size: 12px;
+  line-height: 1.5;
   font-style: normal;
+  color: var(--x-text);
 }
 
 ::v-deep .code-diff-view .hljs-emphasis,
@@ -2483,9 +2609,10 @@ export default {
   background-color: transparent;
 }
 
+// Function (plugin) changes
 .function-change-view {
   padding: 16px;
-  background: #fff;
+  background: var(--x-surface);
 }
 
 .function-change-view.is-single {
@@ -2500,25 +2627,17 @@ export default {
 
 .function-toggle-card {
   padding: 14px 16px;
-  border: 1px solid #dfe7ff;
-  border-radius: 8px;
-  background: #fbfdff;
-  box-shadow: 0 2px 8px rgba(31, 48, 96, 0.04);
+  border: 1px solid var(--x-border);
+  border-radius: 12px;
+  background: var(--x-surface);
 }
 
 .function-toggle-card.is-added {
-  border-color: #dcefdc;
-  background: #fbfffa;
+  border-color: color-mix(in srgb, var(--x-success) 25%, var(--x-border));
 }
 
 .function-toggle-card.is-removed {
-  border-color: #f5d6d6;
-  background: #fffafa;
-}
-
-.function-toggle-card.is-updated {
-  border-color: #dfe7ff;
-  background: #fbfdff;
+  border-color: color-mix(in srgb, var(--x-danger) 25%, var(--x-border));
 }
 
 .function-toggle-card.is-single .function-state-pane {
@@ -2537,15 +2656,15 @@ export default {
   height: 8px;
   margin-top: 7px;
   border-radius: 50%;
-  background: #6278ff;
+  background: var(--x-ink);
 }
 
 .function-toggle-card.is-removed .function-dot {
-  background: #f56c6c;
+  background: var(--x-danger);
 }
 
 .function-toggle-card.is-added .function-dot {
-  background: #67c23a;
+  background: var(--x-success);
 }
 
 .function-change-title-wrap {
@@ -2561,30 +2680,31 @@ export default {
 }
 
 .function-change-name {
-  color: #30415f;
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 1.4;
+  color: var(--x-text);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
   word-break: break-word;
 }
 
 .function-change-badge {
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: #eef4ff;
-  color: #4d65d9;
+  padding: 1px 8px;
+  border-radius: var(--x-radius-pill);
+  background: var(--x-selected);
+  color: var(--x-text-secondary);
   font-size: 12px;
+  font-weight: 500;
   line-height: 1.5;
 }
 
 .function-toggle-card.is-added .function-change-badge {
-  background: #edf8e8;
-  color: #4f9b2d;
+  background: var(--x-success-bg);
+  color: var(--x-success-text);
 }
 
 .function-toggle-card.is-removed .function-change-badge {
-  background: #fff0f0;
-  color: #d24b4b;
+  background: var(--x-danger-bg);
+  color: var(--x-danger-text);
 }
 
 .function-state-grid {
@@ -2597,21 +2717,9 @@ export default {
 .function-state-pane {
   min-width: 0;
   padding: 10px 12px;
-  border: 1px solid #edf0f7;
-  border-radius: 6px;
-  background: #fff;
-}
-
-.function-state-pane.is-before {
-  background: #fffafa;
-}
-
-.function-state-pane.is-after {
-  background: #fbfffa;
-}
-
-.function-state-pane.is-disabled {
-  background: #fafbff;
+  border: 1px solid var(--x-divider);
+  border-radius: var(--x-radius-control);
+  background: var(--x-surface-raised);
 }
 
 .function-state-title {
@@ -2620,25 +2728,25 @@ export default {
   gap: 8px;
   align-items: center;
   margin-bottom: 8px;
-  color: #3d4566;
-  font-size: 14px;
-  font-weight: 600;
+  color: var(--x-text-muted);
+  font-size: 12px;
+  font-weight: 500;
 }
 
 .function-state-badge {
   flex: 0 0 auto;
   padding: 1px 8px;
-  border-radius: 999px;
-  background: #edf8e8;
-  color: #4f9b2d;
+  border-radius: var(--x-radius-pill);
+  background: var(--x-success-bg);
+  color: var(--x-success-text);
   font-size: 12px;
-  font-weight: 400;
+  font-weight: 500;
   line-height: 1.5;
 }
 
 .function-state-pane.is-disabled .function-state-badge {
-  background: #f0f2f7;
-  color: #8b93a7;
+  background: var(--x-divider);
+  color: var(--x-text-secondary);
 }
 
 .function-state-params {
@@ -2652,11 +2760,11 @@ export default {
 }
 
 .function-param-row + .function-param-row {
-  border-top: 1px solid #e6ebf5;
+  border-top: 1px solid var(--x-border);
 }
 
 .function-param-row.is-changed {
-  background: #fff7e6;
+  background: var(--x-warning-bg);
 }
 
 .param-key {
@@ -2666,7 +2774,7 @@ export default {
   min-width: 0;
   min-height: 28px;
   padding: 5px 10px 5px 0;
-  color: #69738f;
+  color: var(--x-text-muted);
   font-size: 12px;
   line-height: 1.35;
   text-align: right;
@@ -2677,26 +2785,23 @@ export default {
   min-width: 0;
   min-height: 28px;
   padding: 5px 0 5px 10px;
-  border-left: 1px solid #e6ebf5;
-  color: #303133;
-  font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+  border-left: 1px solid var(--x-border);
+  color: var(--x-text);
+  font-family: var(--x-font-mono);
   font-size: 12px;
   line-height: 1.4;
   white-space: pre-wrap;
   word-break: break-word;
 }
 
-.function-state-empty {
-  color: #a3a8b8;
+.function-state-empty,
+.value-empty {
+  color: var(--x-text-muted);
   font-size: 13px;
   line-height: 1.6;
 }
 
-.value-empty {
-  color: #a3a8b8;
-  font-size: 13px;
-}
-
+// Markdown values
 .markdown-body {
   color: inherit;
   font-size: 13px;
@@ -2710,8 +2815,8 @@ export default {
 .markdown-body ::v-deep h3,
 .markdown-body ::v-deep h4 {
   margin: 0 0 8px;
-  color: #3d4566;
-  font-weight: 700;
+  color: var(--x-text);
+  font-weight: 600;
   line-height: 1.4;
 }
 
@@ -2751,19 +2856,19 @@ export default {
 .markdown-body ::v-deep code {
   padding: 1px 4px;
   border-radius: 4px;
-  background: rgba(87, 120, 255, 0.12);
-  color: #3d4566;
-  font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+  background: var(--x-selected);
+  color: var(--x-text);
+  font-family: var(--x-font-mono);
   font-size: 12px;
 }
 
 .markdown-body ::v-deep strong {
-  color: #303133;
-  font-weight: 700;
+  color: var(--x-text);
+  font-weight: 600;
 }
 
 .markdown-body ::v-deep .markdown-empty {
-  color: #a3a8b8;
+  color: var(--x-text-muted);
 }
 
 .dialog-footer {
@@ -2773,13 +2878,29 @@ export default {
 }
 
 @media (max-width: 720px) {
+  ::v-deep .el-dialog__header {
+    padding: 16px;
+  }
+
+  ::v-deep .el-dialog__body {
+    padding: 16px;
+  }
+
+  ::v-deep .el-dialog__footer {
+    padding: 12px 16px 16px;
+  }
+
+  .snapshot-table-wrapper {
+    overflow-x: auto;
+  }
+
   .diff-values {
     grid-template-columns: 1fr;
   }
 
   .diff-after {
     border-left: 0;
-    border-top: 1px solid #e9e9e9;
+    border-top: 1px solid var(--x-divider);
   }
 
   .function-state-grid,

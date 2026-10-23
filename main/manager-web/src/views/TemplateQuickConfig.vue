@@ -2,56 +2,61 @@
   <div class="welcome">
     <HeaderBar />
 
-    <div class="operation-bar">
-      <h2 class="page-title">{{ $t('templateQuickConfig.title') }}</h2>
-    </div>
+    <div class="config-page">
+      <nav class="breadcrumb" :aria-label="$t('templateQuickConfig.title')">
+        <button type="button" class="breadcrumb-link" @click="goToHome">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m15 18-6-6 6-6" />
+          </svg>
+          {{ $t('agentTemplateManagement.title') }}
+        </button>
+        <span class="breadcrumb-sep" aria-hidden="true">/</span>
+        <span class="breadcrumb-current">{{ $t('templateQuickConfig.title') }}</span>
+      </nav>
 
-    <div class="main-wrapper">
-      <div class="content-panel">
-        <div class="content-area">
-          <el-card class="config-card" shadow="never">
-              <div class="config-header">
-              <!-- Use the same colored icon effect as the role configuration page -->
-              <div class="header-icon">
-                <img loading="lazy" src="@/assets/home/setting-user.png" alt="">
-              </div>
-              <span class="header-title">{{ form.agentName }}</span>
-              <div class="header-actions">
-                <el-button type="primary" class="save-btn" @click="saveConfig">{{ $t('templateQuickConfig.saveConfig') }}</el-button>
-                <el-button class="reset-btn" @click="resetConfig">{{ $t('templateQuickConfig.resetConfig') }}</el-button>
-                <button class="custom-close-btn" @click="goToHome">
-                  ×
-                </button>
-              </div>
-            </div>
-            <div class="divider"></div>
-
-            <el-form ref="form" :model="form" label-width="72px" class="full-height-form">
-              <!-- Assistant nickname -->
-              <el-form-item :label="$t('templateQuickConfig.agentSettings.agentName')" prop="agentName" class="nickname-item">
-                <el-input
-                  v-model="form.agentName"
-                  :placeholder="$t('templateQuickConfig.agentSettings.agentNamePlaceholder')"
-                  :validate-event="false"
-                  class="form-input"
-                />
-              </el-form-item>
-              
-              <!-- Role introduction -->
-              <el-form-item :label="$t('templateQuickConfig.agentSettings.systemPrompt')" prop="systemPrompt" class="description-item">
-                <el-input
-                  v-model="form.systemPrompt"
-                  type="textarea"
-                  :placeholder="$t('templateQuickConfig.agentSettings.systemPromptPlaceholder')"
-                  :validate-event="false"
-                  show-word-limit
-                  maxlength="2000"
-                />
-              </el-form-item>
-            </el-form>
-          </el-card>
+      <header class="page-header">
+        <div class="page-heading">
+          <h1 class="page-title">{{ form.agentName || $t('templateQuickConfig.title') }}</h1>
         </div>
-      </div>
+        <div class="header-actions">
+          <el-button size="small" class="reset-btn" @click="resetConfig">{{ $t('templateQuickConfig.resetConfig') }}</el-button>
+          <el-button type="primary" size="small" class="save-btn" @click="saveConfig">{{ $t('templateQuickConfig.saveConfig') }}</el-button>
+        </div>
+      </header>
+
+      <el-form ref="form" :model="form" label-position="top" class="config-form">
+        <section class="config-card">
+          <div class="card-head">
+            <h2 class="card-title">{{ $t('templateQuickConfig.title') }}</h2>
+          </div>
+          <div class="card-body grid-2">
+            <!-- Assistant nickname -->
+            <el-form-item :label="$t('templateQuickConfig.agentSettings.agentName')" prop="agentName">
+              <el-input
+                v-model="form.agentName"
+                :placeholder="$t('templateQuickConfig.agentSettings.agentNamePlaceholder')"
+                :validate-event="false"
+                class="form-input"
+              />
+            </el-form-item>
+
+            <!-- Role introduction -->
+            <el-form-item :label="$t('templateQuickConfig.agentSettings.systemPrompt')" prop="systemPrompt"
+              class="span-all description-item">
+              <el-input
+                v-model="form.systemPrompt"
+                type="textarea"
+                :placeholder="$t('templateQuickConfig.agentSettings.systemPromptPlaceholder')"
+                :validate-event="false"
+                :autosize="{ minRows: 12, maxRows: 24 }"
+                show-word-limit
+                maxlength="2000"
+              />
+            </el-form-item>
+          </div>
+        </section>
+      </el-form>
     </div>
     <el-footer>
       <version-footer />
@@ -262,221 +267,199 @@ export default {
 };
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .welcome {
-  min-width: 900px;
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
-  position: relative;
   flex-direction: column;
-  background: #eff4ff;
-  background-size: cover;
-  -webkit-background-size: cover;
-  -o-background-size: cover;
-  overflow: hidden;
+  background: var(--x-canvas);
 }
 
-.operation-bar {
+.config-page {
+  flex: 1;
+  width: 100%;
+  max-width: 1120px;
+  box-sizing: border-box;
+  padding: 24px 32px 32px;
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 20px;
+  text-align: left;
+}
+
+// Breadcrumb
+.breadcrumb {
+  padding: 0; // App.vue has a global `nav { padding: 30px }`
+  display: flex;
   align-items: center;
-  padding: 16px 24px;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--x-text-muted);
+  min-width: 0;
+}
+
+.breadcrumb-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 4px 2px 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--x-text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+  cursor: pointer;
+  border-radius: 6px;
+
+  &:hover {
+    color: var(--x-ink);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--x-focus-ring);
+  }
+}
+
+.breadcrumb-sep {
+  color: var(--x-border-control);
+}
+
+.breadcrumb-current {
+  color: var(--x-text);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// Page header
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.page-heading {
+  min-width: 0;
+  flex: 1 1 320px;
 }
 
 .page-title {
-  font-size: 24px;
   margin: 0;
-  color: #2c3e50;
-}
-
-.main-wrapper {
-  height: calc(100vh - 63px - 35px - 60px);
-  margin: 0 22px;
-  border-radius: 15px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-  position: relative;
-  background: rgba(237, 242, 255, 0.5);
-  display: flex;
-  flex-direction: column;
-  padding: 0 !important;
-}
-
-.content-panel {
-  flex: 1;
-  display: flex;
-  overflow: hidden;
-  height: 100%;
-  border-radius: 15px;
-  background: transparent;
-  border: 1px solid #fff;
-}
-
-.content-area {
-  flex: 1;
-  height: 100%;
-  overflow: auto;
-  background-color: white;
-  display: flex;
-  flex-direction: column;
-}
-
-.config-card {
-  background: white !important;
-  border-radius: 15px !important;
-  overflow: hidden !important;
-  height: 100% !important;
-  margin: 0 !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-.full-height-form {
-  display: flex;
-  flex-direction: column;
-  padding: 20px;
-  gap: 20px;
-  height: calc(100% - 120px);
-}
-
-.nickname-item {
-  margin-bottom: 0 !important;
-}
-
-.description-item {
-  margin-bottom: 0 !important;
-  display: flex;
-  flex-direction: column;
-}
-
-::v-deep .description-item .el-textarea {
-  height: 300px;
-  min-height: 200px;
-  max-height: 400px;
-  display: flex;
-  flex-direction: column;
-}
-
-::v-deep .description-item .el-textarea__inner {
-  height: 100% !important;
-  min-height: 200px !important;
-  max-height: 400px !important;
-  resize: vertical !important;
-  line-height: 1.6;
-  font-size: 14px;
-  padding: 10px;
-  border: 1px solid #dcdfe6;
-  border-radius: 4px;
-  background-color: #fff;
-  color: #303133;
-}
-
-::v-deep .el-form-item__label {
-  font-size: 12px !important;
-  color: #3d4566 !important;
-  font-weight: 400;
-  line-height: 22px;
-  padding-bottom: 2px;
-}
-
-::v-deep .el-textarea .el-input__count {
-  color: #909399;
-  background: rgba(255, 255, 255, 0.8);
-  position: absolute;
-  font-size: 12px;
-  right: 10px;
-  bottom: 10px;
-  padding: 2px 5px;
-  border-radius: 3px;
-}
-
-.config-header {
-  padding: 20px;
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  background: #f8f9ff;
-  position: relative;
-}
-
-.header-icon {
-  width: 37px;
-  height: 37px;
-  background: #5778ff;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.header-icon img {
-  width: 19px;
-  height: 19px;
-}
-
-.header-title {
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 600;
-  color: #2c3e50;
-}
-
-.custom-close-btn {
-  position: absolute;
-  top: 25%;
-  right: 0;
-  transform: translateY(-50%);
-  width: 35px;
-  height: 35px;
-  border-radius: 50%;
-  border: 2px solid #cfcfcf;
-  background: none;
-  font-size: 30px;
-  font-weight: lighter;
-  color: #cfcfcf;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1;
-  padding: 0;
-  outline: none;
-}
-
-.custom-close-btn:hover {
-  color: #409EFF;
-  border-color: #409EFF;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+  color: var(--x-text);
+  overflow-wrap: anywhere;
 }
 
 .header-actions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
-  margin-left: auto;
+
+  .el-button + .el-button {
+    margin-left: 0;
+  }
 }
 
-.header-actions .save-btn {
-  background: #5778ff;
-  color: white;
-  border: none;
-  border-radius: 18px;
-  padding: 8px 16px;
-  height: 32px;
+// Card
+.config-card {
+  background: var(--x-surface);
+  border: 1px solid var(--x-border);
+  border-radius: var(--x-radius-card);
+  min-width: 0;
+}
+
+.card-head {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--x-divider);
+}
+
+.card-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--x-text);
+}
+
+.card-body {
+  padding: 20px;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 20px;
+}
+
+.span-all {
+  grid-column: 1 / -1;
+}
+
+.config-form ::v-deep .el-form-item {
+  margin-bottom: 0;
+  min-width: 0;
+}
+
+.config-form ::v-deep .el-form-item__label {
+  float: none;
+  display: block;
+  padding: 0 0 6px;
+  line-height: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--x-text);
+  text-align: left;
+}
+
+.config-form ::v-deep .el-form-item__content {
+  line-height: normal;
+}
+
+.form-input {
+  width: 100%;
+}
+
+::v-deep .description-item .el-textarea__inner {
+  min-height: 240px !important;
+  resize: vertical;
+  line-height: 1.6;
   font-size: 14px;
+  padding: 10px 12px;
 }
 
-.header-actions .reset-btn {
-  background: #e6ebff;
-  color: #5778ff;
-  border: 1px solid #adbdff;
-  border-radius: 18px;
-  padding: 8px 16px;
-  height: 32px;
+::v-deep .description-item .el-input__count {
+  color: var(--x-text-muted);
+  background: transparent;
+  font-size: 12px;
+  right: 12px;
+  bottom: 8px;
 }
 
-.header-actions .custom-close-btn {
-  position: static;
-  transform: none;
-  width: 32px;
-  height: 32px;
-  margin-left: 8px;
+.el-footer {
+  height: auto !important;
+  padding: 0;
+}
+
+@media (max-width: 768px) {
+  .config-page {
+    padding: 16px 16px 24px;
+    gap: 16px;
+  }
+
+  .grid-2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .card-body {
+    padding: 16px;
+  }
 }
 </style>

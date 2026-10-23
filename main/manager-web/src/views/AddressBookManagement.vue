@@ -2,198 +2,235 @@
   <div class="welcome">
     <HeaderBar />
 
-    <div class="page-content">
-      <!-- Left: device list -->
-      <div class="left-panel">
-        <div class="left-header">
-          <h1 class="main-title">{{ $t('addressBookManagement.mainTitle') }}</h1>
-          <p class="sub-title">{{ $t('addressBookManagement.subTitle') }}</p>
+    <main class="address-page">
+      <header class="page-header">
+        <div class="page-heading">
+          <h1 class="page-title">{{ $t('addressBookManagement.mainTitle') }}</h1>
+          <p class="page-description">{{ $t('addressBookManagement.subTitle') }}</p>
         </div>
+      </header>
 
-        <div class="search-bar">
-          <el-input
-            :placeholder="$t('addressBookManagement.searchPlaceholder')"
-            v-model="searchKeyword"
-            class="search-input"
-            @input="handleSearch"
-            clearable
-          />
-        </div>
+      <div class="page-content">
+        <!-- Left: device list -->
+        <aside class="left-panel">
+          <div class="search-bar">
+            <el-input
+              :placeholder="$t('addressBookManagement.searchPlaceholder')"
+              :aria-label="$t('addressBookManagement.searchPlaceholder')"
+              v-model="searchKeyword"
+              class="search-input"
+              @input="handleSearch"
+              clearable
+            >
+              <i slot="prefix" class="el-input__icon el-icon-search" aria-hidden="true"></i>
+            </el-input>
+          </div>
 
-        <!-- Agent list -->
-        <el-collapse accordion class="agent-collapse" v-model="expandedAgentId">
-          <el-collapse-item v-for="agent in filteredAgents" :key="agent.id" :name="agent.id">
-            <template slot="title">
-              <svg class="agent-triangle" width="8" height="12" viewBox="0 0 10 14" fill="#c8cafb">
-                <path d="M2 2L8 7L2 12L2 2Z" stroke="#c8cafb" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-              </svg>
-              <span class="agent-name">{{ agent.agentName }} ({{ agent.deviceCount || 0 }})</span>
-            </template>
-            <div class="device-list">
-              <div
-                v-for="device in agent.devices"
-                :key="device.id"
-                class="device-item"
-                :class="{ active: selectedDevice && selectedDevice.id === device.id }"
-                @click="handleDeviceClick(device, agent)"
-              >
-                <div class="device-avatar">
-                  <img :src="getDeviceAvatar(device.id)" alt="avatar" />
-                </div>
-                <div class="device-content">
-                  <div class="device-name">
-                    <MacAddressMask :macAddress="device.name" />
-                  </div>
-                  <div class="device-row">
-                    <span class="device-id">
-                      <MacAddressMask :macAddress="device.deviceId" />
+          <!-- Agent list -->
+          <el-collapse accordion class="agent-collapse" v-model="expandedAgentId">
+            <el-collapse-item v-for="agent in filteredAgents" :key="agent.id" :name="agent.id">
+              <template slot="title">
+                <span class="agent-name">{{ agent.agentName }}</span>
+                <span class="agent-count">{{ agent.deviceCount || 0 }}</span>
+              </template>
+              <ul class="device-list">
+                <li v-for="device in agent.devices" :key="device.id">
+                  <button
+                    type="button"
+                    class="device-item"
+                    :class="{ active: selectedDevice && selectedDevice.id === device.id }"
+                    :aria-current="selectedDevice && selectedDevice.id === device.id ? 'true' : null"
+                    @click="handleDeviceClick(device, agent)"
+                  >
+                    <span class="device-avatar" aria-hidden="true">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="6" y="3" width="12" height="18" rx="3" />
+                        <circle cx="12" cy="14" r="3" />
+                        <path d="M11 7h2" />
+                      </svg>
                     </span>
-                    <span class="device-status" :class="device.online ? 'online' : 'offline'">
+                    <span class="device-content">
+                      <span class="device-name">
+                        <MacAddressMask :macAddress="device.name" />
+                      </span>
+                      <span class="device-row">
+                        <span class="device-id">
+                          <MacAddressMask :macAddress="device.deviceId" />
+                        </span>
+                        <span class="status-pill" :class="device.online ? 'status-pill--success' : 'status-pill--neutral'">
+                          <span class="status-pill-dot" aria-hidden="true"></span>
+                          {{ device.online ? $t('addressBookManagement.online') : $t('addressBookManagement.offline') }}
+                        </span>
+                      </span>
+                    </span>
+                  </button>
+                </li>
+              </ul>
+            </el-collapse-item>
+          </el-collapse>
+        </aside>
+
+        <!-- Right: address book details -->
+        <section class="right-panel">
+          <div class="device-detail" v-if="selectedDevice">
+            <!-- Device info header -->
+            <div class="device-header">
+              <div class="device-left">
+                <div class="device-avatar-large" aria-hidden="true">
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="6" y="3" width="12" height="18" rx="3" />
+                    <circle cx="12" cy="14" r="3" />
+                    <path d="M11 7h2" />
+                  </svg>
+                </div>
+                <div class="device-info">
+                  <div class="device-name-row">
+                    <input
+                      v-if="isEditingAlias"
+                      v-model="editAliasValue"
+                      class="inline-input alias-input"
+                      ref="aliasInput"
+                      :aria-label="$t('addressBookManagement.deviceName')"
+                      @blur="handleAliasBlur"
+                      @keyup.enter="handleAliasBlur"
+                      autofocus
+                    />
+                    <button v-else type="button" class="device-name-text" @click="handleStartEdit">
+                      <MacAddressMask :macAddress="selectedDevice.name" />
+                    </button>
+                    <button v-if="!isEditingAlias" type="button" class="icon-btn"
+                      :aria-label="$t('addressBookManagement.edit')" @click="handleStartEdit">
+                      <i class="el-icon-edit" aria-hidden="true"></i>
+                    </button>
+                  </div>
+                  <div class="device-mac">
+                    <span class="meta-label">{{ $t('addressBookManagement.macAddress') }}</span>
+                    <span class="mono"><MacAddressMask :macAddress="selectedDevice.deviceId" /></span>
+                  </div>
+                  <div class="device-status">
+                    <span class="meta-label">{{ $t('addressBookManagement.status') }}</span>
+                    <span class="status-pill" :class="selectedDevice.online ? 'status-pill--success' : 'status-pill--neutral'">
+                      <span class="status-pill-dot" aria-hidden="true"></span>
+                      {{ selectedDevice.online ? $t('addressBookManagement.online') : $t('addressBookManagement.offline') }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <dl class="device-stats">
+                <div class="stat-item">
+                  <dt class="stat-label">
+                    <i class="el-icon-folder" aria-hidden="true"></i>{{ $t('addressBookManagement.deviceGroup') }}
+                  </dt>
+                  <dd class="stat-value-row">
+                    <input
+                      v-if="isEditingAgentName"
+                      v-model="editAgentNameValue"
+                      class="inline-input stat-edit-input"
+                      ref="agentNameInput"
+                      :aria-label="$t('addressBookManagement.deviceGroup')"
+                      @blur="handleAgentNameBlur"
+                      @keyup.enter="handleAgentNameBlur"
+                      autofocus
+                    />
+                    <button v-else type="button" class="stat-value stat-value--button" @click="handleStartEditAgentName">
+                      {{ selectedAgent ? selectedAgent.agentName : '-' }}
+                    </button>
+                    <button v-if="!isEditingAgentName && selectedAgent" type="button" class="icon-btn icon-btn--sm"
+                      :aria-label="$t('addressBookManagement.edit')" @click="handleStartEditAgentName">
+                      <i class="el-icon-edit" aria-hidden="true"></i>
+                    </button>
+                  </dd>
+                </div>
+                <div class="stat-item">
+                  <dt class="stat-label">
+                    <i class="el-icon-time" aria-hidden="true"></i>{{ $t('addressBookManagement.addTime') }}
+                  </dt>
+                  <dd class="stat-value">{{ formatDeviceCreateDate(selectedDevice) }}</dd>
+                </div>
+                <div class="stat-item">
+                  <dt class="stat-label">
+                    <i class="el-icon-link" aria-hidden="true"></i>{{ $t('addressBookManagement.lastOnline') }}
+                  </dt>
+                  <dd class="stat-value">{{ getTimeAgo(selectedDevice.lastConnectedAt) }}</dd>
+                </div>
+              </dl>
+            </div>
+
+            <!-- Permission management section -->
+            <div class="permission-section">
+              <div class="section-header">
+                <div class="section-title">
+                  <h2>{{ $t('addressBookManagement.deviceCallPermission') }}</h2>
+                  <p class="section-desc">{{ $t('addressBookManagement.setPermissionDesc', { count: selectedPermissions.length }) }}</p>
+                </div>
+                <div class="section-actions">
+                  <el-button size="small" :disabled="permissionsLoading" @click="handleCancel">{{ $t('common.cancel') }}</el-button>
+                  <el-button size="small" :disabled="permissionsLoading" @click="handleToggleSelectAll">{{ isAllSelected ? $t('addressBookManagement.deselectAll') : $t('addressBookManagement.selectAll') }}</el-button>
+                  <el-button type="primary" size="small" :disabled="permissionsLoading" @click="handleSavePermissions">{{ $t('addressBookManagement.save') }}</el-button>
+                </div>
+              </div>
+
+              <div v-loading="permissionsLoading" class="permission-grid">
+                <div
+                  v-for="device in allDevices"
+                  :key="device.id"
+                  class="permission-item"
+                  :class="{ active: selectedPermissions.includes(device.deviceId) }"
+                >
+                  <el-checkbox
+                    class="permission-checkbox"
+                    :disabled="permissionsLoading"
+                    :value="selectedPermissions.includes(device.deviceId)"
+                    :aria-label="device.addressBookAlias || device.name"
+                    @change="(checked) => handlePermissionToggle(device.deviceId, checked)"
+                  ></el-checkbox>
+                  <div class="permission-avatar" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="6" y="3" width="12" height="18" rx="3" />
+                      <circle cx="12" cy="14" r="3" />
+                      <path d="M11 7h2" />
+                    </svg>
+                  </div>
+                  <div class="permission-content">
+                    <div class="permission-name-row">
+                      <input
+                        v-if="editingDeviceId === device.id"
+                        v-model="editingDeviceName"
+                        class="inline-input permission-edit-input"
+                        :aria-label="$t('addressBookManagement.deviceName')"
+                        @blur="handleEditPermissionBlur(device)"
+                        @keyup.enter="handleEditPermissionBlur(device)"
+                        autofocus
+                      />
+                      <button v-else type="button" class="permission-name" @click.stop="handleStartEditPermission(device)">
+                        <MacAddressMask :macAddress="device.addressBookAlias || device.name" />
+                      </button>
+                      <button v-if="editingDeviceId !== device.id" type="button" class="icon-btn icon-btn--sm permission-edit-btn"
+                        :aria-label="$t('addressBookManagement.edit')" @click.stop="handleStartEditPermission(device)">
+                        <i class="el-icon-edit" aria-hidden="true"></i>
+                      </button>
+                    </div>
+                    <div class="permission-id mono">
+                      <MacAddressMask :macAddress="device.deviceId" />
+                    </div>
+                    <span class="status-pill" :class="device.online ? 'status-pill--success' : 'status-pill--neutral'">
+                      <span class="status-pill-dot" aria-hidden="true"></span>
                       {{ device.online ? $t('addressBookManagement.online') : $t('addressBookManagement.offline') }}
                     </span>
                   </div>
                 </div>
               </div>
             </div>
-          </el-collapse-item>
-        </el-collapse>
-      </div>
-
-      <!-- Right: address book details -->
-      <div class="right-panel">
-        <div class="device-detail" v-if="selectedDevice">
-          <!-- Device info header -->
-          <div class="device-header">
-            <div class="device-left">
-              <div class="device-avatar-large">
-                <img :src="getDeviceAvatar(selectedDevice.id)" alt="avatar" />
-              </div>
-              <div class="device-info">
-                <div class="device-name-row">
-                  <input
-                    v-if="isEditingAlias"
-                    v-model="editAliasValue"
-                    class="alias-input"
-                    ref="aliasInput"
-                    @blur="handleAliasBlur"
-                    @keyup.enter="handleAliasBlur"
-                    autofocus
-                  />
-                  <span v-else class="device-name-text" @click="handleStartEdit">
-                    <MacAddressMask :macAddress="selectedDevice.name" />
-                  </span>
-                  <i v-if="!isEditingAlias" class="el-icon-edit" @click="handleStartEdit"></i>
-                </div>
-                <div class="device-mac">
-                  {{ $t('addressBookManagement.macAddress') }}：
-                  <MacAddressMask :macAddress="selectedDevice.deviceId" />
-                </div>
-                <div class="device-status">
-                  <span>{{ $t('addressBookManagement.status') }}：</span>
-                  <span :class="selectedDevice.online ? 'online' : 'offline'">
-                  <i class="status-dot"></i>
-                  <span>{{ selectedDevice.online ? $t('addressBookManagement.online') : $t('addressBookManagement.offline') }}</span></span>
-                </div>
-              </div>
-            </div>
-            <div class="device-stats">
-              <div class="stat-item">
-                <i class="el-icon-folder"></i>
-                <div class="stat-content">
-                  <div class="stat-label">{{ $t('addressBookManagement.deviceGroup') }}</div>
-                  <div class="stat-value-row">
-                    <input
-                      v-if="isEditingAgentName"
-                      v-model="editAgentNameValue"
-                      class="stat-edit-input"
-                      ref="agentNameInput"
-                      @blur="handleAgentNameBlur"
-                      @keyup.enter="handleAgentNameBlur"
-                      autofocus
-                    />
-                    <span v-else class="stat-value" @click="handleStartEditAgentName">{{ selectedAgent ? selectedAgent.agentName : '-' }}</span>
-                    <i v-if="!isEditingAgentName && selectedAgent" class="el-icon-edit stat-edit-icon" @click="handleStartEditAgentName"></i>
-                  </div>
-                </div>
-              </div>
-              <div class="stat-item">
-                <i class="el-icon-time"></i>
-                <div class="stat-content">
-                  <div class="stat-label">{{ $t('addressBookManagement.addTime') }}</div>
-                  <div class="stat-value">{{ formatDeviceCreateDate(selectedDevice) }}</div>
-                </div>
-              </div>
-              <div class="stat-item">
-                <i class="el-icon-link"></i>
-                <div class="stat-content">
-                  <div class="stat-label">{{ $t('addressBookManagement.lastOnline') }}</div>
-                  <div class="stat-value">{{ getTimeAgo(selectedDevice.lastConnectedAt) }}</div>
-                </div>
-              </div>
-            </div>
           </div>
 
-          <!-- Permission management section -->
-          <div class="permission-section">
-            <div class="section-header">
-              <div class="section-title">
-                <h3>{{ $t('addressBookManagement.deviceCallPermission') }}</h3>
-                <p class="section-desc">{{ $t('addressBookManagement.setPermissionDesc', { count: selectedPermissions.length }) }}</p>
-              </div>
-              <div class="section-actions">
-                <CustomButton size="small" :disabled="permissionsLoading" @click="handleCancel">{{ $t('common.cancel') }}</CustomButton>
-                <CustomButton size="small" :disabled="permissionsLoading" @click="handleToggleSelectAll">{{ isAllSelected ? $t('addressBookManagement.deselectAll') : $t('addressBookManagement.selectAll') }}</CustomButton>
-                <CustomButton type="confirm" size="small" :disabled="permissionsLoading" @click="handleSavePermissions">{{ $t('addressBookManagement.save') }}</CustomButton>
-              </div>
-            </div>
-
-            <div v-loading="permissionsLoading" class="permission-grid">
-              <div
-                v-for="device in allDevices"
-                :key="device.id"
-                class="permission-item"
-                :class="{ active: selectedPermissions.includes(device.deviceId) }"
-              >
-                <el-checkbox
-                  class="permission-checkbox"
-                  :disabled="permissionsLoading"
-                  :value="selectedPermissions.includes(device.deviceId)"
-                  @change="(checked) => handlePermissionToggle(device.deviceId, checked)"
-                ></el-checkbox>
-                <div class="permission-avatar">
-                  <img :src="getDeviceAvatar(device.id)" alt="avatar" />
-                </div>
-                <div class="permission-content">
-                  <div class="permission-name-row">
-                    <input
-                      v-if="editingDeviceId === device.id"
-                      v-model="editingDeviceName"
-                      class="permission-edit-input"
-                      @blur="handleEditPermissionBlur(device)"
-                      @keyup.enter="handleEditPermissionBlur(device)"
-                      autofocus
-                    />
-                    <span v-else class="permission-name" @click.stop="handleStartEditPermission(device)">
-                      <MacAddressMask :macAddress="device.addressBookAlias || device.name" />
-                    </span>
-                    <i v-if="editingDeviceId !== device.id" class="el-icon-edit permission-edit-btn" @click.stop="handleStartEditPermission(device)"></i>
-                  </div>
-                  <div class="permission-id">
-                    <MacAddressMask :macAddress="device.deviceId" />
-                  </div>
-                  <div class="permission-status" :class="device.online ? 'online' : 'offline'">
-                    {{ device.online ? $t('addressBookManagement.online') : $t('addressBookManagement.offline') }}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <el-empty :description="$t('addressBookManagement.selectDevice')" v-else>
-        </el-empty>
+          <el-empty :description="$t('addressBookManagement.selectDevice')" v-else>
+          </el-empty>
+        </section>
       </div>
-    </div>
+    </main>
 
     <el-footer>
       <version-footer />
@@ -207,12 +244,11 @@ import VersionFooter from "@/components/VersionFooter.vue";
 import Api from "@/apis/api.js";
 import AddressBookApi from "@/apis/module/addressBook.js";
 import MacAddressMask from "@/components/MacAddressMask.vue";
-import CustomButton from "@/components/CustomButton.vue";
 import { formatCreateDate, parseTimestamp } from '@/utils/deviceTime.mjs';
 
 export default {
   name: "AddressBookManagement",
-  components: { HeaderBar, VersionFooter, MacAddressMask, CustomButton },
+  components: { HeaderBar, VersionFooter, MacAddressMask },
   data() {
     return {
       searchKeyword: "",
@@ -584,35 +620,6 @@ export default {
     formatDeviceCreateDate(device) {
       if (!device) return '-';
       return formatCreateDate(device.createDateTimestamp, device.createDate);
-    },
-    getDeviceAvatar(deviceId) {
-      // Compute an MD5 of the deviceId to pick the matching avatar
-      const avatars = [
-        require('@/assets/device-avatars/xiaozhi-logo1.png'),
-        require('@/assets/device-avatars/xiaozhi-logo2.png'),
-        require('@/assets/device-avatars/xiaozhi-logo3.png'),
-        require('@/assets/device-avatars/xiaozhi-logo4.png'),
-        require('@/assets/device-avatars/xiaozhi-logo5.png'),
-        require('@/assets/device-avatars/xiaozhi-logo6.png'),
-        require('@/assets/device-avatars/xiaozhi-logo7.png'),
-        require('@/assets/device-avatars/xiaozhi-logo8.png'),
-        require('@/assets/device-avatars/xiaozhi-logo9.png'),
-        require('@/assets/device-avatars/xiaozhi-logo10.png'),
-        require('@/assets/device-avatars/xiaozhi-logo11.png'),
-        require('@/assets/device-avatars/xiaozhi-logo12.png'),
-        require('@/assets/device-avatars/xiaozhi-logo13.png'),
-        require('@/assets/device-avatars/xiaozhi-logo14.png'),
-        require('@/assets/device-avatars/xiaozhi-logo15.png'),
-        require('@/assets/device-avatars/xiaozhi-logo16.png')
-      ];
-      // Simple hash to assign an avatar based on deviceId
-      let hash = 0;
-      for (let i = 0; i < deviceId.length; i++) {
-        hash = ((hash << 5) - hash) + deviceId.charCodeAt(i);
-        hash = hash & hash;
-      }
-      const index = Math.abs(hash) % avatars.length;
-      return avatars[index];
     }
   },
 };
@@ -620,675 +627,641 @@ export default {
 
 <style lang="scss" scoped>
 .welcome {
-  min-width: 1200px;
-  min-height: 506px;
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background-size: cover;
-  background: #eff4ff;
-  -webkit-background-size: cover;
-  -o-background-size: cover;
-  overflow: hidden;
-
-  .page-content {
-    display: flex;
-    flex: 1;
-    margin: 20px 22px 0 22px;
-    gap: 8px;
-    min-height: 0;
-  }
+  background: var(--x-canvas);
+  text-align: left;
 }
+
+.address-page {
+  flex: 1;
+  width: 100%;
+  max-width: 1280px;
+  padding: 24px 32px 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.page-heading {
+  min-width: 0;
+}
+
+.page-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+  color: var(--x-text);
+}
+
+.page-content {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.left-panel,
+.right-panel {
+  background: var(--x-surface);
+  border: 1px solid var(--x-border);
+  border-radius: var(--x-radius-card);
+  min-width: 0;
+}
+
+/* ---------- Left: agents and devices ---------- */
+.left-panel {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 160px);
+  overflow: hidden;
+}
+
+.search-bar {
+  padding: 12px;
+  border-bottom: 1px solid var(--x-border);
+}
+
+.search-input {
+  width: 100%;
+}
+
 .agent-collapse {
   flex: 1;
-  padding-right: 10px;
-  padding-left: 20px;
+  min-height: 0;
   overflow-y: auto;
-  scrollbar-width: thin;
-  .agent-name {
-    font-size: 14px;
-    font-weight: 500;
-    color: #686f85;
-    text-align: left;
+  padding: 6px 8px 8px;
+  border: 0;
+
+  ::v-deep .el-collapse-item__header {
+    height: 40px;
+    line-height: 40px;
+    padding: 0 8px;
+    border: 0;
+    border-radius: var(--x-radius-control);
+    background: transparent;
+    gap: 8px;
+
+    &:hover {
+      background: var(--x-surface-raised);
+    }
+
+    &.focusing:focus:not(:hover) {
+      color: inherit;
+      box-shadow: 0 0 0 3px var(--x-focus-ring);
+    }
   }
-  
-  .device-list {
-    display: flex;
-    flex-direction: column;
-    margin-top: 8px;
-    .device-item {
-      padding: 4px 15px;
-      border-radius: 6px;
-      margin-bottom: 8px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      border: 1px solid transparent;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      background: none;
 
-      &:hover {
-        background: #ebf1fe;
-      }
+  ::v-deep .el-collapse-item__arrow {
+    margin: 0 0 0 4px;
+    color: var(--x-text-muted);
+  }
 
-      &.active {
-        .device-name {
-          color: #7297fd !important;
-        }
-        border-color: #b3c0fc;
-        background: #ebf1fe;
-      }
+  ::v-deep .el-collapse-item__wrap {
+    border: 0;
+    background: transparent;
+  }
 
-      .device-avatar {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        overflow: hidden;
-        flex-shrink: 0;
+  ::v-deep .el-collapse-item__content {
+    padding-bottom: 4px;
+  }
+}
 
-        img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-      }
+.agent-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--x-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
-      .device-content {
-        flex: 1;
-        min-width: 0;
-        .device-name {
-          font-size: 14px;
-          color: #686f85;
-          text-align: left;
-          line-height: 16px;
-          // margin-bottom: 4px;
-        }
-      }
+.agent-count {
+  min-width: 20px;
+  padding: 0 6px;
+  box-sizing: border-box;
+  border-radius: var(--x-radius-pill);
+  background: var(--x-divider);
+  color: var(--x-text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 20px;
+  text-align: center;
+}
 
+.device-list {
+  list-style: none;
+  margin: 0;
+  padding: 2px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
 
-      .device-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+.device-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border: 0;
+  border-radius: var(--x-radius-control);
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
 
-        .device-id {
-          font-size: 12px;
-          line-height: 16px;
-          color: #909399;
-        }
+  &:hover {
+    background: var(--x-surface-raised);
+  }
 
-        .device-status {
-          font-size: 12px;
-          line-height: 16px;
-          padding: 2px 8px;
-          border-radius: 4px;
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--x-focus-ring);
+  }
 
-          &.online {
-            color: #4fbe80;
-          }
+  &.active {
+    background: var(--x-selected);
 
-          &.offline {
-            color: #9ea3b0;
-          }
-        }
-      }
+    .device-avatar {
+      background: var(--x-ink);
+      color: var(--x-on-ink);
     }
   }
 }
 
-.left-panel {
-  width: 19%;
-  background: white;
-  border-radius: 15px;
-  padding: 20px 0;
+.device-avatar,
+.permission-avatar {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background: var(--x-divider);
+  color: var(--x-text-secondary);
   display: flex;
-  flex-direction: column;
-  min-height: 0;
-  overflow: hidden;
+  align-items: center;
+  justify-content: center;
 }
 
-.right-panel {
+.device-content {
   flex: 1;
-  background: white;
-  border-radius: 15px;
-  padding: 20px;
+  min-width: 0;
   display: flex;
   flex-direction: column;
+  gap: 2px;
+}
+
+.device-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--x-text);
   overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.device-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.device-id {
+  min-width: 0;
+  font-family: var(--x-font-mono);
+  font-size: 12px;
+  color: var(--x-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- Status pills ---------- */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  padding: 1px 8px;
+  border-radius: var(--x-radius-pill);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  white-space: nowrap;
+
+  &--success {
+    background: var(--x-success-bg);
+    color: var(--x-success-text);
+
+    .status-pill-dot {
+      background: var(--x-success);
+    }
+  }
+
+  &--neutral {
+    background: var(--x-divider);
+    color: var(--x-text-secondary);
+
+    .status-pill-dot {
+      background: var(--x-text-muted);
+    }
+  }
+}
+
+.status-pill-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+/* ---------- Right: device detail ---------- */
+.right-panel {
+  padding: 20px;
+  box-sizing: border-box;
+  min-height: 420px;
 }
 
 .device-detail {
   display: flex;
   flex-direction: column;
-  height: 100%;
 }
 
 .device-header {
   display: flex;
-  align-items: stretch;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
   gap: 20px;
   padding-bottom: 20px;
-  border-bottom: 1px solid #ebeef5;
+  border-bottom: 1px solid var(--x-border);
 }
 
 .device-left {
   display: flex;
   align-items: flex-start;
-  gap: 15px;
+  gap: 14px;
+  min-width: 0;
 }
 
 .device-avatar-large {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  overflow: hidden;
+  width: 56px;
+  height: 56px;
   flex-shrink: 0;
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
+  border-radius: 12px;
+  background: var(--x-ink);
+  color: var(--x-on-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .device-info {
+  min-width: 0;
   display: flex;
   flex-direction: column;
+  gap: 6px;
+}
+
+.device-name-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.device-name-text {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 28px;
+  color: var(--x-text);
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inline-input {
+  box-sizing: border-box;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--x-ink);
+  border-radius: var(--x-radius-control);
+  box-shadow: 0 0 0 4px var(--x-focus-ring);
+  background: var(--x-surface);
+  font: inherit;
+  font-size: 14px;
+  color: var(--x-text);
+  outline: none;
+}
+
+.alias-input {
+  width: 220px;
+  max-width: 100%;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.icon-btn {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--x-text-muted);
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
+  font-size: 15px;
+  cursor: pointer;
 
-  .device-name-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 6px;
-
-    .device-name-text {
-      line-height: 34px;
-      font-size: 24px;
-      color: #3d4566;
-      cursor: pointer;
-    }
-
-    .alias-input {
-      height: 28px;
-      font-size: 24px;
-      font-weight: 600;
-      color: #3d4566;
-      border: 1px solid #6b8cff;
-      border-radius: 4px;
-      padding: 2px 8px;
-      outline: none;
-      width: 200px;
-    }
-
-    i {
-      cursor: pointer;
-      color: #6b8cff;
-      font-size: 18px;
-
-      &:hover {
-        color: #a966ff;
-      }
-    }
+  &:hover,
+  &:focus-visible {
+    background: var(--x-canvas);
+    color: var(--x-text);
   }
 
-  .device-mac {
-    font-size: 12px;
-    color: #686f85;
-    margin-bottom: 4px;
-    text-align: left;
+  &--sm {
+    width: 24px;
+    height: 24px;
+    font-size: 13px;
+    border-radius: 6px;
   }
+}
 
-  .device-status {
-    display: flex;
-    margin-top: 4px;
-    font-size: 12px;
-    color: #686f85;
-    text-align: left;
-    gap: 4px;
+.device-mac,
+.device-status {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--x-text-secondary);
+}
 
-    .online {
-      color: #686f85;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
+.meta-label {
+  min-width: 88px;
+  font-size: 12px;
+  color: var(--x-text-muted);
+}
 
-      .status-dot {
-        width: 9px;
-        height: 9px;
-        border-radius: 50%;
-        background: #4eb36c;
-        flex-shrink: 0;
-      }
-    }
-
-    .offline {
-      color: #999;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-
-      .status-dot {
-        width: 9px;
-        height: 9px;
-        border-radius: 50%;
-        background: #999;
-        flex-shrink: 0;
-      }
-    }
-  }
+.mono {
+  font-family: var(--x-font-mono);
 }
 
 .device-stats {
   display: flex;
-  gap: 15px;
-  align-items: stretch;
-  margin-left: auto;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+}
 
-  .stat-item {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 10px;
-    padding: 12px 15px;
-    border-radius: 8px;
-    min-width: 140px;
-    border: 1px solid #eaedf4;
+.stat-item {
+  min-width: 150px;
+  padding: 12px 14px;
+  border: 1px solid var(--x-border);
+  border-radius: 12px;
+  background: var(--x-surface-raised);
+  box-sizing: border-box;
+}
 
-    i {
-      font-size: 28px;
-      color: #6b8cff;
-      flex-shrink: 0;
-    }
+.stat-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: var(--x-text-muted);
 
-    .stat-content {
-      text-align: left;
-
-      .stat-label {
-        font-size: 12px;
-        color: #909399;
-        margin-bottom: 10px;
-      }
-
-      .stat-value {
-        font-size: 14px;
-        color: #3d4566;
-        font-weight: 500;
-      }
-
-      .stat-value-row {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-
-        .stat-value {
-          cursor: pointer;
-        }
-
-        .stat-edit-icon {
-          font-size: 14px;
-          color: #909399;
-          cursor: pointer;
-          &:hover {
-            color: #6b8cff;
-          }
-        }
-      }
-
-      .stat-edit-input {
-        font-size: 14px;
-        color: #3d4566;
-        font-weight: 500;
-        border: 1px solid #6b8cff;
-        border-radius: 4px;
-        padding: 2px 6px;
-        outline: none;
-        background: white;
-        width: 100px;
-      }
-    }
+  i {
+    font-size: 14px;
   }
 }
 
+.stat-value,
+.stat-value-row {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--x-text);
+}
+
+.stat-value-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 24px;
+}
+
+.stat-value--button {
+  min-width: 0;
+  max-width: 180px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-weight: 500;
+  color: var(--x-text);
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stat-edit-input {
+  width: 140px;
+  height: 28px;
+}
+
+/* ---------- Permissions ---------- */
 .permission-section {
-  flex: 1;
   display: flex;
   flex-direction: column;
-  width: 100%;
   margin-top: 20px;
-  overflow: hidden;
+}
 
-  .section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 15px;
+.section-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
 
-    .section-title {
-      text-align: left;
+.section-title {
+  min-width: 0;
 
-      h3 {
-        font-size: 24px;
-        font-weight: 500;
-        color: #3d4566;
-        margin: 0 0 10px 0;
-      }
+  h2 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--x-text);
+  }
 
-      .section-desc {
-        font-size: 12px;
-        color: #909399;
-        margin: 0;
-      }
-    }
+  .section-desc {
+    margin: 2px 0 0;
+    font-size: 13px;
+    color: var(--x-text-muted);
+  }
+}
 
-    .section-actions {
-      margin-top: 4px;
-      display: flex;
-    }
+.section-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  .el-button + .el-button {
+    margin-left: 0;
   }
 }
 
 .permission-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  grid-template-rows: repeat(auto-fill, minmax(100px, 1fr));
-  gap: 12px;
-  overflow-y: auto;
-  flex: 1;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+  min-height: 100px;
 }
 
 .permission-item {
-  padding: 12px;
-  background: linear-gradient(135deg, #f8fafd 0%, #ffffff 100%);
-  border-radius: 8px;
-  transition: all 0.3s ease;
-  border: 2px solid #eaedf4;
-  display: flex;
-  align-items: center;
-  gap: 10px;
   position: relative;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--x-border);
+  border-radius: 12px;
+  background: var(--x-surface);
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 
+  &:hover {
+    border-color: var(--x-border-control);
+  }
 
   &.active {
-    border-color: #c6d1fd;
-
-    .permission-name {
-      color: #3765f8;
-    }
+    border-color: var(--x-ink);
+    box-shadow: inset 0 0 0 1px var(--x-ink);
   }
+}
 
-  .permission-checkbox {
-    position: absolute;
-    top: 8px;
-    right: 8px;
+.permission-checkbox {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
 
-    ::v-deep(.el-checkbox__inner) {
-      width: 16px;
-      height: 16px;
-      border-radius: 4px;
-      border-color: #dcdfe6;
-      background-color: #ffffff;
+.permission-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
 
-      &::after {
-        width: 4px;
-        height: 8px;
-        left: 5px;
-        top: 2px;
-      }
-    }
+.permission-name-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-right: 24px;
+  box-sizing: border-box;
+  min-height: 24px;
+}
 
-    ::v-deep(.el-checkbox__input.is-checked .el-checkbox__inner) {
-      background-color: #3765f8;
-      border-color: #3765f8;
-    }
-
-    ::v-deep(.el-checkbox__input.is-checked + .el-checkbox__label) {
-      color: #3765f8;
-    }
-  }
-
-  .permission-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    overflow: hidden;
-    flex-shrink: 0;
-
-    img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-  }
-
-  .permission-content {
-    flex: 1;
-    min-width: 0;
-    text-align: left;
-
-    .permission-name {
-      font-size: 14px;
-      color: #3d4566;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .permission-name-row {
-      line-height: 22px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 4px;
-
-      .permission-name {
-        flex: 1;
-        margin-bottom: 0;
-      }
-
-      .permission-edit-btn {
-        margin-right: 24px;
-        font-size: 14px;
-        color: #909399;
-        cursor: pointer;
-        flex-shrink: 0;
-        &:hover {
-          color: #6b8cff;
-        }
-      }
-    }
-
-    .permission-id {
-      font-size: 12px;
-      color: #909399;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      margin-bottom: 6px;
-    }
-
-    .permission-status {
-      font-size: 12px;
-
-      &.online {
-        color: #67c23a;
-      }
-
-      &.offline {
-        color: #909399;
-      }
-    }
-  }
+.permission-name {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--x-text);
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .permission-edit-input {
-  font-size: 14px;
-  color: #3d4566;
-  border: 1px solid #6b8cff;
-  border-radius: 4px;
-  padding: 2px 6px;
-  outline: none;
-  width: calc(100% - 40px);
-}
-
-.left-header {
-  margin-bottom: 20px;
-  text-align: left;
-  padding: 0 20px;
-}
-
-.main-title {
-  font-size: 24px;
-  font-weight: 500;
-  color: #3d4566;
-  margin: 0 0 8px 0;
-}
-
-.sub-title {
-  font-size: 14px;
-  color: #a6aebe;
-  margin: 0;
-}
-
-.search-bar {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 15px;
-  padding: 0 20px;
-}
-
-.agent-triangle {
-  margin-right: 8px;
-  flex-shrink: 0;
-}
-
-.search-input {
   flex: 1;
+  min-width: 0;
+  height: 28px;
 }
 
-.agent-card {
-  width: 100%;
-  padding: 12px 0px;
-  // background: #f5f7fa;
-  border-radius: 8px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  transition: all 0.3s ease;
-  border: 2px solid transparent;
-  box-sizing: border-box;
+.permission-id {
+  max-width: 100%;
+  font-size: 12px;
+  color: var(--x-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
-  &:hover {
-    background: #e6f0ff;
-  }
+::v-deep .el-empty {
+  min-height: 380px;
+}
 
-  &.active, &.expanded {
-    border-color: #6b8cff;
-    background: #e6f0ff;
-  }
-
-  .agent-icon {
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #686f85;
-    transition: transform 0.3s ease;
-
-    i {
-      font-size: 14px;
-    }
-  }
-
-  &.expanded .agent-icon {
-    transform: rotate(90deg);
-  }
-
-  .agent-info {
-    flex: 1;
-
-    .agent-name {
-      font-size: 14px;
-      font-weight: 600;
-      color: #3d4566;
-      text-align: left;
-    }
-
-    .device-count {
-      font-weight: normal;
-      color: #909399;
-    }
+@media (max-width: 1100px) {
+  .page-content {
+    grid-template-columns: 260px minmax(0, 1fr);
   }
 }
 
-.right-panel {
-  width: 75%;
-  background: white;
-  border-radius: 15px;
-  padding: 20px;
-}
+@media (max-width: 900px) {
+  .page-content {
+    grid-template-columns: minmax(0, 1fr);
+  }
 
-.detail-form {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.form-footer {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: auto;
-  padding-top: 20px;
-
-  .el-button--primary {
-    background: linear-gradient(135deg, #6b8cff, #a966ff);
-    border: none;
-    width: 120px;
+  .left-panel {
+    max-height: 420px;
   }
 }
 
-.empty-detail {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  color: #909399;
-
-  .empty-icon {
-    font-size: 60px;
-    margin-bottom: 20px;
+@media (max-width: 768px) {
+  .address-page {
+    padding: 16px 16px 0;
+    gap: 16px;
   }
 
-  p {
-    font-size: 16px;
+  .right-panel {
+    padding: 16px;
   }
-}
 
-::v-deep(.el-input__inner) {
-  height: 36px;
-  border-radius: 6px;
-}
-
-::v-deep(.el-textarea__inner) {
-  border-radius: 4px;
-}
-::v-deep(.el-collapse) {
-  border: none !important;
-}
-::v-deep(.el-collapse-item__header) {
-  border: none !important;
-}
-::v-deep(.el-collapse-item__wrap) {
-  border: none !important;
-}
-::v-deep(.el-collapse-item__content) {
-  padding-bottom: 0 !important;
-}
-::v-deep(.el-empty) {
-  height: 100%;
+  .device-stats,
+  .stat-item {
+    width: 100%;
+  }
 }
 </style>

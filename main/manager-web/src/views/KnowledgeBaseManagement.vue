@@ -1,103 +1,120 @@
 <template>
   <div class="welcome">
     <HeaderBar />
-    <div class="main-wrapper">
-      <div class="content-panel">
-        <div class="content-area" v-loading="loading" :element-loading-text="$t('knowledgeBaseManagement.loading')">
-          <!-- Knowledge Base Cards Section -->
-          <div class="kb-section" :style="{ height: filteredKnowledgeBases.length > 0 ? 'fit-content' : '100%' }">
-            <div class="kb-section-header">
-              <h2 class="page-title">{{ $t('knowledgeBaseManagement.title') }}</h2>
-              <div class="right-operations">
-                <el-input
-                  :placeholder="$t('knowledgeBaseManagement.searchPlaceholder')"
-                  v-model="searchKbName"
-                  class="search-input"
-                  @keyup.enter.native="handleSearchKb"
-                  clearable
-                  prefix-icon="el-icon-search"
-                />
-                <CustomButton icon="el-icon-search" @click="handleSearchKb">
-                  {{ $t('knowledgeBaseManagement.search') }}
-                </CustomButton>
-                <CustomButton type="confirm" icon="el-icon-plus" @click="showAddDialog">
-                  {{ $t('knowledgeBaseManagement.addKnowledgeBase') }}
-                </CustomButton>
-              </div>
-            </div>
-            <div class="kb-cards-wrapper" :style="{ height: filteredKnowledgeBases.length > 0 ? 'fit-content' : '100%' }">
-              <div class="kb-arrow left" @click="scrollCards(-1)" v-if="filteredKnowledgeBases.length > 0">
-                <i class="el-icon-arrow-left"></i>
-              </div>
-              <div class="kb-cards" ref="kbCards">
-                <div
-                  v-for="(kb, index) in filteredKnowledgeBases"
-                  :key="kb.datasetId"
-                  class="kb-card"
-                  :class="{ active: selectedKb && selectedKb.datasetId === kb.datasetId, error: !!kb.errorMessage }"
-                  @click="selectKnowledgeBase(kb)"
-                >
-                  <div class="kb-card-actions-top">
-                    <button class="kb-action-icon" :title="$t('knowledgeBaseManagement.edit')" @click.stop="editKnowledgeBase(kb)">
-                      <i class="el-icon-edit"></i>
-                    </button>
-                    <button class="kb-action-icon delete" :title="$t('knowledgeBaseManagement.delete')" @click.stop="deleteKnowledgeBase(kb)">
-                      <i class="el-icon-delete"></i>
-                    </button>
-                  </div>
-                  <div class="kb-card-top">
-                    <div class="kb-card-icon" :class="getCardColorClass(index)">
-                      <ManualIcon :color="getIconColor(index)" />
-                    </div>
-                    <div class="kb-card-info">
-                      <div class="kb-card-name">{{ kb.name }}</div>
-                      <div class="kb-card-bottom">
-                        <div class="kb-card-meta">
-                          <span>{{`Documents&nbsp;&nbsp;${kb.documentCount || 0}` }}</span>
-                          <el-divider direction="vertical" />
-                          <span>{{ formatDate(kb.createdAt) }}</span>
-                          <el-divider direction="vertical" />
-                          <el-switch
-                            v-model="kb.status"
-                            :active-value="1"
-                            :inactive-value="0"
-                            active-color="#5778ff"
-                            inactive-color="#DCDFE6"
-                            @click.native.stop
-                            @change="handleStatusChange(kb)"
-                          ></el-switch>
-                          <el-tooltip v-if="kb.errorMessage" :content="kb.errorMessage" placement="top-end" effect="dark">
-                            <i class="kb-card-warning el-icon-warning"></i>
-                          </el-tooltip>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="kb-card-desc">{{ kb.description || '-' }}</div>
-                </div>
-                <div v-if="filteredKnowledgeBases.length === 0 && !loading" class="kb-empty">
-                  <p>{{ $t('knowledgeBaseManagement.noData') }}</p>
-                </div>
-              </div>
-              <div class="kb-arrow right" @click="scrollCards(1)" v-if="filteredKnowledgeBases.length > 0">
-                <i class="el-icon-arrow-right"></i>
-              </div>
-            </div>
-          </div>
-
-          <!-- Document Section -->
-          <KnowledgeBaseItem
-            ref="knowledgeBaseItem"
-            v-if="selectedKb"
-            :kb="selectedKb"
-            @upload="showUploadDialog"
-            @retrieval-test="showRetrievalTestDialog"
-            @view-slices="handleViewSlices"
-            @refresh="refreshDocuments"
-          />
+    <main class="kb-page" v-loading="loading" :element-loading-text="$t('knowledgeBaseManagement.loading')">
+      <header class="page-header">
+        <div class="page-heading">
+          <h1 class="page-title">{{ $t('knowledgeBaseManagement.title') }}</h1>
+          <p class="page-description">{{ $t('console.knowledgeDescription') }}</p>
         </div>
-      </div>
-    </div>
+        <div class="page-actions">
+          <el-input
+            :placeholder="$t('knowledgeBaseManagement.searchPlaceholder')"
+            :aria-label="$t('knowledgeBaseManagement.searchPlaceholder')"
+            v-model="searchKbName"
+            class="search-input"
+            @keyup.enter.native="handleSearchKb"
+            clearable
+          >
+            <button slot="prefix" type="button" class="search-icon-btn" :aria-label="$t('knowledgeBaseManagement.search')"
+              @click="handleSearchKb">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" aria-hidden="true">
+                <circle cx="11" cy="11" r="7" />
+                <path d="m20 20-3.5-3.5" />
+              </svg>
+            </button>
+          </el-input>
+          <el-button @click="handleSearchKb">{{ $t('knowledgeBaseManagement.search') }}</el-button>
+          <el-button type="primary" icon="el-icon-plus" @click="showAddDialog">
+            {{ $t('knowledgeBaseManagement.addKnowledgeBase') }}
+          </el-button>
+        </div>
+      </header>
+
+      <!-- Knowledge base cards -->
+      <section v-if="filteredKnowledgeBases.length > 0" class="kb-strip" :aria-label="$t('knowledgeBaseManagement.title')">
+        <button type="button" class="kb-arrow" :aria-label="$t('knowledgeBaseManagement.prevPage')" @click="scrollCards(-1)">
+          <i class="el-icon-arrow-left" aria-hidden="true"></i>
+        </button>
+        <div class="kb-cards" ref="kbCards">
+          <article
+            v-for="kb in filteredKnowledgeBases"
+            :key="kb.datasetId"
+            class="kb-card"
+            :class="{ active: selectedKb && selectedKb.datasetId === kb.datasetId, error: !!kb.errorMessage }"
+            role="button"
+            tabindex="0"
+            :aria-pressed="selectedKb && selectedKb.datasetId === kb.datasetId ? 'true' : 'false'"
+            @click="selectKnowledgeBase(kb)"
+            @keydown.enter.self="selectKnowledgeBase(kb)"
+          >
+            <div class="kb-card-head">
+              <div class="kb-initial" aria-hidden="true">{{ getKbInitial(kb) }}</div>
+              <div class="kb-card-title">
+                <h2 class="kb-card-name" :title="kb.name">{{ kb.name }}</h2>
+                <div class="kb-card-meta">
+                  <span>{{ $t('knowledgeBaseManagement.documentCount') }} {{ kb.documentCount || 0 }}</span>
+                  <span v-if="kb.createdAt" class="meta-sep" aria-hidden="true">·</span>
+                  <span>{{ formatDate(kb.createdAt) }}</span>
+                </div>
+              </div>
+              <div class="kb-card-tools">
+                <button type="button" class="icon-btn" :aria-label="$t('knowledgeBaseManagement.edit')"
+                  :title="$t('knowledgeBaseManagement.edit')" @click.stop="editKnowledgeBase(kb)">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                    stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4" />
+                  </svg>
+                </button>
+                <button type="button" class="icon-btn icon-btn--danger" :aria-label="$t('knowledgeBaseManagement.delete')"
+                  :title="$t('knowledgeBaseManagement.delete')" @click.stop="deleteKnowledgeBase(kb)">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                    stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <p class="kb-card-desc">{{ kb.description || '-' }}</p>
+            <div class="kb-card-foot">
+              <div class="kb-status" @click.stop>
+                <el-switch
+                  v-model="kb.status"
+                  :active-value="1"
+                  :inactive-value="0"
+                  @change="handleStatusChange(kb)"
+                ></el-switch>
+                <span class="kb-status-text">{{ getStatusText(kb) }}</span>
+              </div>
+              <el-tooltip v-if="kb.errorMessage" :content="kb.errorMessage" placement="top-end" effect="dark">
+                <span class="status-pill status-pill--warning kb-warning" tabindex="0" @click.stop>
+                  <i class="el-icon-warning" aria-hidden="true"></i>
+                  <span class="kb-warning-text">{{ kb.errorMessage }}</span>
+                </span>
+              </el-tooltip>
+            </div>
+          </article>
+        </div>
+        <button type="button" class="kb-arrow" :aria-label="$t('knowledgeBaseManagement.nextPage')" @click="scrollCards(1)">
+          <i class="el-icon-arrow-right" aria-hidden="true"></i>
+        </button>
+      </section>
+      <section v-else-if="!loading" class="kb-empty">
+        <el-empty :description="$t('knowledgeBaseManagement.noData')"></el-empty>
+      </section>
+
+      <!-- Document section -->
+      <KnowledgeBaseItem
+        ref="knowledgeBaseItem"
+        v-if="selectedKb"
+        :kb="selectedKb"
+        @upload="showUploadDialog"
+        @retrieval-test="showRetrievalTestDialog"
+        @view-slices="handleViewSlices"
+        @refresh="refreshDocuments"
+      />
+    </main>
 
     <!-- Knowledge Base Dialog -->
     <KnowledgeBaseDialog
@@ -111,6 +128,7 @@
 
     <!-- Slice Dialog -->
     <CustomDialog
+      class="kb-dialog"
       :title="`${$t('knowledgeFileUpload.viewSlices')} - ${currentDocumentName}`"
       :visible.sync="sliceDialogVisible"
       width="1200px"
@@ -119,14 +137,12 @@
     >
       <div class="slice-management">
         <div v-loading="sliceLoading" class="slice-content-container">
-          <div v-if="sliceList.length > 0" class="slice-cards-container">
-            <div v-for="(slice, index) in sliceList" :key="index" class="slice-card">
-              <div class="slice-card-content">
-                <span class="clice-index">{{ $t('knowledgeFileUpload.slice') }} {{ (sliceCurrentPage - 1) * slicePageSize + index + 1 }}</span>
-                <div class="content-text">{{ slice.content }}</div>
-              </div>
-            </div>
-          </div>
+          <ol v-if="sliceList.length > 0" class="slice-list">
+            <li v-for="(slice, index) in sliceList" :key="index" class="slice-card">
+              <span class="slice-index">{{ $t('knowledgeFileUpload.slice') }} {{ (sliceCurrentPage - 1) * slicePageSize + index + 1 }}</span>
+              <div class="content-text">{{ slice.content }}</div>
+            </li>
+          </ol>
           <div v-else class="no-slice-data">
             <el-empty :description="$t('knowledgeFileUpload.noSliceData')"></el-empty>
           </div>
@@ -146,6 +162,7 @@
 
     <!-- Upload Dialog -->
     <CustomDialog
+      class="kb-dialog"
       :title="$t('knowledgeFileUpload.uploadDocument')"
       :visible.sync="uploadDialogVisible"
       width="800px"
@@ -156,6 +173,7 @@
     >
       <el-upload
         ref="uploadRef"
+        class="kb-upload"
         action="#"
         :auto-upload="false"
         :show-file-list="false"
@@ -164,30 +182,37 @@
         accept=".doc,.docx,.pdf,.txt,.md,.mdx,.csv,.xls,.xlsx,.ppt,.pptx"
         drag
       >
-        <i class="el-icon-upload"></i>
+        <span class="upload-icon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 16V4M7 9l5-5 5 5M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+          </svg>
+        </span>
         <div class="el-upload__text">{{ $t('knowledgeFileUpload.dragOrClick') }}</div>
         <div class="el-upload__tip" slot="tip">{{ $t('knowledgeFileUpload.uploadTip') }}</div>
       </el-upload>
       <!-- Selected file list -->
       <div class="selected-files-section" v-if="selectedFilesList.length > 0">
         <h4>{{ $t('knowledgeFileUpload.selectedFiles') }} ({{ selectedFilesList.length }})</h4>
-        <div class="selected-files-list">
-          <div v-for="(file, index) in selectedFilesList" :key="index" class="selected-file-item">
+        <ul class="selected-files-list">
+          <li v-for="(file, index) in selectedFilesList" :key="index" class="selected-file-item">
             <div class="file-info">
-              <i class="el-icon-document"></i>
-              <span class="file-name">{{ file.name }}</span>
+              <i class="el-icon-document" aria-hidden="true"></i>
+              <span class="file-name" :title="file.name">{{ file.name }}</span>
               <span class="file-size">{{ formatFileSize(file.size) }}</span>
             </div>
-            <el-button type="text" class="remove-btn" @click="removeSelectedFile(index)">
-              <i class="el-icon-close"></i>
-            </el-button>
-          </div>
-        </div>
+            <button type="button" class="icon-btn icon-btn--danger" :aria-label="$t('knowledgeFileUpload.delete')"
+              @click="removeSelectedFile(index)">
+              <i class="el-icon-close" aria-hidden="true"></i>
+            </button>
+          </li>
+        </ul>
       </div>
     </CustomDialog>
 
     <!-- Retrieval Test Dialog -->
     <CustomDialog
+      class="kb-dialog"
       :title="$t('knowledgeFileUpload.retrievalTest')"
       :visible.sync="retrievalTestDialogVisible"
       width="1200px"
@@ -198,7 +223,7 @@
       @confirm="runRetrievalTest"
     >
       <div class="retrieval-test-form">
-        <el-form :model="retrievalTestForm" label-width="100px" @submit.native.prevent>
+        <el-form :model="retrievalTestForm" label-position="top" @submit.native.prevent>
           <el-form-item :label="$t('knowledgeFileUpload.testQuestion')" required>
             <el-input
               v-model="retrievalTestForm.question"
@@ -208,34 +233,28 @@
             />
           </el-form-item>
         </el-form>
-        <div v-if="retrievalTestResult" class="retrieval-test-result" style="margin-top: 20px;">
-          <div class="result-chunks" v-if="retrievalTestResult.chunks.length">
-            <div v-for="(chunk, index) in retrievalTestResult.chunks" :key="index" class="result-chunk">
-              <div class="chunk-left">
-                <div class="chunk-similarity">
-                  <p class="similarity-label">{{ $t('knowledgeFileUpload.comprehensiveSimilarity') }}</p>
-                  <p class="similarity-value">{{ (chunk.similarity || 0).toFixed(4) }}</p>
-                  <el-progress
-                    :percentage="Math.round((chunk.similarity || 0) * 100)"
-                    :stroke-width="6"
-                    :show-text="false"
-                    class="similarity-progress"
-                  />
-                </div>
+        <div v-if="retrievalTestResult" class="retrieval-test-result">
+          <ol class="result-chunks" v-if="retrievalTestResult.chunks.length">
+            <li v-for="(chunk, index) in retrievalTestResult.chunks" :key="index" class="result-chunk">
+              <div class="chunk-similarity">
+                <p class="similarity-label">{{ $t('knowledgeFileUpload.comprehensiveSimilarity') }}</p>
+                <p class="similarity-value">{{ (chunk.similarity || 0).toFixed(4) }}</p>
+                <el-progress
+                  :percentage="Math.round((chunk.similarity || 0) * 100)"
+                  :stroke-width="6"
+                  :show-text="false"
+                  class="similarity-progress"
+                />
               </div>
-              <el-divider direction="vertical"></el-divider>
-              <div class="chunk-right">
-                
-                <div class="chunk-content">
-                  <div class="chunk-right-header">
-                    <span class="chunk-source">{{ $t('knowledgeFileUpload.sourceDocument') }}：{{ chunk.document_keyword || '-' }}</span>
-                    <span class="chunk-index">{{ $t('knowledgeFileUpload.slice') }} {{ index + 1 }}</span>
-                  </div>
-                  <p>{{ chunk.content }}</p>
+              <div class="chunk-content">
+                <div class="chunk-header">
+                  <span class="chunk-source">{{ $t('knowledgeFileUpload.sourceDocument') }}: {{ chunk.document_keyword || '-' }}</span>
+                  <span class="slice-index">{{ $t('knowledgeFileUpload.slice') }} {{ index + 1 }}</span>
                 </div>
+                <p>{{ chunk.content }}</p>
               </div>
-            </div>
-          </div>
+            </li>
+          </ol>
           <el-empty v-else :description="$t('knowledgeFileUpload.noSliceData')"></el-empty>
         </div>
       </div>
@@ -253,13 +272,11 @@ import HeaderBar from "@/components/HeaderBar.vue";
 import VersionFooter from "@/components/VersionFooter.vue";
 import KnowledgeBaseDialog from "@/components/KnowledgeBaseDialog.vue";
 import KnowledgeBaseItem from "./KnowledgeBaseItem.vue";
-import ManualIcon from "@/components/ManualIcon.vue";
 import CustomDialog from "@/components/CustomDialog.vue";
 import CustomPagination from "@/components/CustomPagination.vue";
-import CustomButton from "@/components/CustomButton.vue";
 
 export default {
-  components: { HeaderBar, VersionFooter, KnowledgeBaseDialog, KnowledgeBaseItem, ManualIcon, CustomDialog, CustomPagination, CustomButton },
+  components: { HeaderBar, VersionFooter, KnowledgeBaseDialog, KnowledgeBaseItem, CustomDialog, CustomPagination },
   data() {
     return {
       knowledgeBases: [],
@@ -652,14 +669,9 @@ export default {
       this.fetchSlices();
     },
 
-    getCardColorClass(index) {
-      const colors = ['blue', 'green', 'purple', 'orange', 'pink', 'cyan'];
-      return colors[index % colors.length];
-    },
-
-    getIconColor(index) {
-      const colors = ['#2f5bff', '#34c759', '#6a5cff', '#ff9500', '#f43f7a', '#00c9db'];
-      return colors[index % colors.length];
+    getKbInitial(kb) {
+      const name = (kb.name || '').trim();
+      return name ? Array.from(name)[0].toUpperCase() : '?';
     },
 
     getStatusClass(kb) {
@@ -693,104 +705,104 @@ export default {
 
 <style lang="scss" scoped>
 .welcome {
-  min-width: 900px;
-  min-height: 506px;
-  height: 100vh;
-  display: flex;
-  position: relative;
-  flex-direction: column;
-  background: #eff4ff;
-  background-size: cover;
-  -webkit-background-size: cover;
-  -o-background-size: cover;
-  overflow: hidden;
-}
-
-.main-wrapper {
-  height: calc(100vh - 63px - 35px);
-  margin: 20px 22px 0;
-  border-radius: 15px;
-  position: relative;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  background: var(--x-canvas);
+  text-align: left;
 }
 
-.operation-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 24px;
-}
-
-.page-title {
-  font-weight: 500;
-  font-size: 24px;
-  margin: 0;
-}
-
-.right-operations {
-  display: flex;
-  margin-left: auto;
-  align-items: center;
-}
-
-.search-input {
-  margin-right: 10px;
-  width: 240px;
-}
-
-.content-panel {
+.kb-page {
   flex: 1;
-  display: flex;
-  overflow: hidden;
-  height: 100%;
-  border-radius: 15px;
-}
-
-.content-area {
-  flex: 1;
-  height: 100%;
-  min-width: 600px;
-  overflow: hidden;
+  width: 100%;
+  max-width: 1280px;
+  padding: 24px 32px 0;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   gap: 20px;
+  min-width: 0;
 }
 
-/* ========== Knowledge Base Cards Section ========== */
-.kb-section {
-  background: #fff;
-  border-radius: 10px;
-  padding: 14px 20px;
-  border: 1px solid #f0f3f9;
-}
-
-.kb-section-header {
+.page-header {
   display: flex;
-  align-items: center;
+  flex-wrap: wrap;
+  align-items: flex-end;
   justify-content: space-between;
-  padding: 0 0 16px 0;
+  gap: 16px;
 }
 
-.kb-section-title {
-  font-size: 18px;
-  font-weight: 500;
-  color: #1f2a44;
+.page-heading {
+  min-width: 0;
 }
 
-.kb-cards-wrapper {
+.page-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+  color: var(--x-text);
+}
+
+.page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+
+  .el-button + .el-button {
+    margin-left: 0;
+  }
+}
+
+.search-input {
+  width: 280px;
+  max-width: 100%;
+
+  ::v-deep .el-input__inner {
+    padding-left: 34px;
+  }
+
+  ::v-deep .el-input__prefix {
+    left: 0;
+    display: flex;
+    align-items: center;
+  }
+}
+
+.search-icon-btn {
+  width: 34px;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--x-text-muted);
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: center;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--x-text);
+  }
+}
+
+/* ---------- Knowledge base cards ---------- */
+.kb-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
 }
 
 .kb-cards {
   flex: 1;
+  min-width: 0;
   display: flex;
-  gap: 24px;
+  gap: 16px;
   overflow-x: auto;
-  padding: 10px;
+  padding: 2px;
   scroll-behavior: smooth;
   scrollbar-width: none;
 
@@ -800,287 +812,285 @@ export default {
 }
 
 .kb-arrow {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   flex-shrink: 0;
+  padding: 0;
   border-radius: 50%;
-  background: #fff;
-  border: 1px solid #e7ecf5;
-  box-shadow: 0 4px 16px rgba(31, 42, 68, 0.06);
+  background: var(--x-surface);
+  border: 1px solid var(--x-border-control);
+  color: var(--x-text-secondary);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s;
-  color: #2f5bff;
-  font-size: 18px;
+  font-size: 16px;
+  transition: background-color 0.15s ease, color 0.15s ease;
 
-  &:hover {
-    border-color: #2f5bff;
-    box-shadow: 0 4px 20px rgba(47, 91, 255, 0.15);
+  &:hover,
+  &:focus-visible {
+    background: var(--x-surface-raised);
+    color: var(--x-ink);
   }
 }
 
 .kb-card {
+  flex: 0 0 300px;
   width: 300px;
-  border-radius: 8px;
-  padding: 20px;
-  border: 1px solid transparent;
-  background: #fff;
-  cursor: pointer;
-  transition: all 0.25s;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 16px;
+  background: var(--x-surface);
+  border: 1px solid var(--x-border);
+  border-radius: var(--x-radius-card);
   display: flex;
   flex-direction: column;
-  flex: 0 0 300px;
-  position: relative;
-  box-shadow: 0 0 10px rgba(47, 91, 255, 0.15);
+  gap: 12px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 
   &:hover {
-    box-shadow: 0 0 10px rgba(47, 91, 255, 0.15);
-    border: 1px solid #6b80eb;
+    border-color: var(--x-border-control);
+  }
+
+  &:focus-visible {
+    box-shadow: 0 0 0 4px var(--x-focus-ring);
   }
 
   &.active {
-    border: 1px solid #6b80eb;
+    border-color: var(--x-ink);
+    box-shadow: inset 0 0 0 1px var(--x-ink);
   }
 
   &.error {
-    background: linear-gradient(135deg, #fff5f5, #fff0f0);
-    border: 1px solid #fde2e2;
-    box-shadow: 0 0 10px rgba(245, 108, 108, 0.15);
+    border-color: var(--x-warning);
+  }
 
-    &:hover {
-      border: 1px solid #f56c6c;
-      box-shadow: 0 0 12px rgba(245, 108, 108, 0.25);
-    }
-
-    &.active {
-      border: 1px solid #f56c6c;
-    }
+  &.error.active {
+    box-shadow: inset 0 0 0 1px var(--x-warning);
   }
 }
 
-.kb-card-top {
+.kb-card-head {
   display: flex;
   align-items: flex-start;
-  gap: 16px;
-  margin-bottom: 12px;
+  gap: 12px;
 }
 
-.kb-card-warning {
-  color: #e6a23c;
-  font-size: 16px;
-  cursor: pointer;
-  vertical-align: middle;
-  margin-left: 6px;
-  animation: warning-pulse 2s ease-in-out infinite;
-}
-
-@keyframes warning-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-.kb-card-actions-top {
-  position: absolute;
-  top: 10px;
-  right: 4px;
-  display: flex;
-  z-index: 2;
-}
-
-.kb-action-icon {
-  width: 24px;
-  height: 24px;
-  border-radius: 4px;
-  border: none;
-  background: transparent;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: #6b7280;
-  font-size: 13px;
-  transition: all 0.2s;
-  padding: 0;
-
-  &:hover {
-    color: #2f5bff;
-  }
-
-  &.delete:hover {
-    color: #ff5a5f;
-  }
-}
-
-.kb-card-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
+.kb-initial {
+  width: 40px;
+  height: 40px;
   flex-shrink: 0;
-
-  &.blue {
-    background: linear-gradient(135deg, #e8ecff, #d4daff);
-    color: #2f5bff;
-  }
-  &.purple {
-    background: linear-gradient(135deg, #ede8ff, #dcd4ff);
-    color: #6a5cff;
-  }
-  &.green {
-    background: linear-gradient(135deg, #e2f9ed, #c8f0d8);
-    color: #34c759;
-  }
-  &.orange {
-    background: linear-gradient(135deg, #fff3e0, #ffe4b8);
-    color: #ff9500;
-  }
-  &.pink {
-    background: linear-gradient(135deg, #ffe4ed, #ffc8db);
-    color: #f43f7a;
-  }
-  &.cyan {
-    background: linear-gradient(135deg, #dff8fa, #c4f0f4);
-    color: #00c9db;
-  }
+  border-radius: 8px;
+  background: var(--x-divider);
+  color: var(--x-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 15px;
 }
 
-.kb-card-info {
-  height: 100%;
+.kb-card.active .kb-initial {
+  background: var(--x-ink);
+  color: var(--x-on-ink);
+}
+
+.kb-card-title {
   flex: 1;
   min-width: 0;
-  display: flex;
-  flex-direction: column;
 }
 
 .kb-card-name {
-  font-size: 18px;
-  font-weight: 500;
-  color: #1f2a44;
-  margin-bottom: 6px;
+  margin: 0 0 2px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--x-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  text-align: left;
+}
+
+.kb-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--x-text-muted);
+
+  .meta-sep {
+    padding: 0 6px;
+  }
+}
+
+.kb-card-tools {
+  display: flex;
+  gap: 2px;
+  margin: -4px -6px 0 0;
+}
+
+.icon-btn {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--x-text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+
+  &:hover,
+  &:focus-visible {
+    background: var(--x-canvas);
+    color: var(--x-text);
+  }
+
+  &--danger:hover,
+  &--danger:focus-visible {
+    background: var(--x-danger-bg);
+    color: var(--x-danger-text);
+  }
 }
 
 .kb-card-desc {
-  font-size: 14px;
-  text-align: left;
-  color: #7888a8;
+  margin: 0;
+  min-height: 39px;
+  font-size: 13px;
   line-height: 1.5;
+  color: var(--x-text-secondary);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  word-break: break-word;
 }
 
-.kb-card-bottom {
-  margin-top: auto;
+.kb-card-foot {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--x-divider);
+  min-height: 24px;
 }
 
-.kb-card-meta {
-  font-size: 12px;
-  color: #a0aec0;
-}
-
-.kb-empty {
-  display: flex;
-  flex-direction: column;
+.kb-status {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  min-height: 120px;
-  width: 100%;
-  color: #b0bbc9;
-  font-size: 14px;
-
-  i {
-    font-size: 36px;
-    margin-bottom: 8px;
-  }
+  gap: 8px;
+  cursor: default;
 }
 
-/* ========== Slice Dialog ========== */
-.slice-management {
-  display: flex;
-  flex-direction: column;
+.kb-status-text {
+  font-size: 13px;
+  color: var(--x-text-secondary);
 }
 
-.slice-content-container {
-  flex: 1;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: var(--x-radius-pill);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
 
-.slice-cards-container {
-  flex: 1;
-  overflow-y: auto;
-  padding-right: 4px;
+  &--warning {
+    background: var(--x-warning-bg);
+    color: var(--x-warning-text);
 
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-  &::-webkit-scrollbar-thumb {
-    background: #e0e0e0;
-    border-radius: 3px;
-  }
-}
-
-.slice-card {
-  background: #f8f9fa;
-  margin-bottom: 12px;
-
-  &:last-child {
-    margin-bottom: 0;
-  }
-}
-
-.slice-header-info {
-  margin-bottom: 10px;
-  p {
-    margin: 0;
-    font-size: 14px;
-    strong {
-      color: #374151;
+    i {
+      color: var(--x-warning);
     }
   }
 }
 
-.slice-card-content {
-  background: #fff;
-  border: 1px solid #f0f0f0;
-  border-radius: 8px;
-  padding: 12px;
+.kb-warning {
+  min-width: 0;
+  max-width: 150px;
+  cursor: help;
+  outline: none;
+
+  &:focus-visible {
+    box-shadow: 0 0 0 3px var(--x-focus-ring);
+  }
+}
+
+.kb-warning-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kb-empty {
+  background: var(--x-surface);
+  border: 1px solid var(--x-border);
+  border-radius: var(--x-radius-card);
+  padding: 24px;
+}
+
+/* ---------- Dialogs ---------- */
+.kb-dialog ::v-deep .el-dialog {
+  max-width: calc(100vw - 32px);
+}
+
+.slice-management {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.slice-content-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.slice-list,
+.result-chunks,
+.selected-files-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.slice-card {
+  padding: 14px 16px;
+  background: var(--x-surface);
+  border: 1px solid var(--x-border);
+  border-radius: 12px;
   text-align: left;
 
-  &::-webkit-scrollbar {
-    width: 4px;
+  & + & {
+    margin-top: 10px;
   }
-  &::-webkit-scrollbar-thumb {
-    background: #e0e0e0;
-    border-radius: 2px;
-  }
-  .clice-index {
-    color: #467afe;
-    display: inline-block;
-    padding: 4px 6px;
-    background: #e6f0fe;
-    border-radius: 4px;
-  }
+}
+
+.slice-index {
+  display: inline-block;
+  margin-bottom: 8px;
+  padding: 2px 8px;
+  border-radius: var(--x-radius-pill);
+  background: var(--x-divider);
+  color: var(--x-text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  white-space: nowrap;
 }
 
 .content-text {
   font-size: 14px;
   line-height: 1.6;
-  color: #333;
+  color: var(--x-text);
   white-space: pre-wrap;
   word-break: break-word;
 }
@@ -1094,193 +1104,252 @@ export default {
 }
 
 .slice-pagination {
-  margin-top: 20px;
+  margin-top: 16px;
   display: flex;
+  justify-content: flex-end;
+}
+
+/* Upload */
+.kb-upload {
+  ::v-deep .el-upload,
+  ::v-deep .el-upload-dragger {
+    width: 100%;
+  }
+
+  ::v-deep .el-upload-dragger {
+    height: auto;
+    padding: 28px 16px;
+    box-sizing: border-box;
+    border: 1px dashed var(--x-border-control);
+    border-radius: var(--x-radius-card);
+    background: var(--x-surface-raised);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+
+    &:hover,
+    &.is-dragover {
+      border-color: var(--x-ink);
+      background: var(--x-surface);
+    }
+  }
+
+  ::v-deep .el-upload__text {
+    font-size: 14px;
+    color: var(--x-text);
+  }
+
+  ::v-deep .el-upload__tip {
+    margin-top: 8px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--x-text-muted);
+    text-align: left;
+  }
+}
+
+.upload-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--x-surface);
+  border: 1px solid var(--x-border);
+  color: var(--x-text);
+  display: flex;
+  align-items: center;
   justify-content: center;
 }
 
-
-/* ========== Selected Files List ========== */
 .selected-files-section {
   margin-top: 16px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 16px;
-  background-color: #f8f9fa;
+  text-align: left;
 
   h4 {
-    margin: 0 0 12px 0;
-    font-size: 14px;
+    margin: 0 0 8px;
+    font-size: 13px;
     font-weight: 600;
-    color: #606266;
+    color: var(--x-text);
   }
 }
 
 .selected-files-list {
-  max-height: 180px;
+  max-height: 200px;
   overflow-y: auto;
+  border: 1px solid var(--x-border);
+  border-radius: 12px;
 }
 
 .selected-file-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
-  background-color: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 4px;
-  margin-bottom: 8px;
+  gap: 8px;
+  padding: 6px 8px 6px 12px;
 
-  &:last-child {
-    margin-bottom: 0;
+  & + & {
+    border-top: 1px solid var(--x-divider);
   }
 
   .file-info {
     display: flex;
     align-items: center;
+    gap: 8px;
     flex: 1;
+    min-width: 0;
 
     .el-icon-document {
-      color: #409eff;
-      margin-right: 8px;
+      color: var(--x-text-muted);
       font-size: 16px;
     }
 
     .file-name {
       font-size: 14px;
-      color: #303133;
-      margin-right: 12px;
+      color: var(--x-text);
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      max-width: 300px;
+      min-width: 0;
     }
 
     .file-size {
+      flex-shrink: 0;
       font-size: 12px;
-      color: #909399;
-    }
-  }
-
-  .remove-btn {
-    color: #f56c6c;
-    padding: 4px;
-
-    &:hover {
-      color: #f78989;
-      background-color: #fef0f0;
-      border-radius: 4px;
+      color: var(--x-text-muted);
+      font-family: var(--x-font-mono);
     }
   }
 }
 
-/* ========== Retrieval Test Dialog ========== */
+/* Retrieval test */
 .retrieval-test-form {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  text-align: left;
 
-  .retrieval-test-result {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
+  ::v-deep .el-form-item {
+    margin-bottom: 8px;
   }
 
-  .result-chunks {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
+  ::v-deep .el-form-item__label {
+    padding-bottom: 4px;
+    line-height: 20px;
+    font-size: 13px;
+  }
+}
+
+.retrieval-test-result {
+  margin-top: 12px;
+}
+
+.result-chunk {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 16px;
+  border: 1px solid var(--x-border);
+  border-radius: 12px;
+
+  & + & {
+    margin-top: 10px;
+  }
+}
+
+.chunk-similarity {
+  flex: 0 0 160px;
+  padding-right: 20px;
+  border-right: 1px solid var(--x-divider);
+
+  .similarity-label {
+    margin: 0;
+    font-size: 12px;
+    color: var(--x-text-muted);
+  }
+
+  .similarity-value {
+    margin: 4px 0 10px;
+    font-family: var(--x-font-mono);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--x-text);
+  }
+
+  .similarity-progress {
+    ::v-deep .el-progress-bar__outer {
+      background-color: var(--x-divider);
+    }
+
+    ::v-deep .el-progress-bar__inner {
+      background: var(--x-ink);
+    }
+  }
+}
+
+.chunk-content {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--x-text);
+
+  > p {
+    margin: 0;
+    word-break: break-word;
+  }
+}
+
+.chunk-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+
+  .slice-index {
+    margin-bottom: 0;
+  }
+}
+
+.chunk-source {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--x-text);
+  min-width: 0;
+  word-break: break-all;
+}
+
+@media (max-width: 768px) {
+  .kb-page {
+    padding: 16px 16px 0;
+    gap: 16px;
+  }
+
+  .page-actions,
+  .search-input {
+    width: 100%;
+  }
+
+  .kb-arrow {
+    display: none;
+  }
+
+  .kb-card {
+    flex-basis: 280px;
+    width: 280px;
   }
 
   .result-chunk {
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    padding: 14px;
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
+    flex-direction: column;
+    gap: 12px;
+  }
 
-    .chunk-left {
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-
-      .chunk-similarity {
-        // font-size: 12px;
-        color: #409eff;
-        white-space: nowrap;
-
-        .similarity-label {
-          // font-size: 12px;
-          color: #333;
-          margin-bottom: 4px;
-        }
-
-        .similarity-value {
-          text-align: left;
-          margin-top: 4px;
-          font-size: 16px;
-          font-weight: 600;
-          margin-bottom: 12px;
-        }
-
-        .similarity-progress {
-          margin-top: 8px;
-
-          ::v-deep(.el-progress-bar__outer) {
-            border-radius: 3px;
-            background-color: rgba(64, 158, 255, 0.1);
-          }
-          ::v-deep(.el-progress-bar__inner) {
-            border-radius: 3px;
-            background: #4a7cfd;
-          }
-        }
-      }
-    }
-
-    .chunk-right {
-      flex: 1;
-      min-width: 0;
-
-      .chunk-right-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 8px;
-
-        .chunk-source {
-          font-size: 14px;
-          font-weight: 600;
-        }
-
-        .chunk-index {
-          color: #467afe;
-          display: inline-block;
-          padding: 4px 6px;
-          background: #e6f0fe;
-          border-radius: 4px;
-        }
-      }
-
-      .chunk-content {
-        text-align: left;
-        white-space: normal;
-        background: #fff;
-        border-radius: 4px;
-        // max-height: 150px;
-        // overflow-y: auto;
-        font-size: 14px;
-        line-height: 1.6;
-        // white-space: pre-wrap;
-        // word-break: break-word;
-        > p {
-          margin: 0;
-        }
-      }
-    }
+  .chunk-similarity {
+    flex: none;
+    width: 100%;
+    padding-right: 0;
+    border-right: 0;
   }
 }
 </style>

@@ -25,10 +25,10 @@
         <el-upload ref="upload" class="upload-demo" action="#" :http-request="handleUpload"
           :before-upload="beforeUpload" :accept="'.bin,.apk,.wav'" :limit="1" :multiple="false" :auto-upload="true"
           :on-remove="handleRemove">
-          <el-button size="small" type="primary">{{ $t('firmwareDialog.clickUpload') }}</el-button>
+          <el-button size="small" icon="el-icon-upload2">{{ $t('firmwareDialog.clickUpload') }}</el-button>
           <div slot="tip" class="el-upload__tip">{{ $t('firmwareDialog.uploadTip') }}</div>
         </el-upload>
-        <el-progress v-if="isUploading || uploadStatus === 'success'" :percentage="uploadProgress"
+        <el-progress v-if="isUploading || uploadStatus === 'success'" class="upload-progress" :percentage="uploadProgress"
           :status="uploadStatus"></el-progress>
         <div class="hint-text">
           <span>{{ $t('firmwareDialog.uploadHint') }}</span>
@@ -216,22 +216,84 @@ export default {
 
 <style scoped lang="scss">
 .firmware-form {
+  ::v-deep .el-form-item {
+    margin-bottom: 18px;
+  }
+
   .custom-select {
     width: 100%;
   }
+
   .upload-demo {
     text-align: left;
   }
+
   .el-upload__tip {
-    line-height: 1.2;
-    padding-top: 2%;
-    color: #909399;
+    margin-top: 6px;
+    line-height: 1.5;
+    font-size: 12px;
+    color: var(--x-text-muted);
   }
+
+  .upload-progress {
+    margin-top: 8px;
+
+    ::v-deep .el-progress-bar__outer {
+      background: var(--x-divider);
+    }
+
+    ::v-deep .el-progress-bar__inner {
+      background: var(--x-ink);
+    }
+
+    &.is-success ::v-deep .el-progress-bar__inner {
+      background: var(--x-success);
+    }
+
+    &.is-exception ::v-deep .el-progress-bar__inner {
+      background: var(--x-danger);
+    }
+  }
+
   .hint-text {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 14px;
+    margin-top: 6px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--x-text-muted);
+    text-align: left;
+  }
+
+  ::v-deep .el-upload-list__item {
+    border-radius: 8px;
+  }
+}
+
+::v-deep .el-dialog {
+  max-width: calc(100vw - 32px);
+}
+
+@media (max-width: 600px) {
+  .firmware-form {
+    ::v-deep .el-form-item__label {
+      float: none;
+      display: block;
+      width: auto !important;
+      text-align: left;
+      line-height: 1.5;
+      padding-bottom: 6px;
+    }
+
+    ::v-deep .el-form-item__label-wrap {
+      float: none;
+      margin-left: 0 !important;
+    }
+
+    ::v-deep .el-form-item__content {
+      margin-left: 0 !important;
+    }
   }
 }
 </style>

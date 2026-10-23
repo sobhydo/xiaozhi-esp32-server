@@ -1,43 +1,59 @@
 <template>
     <div class="welcome">
         <HeaderBar />
-        <div class="main-wrapper">
-            <div class="content-panel">
-                <div class="content-area">
-                    <el-card class="voice-print-card" shadow="never">
-                        <div class="operation-header">
-                            <h2 class="page-title">{{ $t('voicePrint.pageTitle') }}</h2>
-                        </div>
-                        <CustomTable
-                            ref="paramsTable"
-                            :data="voicePrintList"
-                            :columns="tableColumns"
-                            :loading="loading"
-                            :loading-text="$t('voicePrint.loading')"
-                            :show-operations="true"
-                            :operations-label="$t('voicePrint.action')"
-                            :total="total"
-                            :show-pagination="false"
-                            :current-page="currentPage"
-                            :page-size="pageSize"
-                            :page-size-options="pageSizeOptions"
-                            @size-change="handlePageSizeChange"
-                            @page-change="goToPage"
-                        >
-                            <template slot="operations" slot-scope="scope">
-                                <el-button size="mini" type="text" @click="editVoicePrint(scope.row)">{{ $t('voicePrint.edit') }}</el-button>
-                                <el-button size="mini" type="text" @click="deleteVoicePrint(scope.row.id)">{{ $t('voicePrint.delete') }}</el-button>
-                            </template>
-                            <template slot="footer-btns">
-                                <div class="ctrl_btn">
-                                    <CustomButton icon="el-icon-plus" type="add" size="small" @click="showAddDialog">{{ $t('voicePrint.add') }}</CustomButton>
-                                </div>
-                            </template>
-                        </CustomTable>
-                    </el-card>
+
+        <main class="page">
+            <nav class="breadcrumb" :aria-label="$t('voicePrint.pageTitle')">
+                <router-link to="/home" class="breadcrumb-link">{{ $t('header.smartManagement') }}</router-link>
+                <span class="breadcrumb-sep" aria-hidden="true">/</span>
+                <span class="breadcrumb-current" aria-current="page">{{ $t('voicePrint.pageTitle') }}</span>
+            </nav>
+
+            <header class="page-header">
+                <div class="page-heading">
+                    <h1 class="page-title">{{ $t('voicePrint.pageTitle') }}</h1>
+                    <p class="page-description">{{ $t('console.voicePrintDescription') }}</p>
                 </div>
-            </div>
-        </div>
+                <div class="page-actions">
+                    <el-button type="primary" icon="el-icon-plus" @click="showAddDialog">
+                        {{ $t('voicePrint.add') }}
+                    </el-button>
+                </div>
+            </header>
+
+            <section class="table-card">
+                <CustomTable
+                    ref="paramsTable"
+                    class="voice-print-table"
+                    :data="voicePrintList"
+                    :columns="tableColumns"
+                    :loading="loading"
+                    :loading-text="$t('voicePrint.loading')"
+                    :show-operations="true"
+                    :operations-label="$t('voicePrint.action')"
+                    :operations-width="140"
+                    :total="total"
+                    :show-pagination="false"
+                    :current-page="currentPage"
+                    :page-size="pageSize"
+                    :page-size-options="pageSizeOptions"
+                    @size-change="handlePageSizeChange"
+                    @page-change="goToPage"
+                >
+                    <template slot="sourceName" slot-scope="scope">
+                        <span class="cell-strong">{{ scope.row.sourceName }}</span>
+                    </template>
+                    <template slot="operations" slot-scope="scope">
+                        <div class="row-actions">
+                            <el-button size="mini" type="text" class="row-action"
+                                @click="editVoicePrint(scope.row)">{{ $t('voicePrint.edit') }}</el-button>
+                            <el-button size="mini" type="text" class="row-action row-action--danger"
+                                @click="deleteVoicePrint(scope.row.id)">{{ $t('voicePrint.delete') }}</el-button>
+                        </div>
+                    </template>
+                </CustomTable>
+            </section>
+        </main>
 
         <!-- Add/edit parameter dialog -->
         <voice-print-dialog :title="dialogTitle" :visible.sync="dialogVisible" :agentId="agentId" :form="paramForm"
@@ -92,9 +108,9 @@ export default {
     methods: {
         initTableColumns() {
             this.tableColumns = [
-                { prop: 'sourceName', label: this.$t('voicePrint.name'), align: 'center' },
-                { prop: 'introduce', label: this.$t('voicePrint.description'), align: 'center' },
-                { prop: 'createDate', label: this.$t('voicePrint.createTime'), align: 'center' }
+                { prop: 'sourceName', label: this.$t('voicePrint.name'), align: 'left', minWidth: 140 },
+                { prop: 'introduce', label: this.$t('voicePrint.description'), align: 'left', minWidth: 220 },
+                { prop: 'createDate', label: this.$t('voicePrint.createTime'), align: 'left', minWidth: 160 }
             ];
         },
         fetchVoicePrints() {
@@ -221,89 +237,174 @@ export default {
 
 <style lang="scss" scoped>
 .welcome {
-    min-width: 900px;
-    min-height: 506px;
     height: 100vh;
+    min-height: 560px;
     display: flex;
-    position: relative;
     flex-direction: column;
-    background-size: cover;
-    background: #eff4ff;
-    -webkit-background-size: cover;
-    -o-background-size: cover;
-    overflow: hidden;
+    background: var(--x-canvas);
+    text-align: left;
 }
 
-.main-wrapper {
-    height: calc(100vh - 63px - 35px);
-    padding: 20px 22px 0;
-    position: relative;
-    display: flex;
-    flex-direction: column;
+.page {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    max-width: 1280px;
+    padding: 24px 32px 0;
     box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
 }
 
-.operation-header {
-    height: 56px;
+.breadcrumb {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 0 0 16px 0;
-    box-sizing: border-box;
+    flex-wrap: wrap;
+    font-size: 13px;
+    color: var(--x-text-muted);
+    margin-bottom: -8px;
 }
 
-.page-title {
-    font-weight: 500;
-    font-size: 24px;
-    margin: 0;
-}
+.breadcrumb-link {
+    color: var(--x-text-muted);
+    text-decoration: none;
 
-.content-panel {
-    display: flex;
-    overflow: hidden;
-    height: 100%;
-    border-radius: 15px;
-    background: transparent;
-    border: 1px solid #fff;
-}
-
-.content-area {
-    flex: 1;
-    height: 100%;
-    min-width: 600px;
-    overflow: auto;
-    background-color: white;
-    display: flex;
-    flex-direction: column;
-}
-
-.voice-print-card {
-    background: white;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    border: none;
-    box-shadow: none;
-    overflow: hidden;
-
-    ::v-deep .el-card__body {
-        padding: 14px 20px;
-        display: flex;
-        flex-direction: column;
-        flex: 1;
-        overflow: hidden;
+    &:hover {
+        color: var(--x-text);
     }
 }
 
-.ctrl_btn {
+.breadcrumb-sep {
+    padding: 0 6px;
+    color: var(--x-border-control);
+}
+
+.breadcrumb-current {
+    color: var(--x-text);
+    font-weight: 500;
+}
+
+.page-header {
     display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
 }
 
-:deep(.el-table .el-button--text) {
-    color: #7079aa;
+.page-heading {
+    min-width: 0;
 }
 
-:deep(.el-table .el-button--text:hover) {
-    color: #5a64b5;
+.page-title {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.3;
+    color: var(--x-text);
+}
+
+.page-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.table-card {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--x-surface);
+    border: 1px solid var(--x-border);
+    border-radius: var(--x-radius-card);
+    overflow: hidden;
+}
+
+/* Table sits flush inside the card; CustomTable's own frame is removed */
+.voice-print-table {
+    ::v-deep .table-container {
+        border: 0;
+        border-radius: 0;
+    }
+
+    ::v-deep .table-footer {
+        display: none;
+    }
+
+    ::v-deep .el-table th.el-table__cell > .cell {
+        white-space: nowrap;
+    }
+
+    ::v-deep .el-table th.el-table__cell > .cell,
+    ::v-deep .el-table td.el-table__cell > .cell {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+}
+
+.cell-strong {
+    font-weight: 500;
+    color: var(--x-text);
+}
+
+.row-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 2px;
+
+    .el-button + .el-button {
+        margin-left: 0;
+    }
+}
+
+.row-action {
+    padding: 6px 8px;
+    font-size: 13px;
+    color: var(--x-text-secondary);
+
+    &:hover,
+    &:focus {
+        color: var(--x-text);
+        background: var(--x-canvas);
+    }
+
+    &--danger,
+    &--danger:hover,
+    &--danger:focus {
+        color: var(--x-danger-text);
+    }
+
+    &--danger:hover,
+    &--danger:focus {
+        background: var(--x-danger-bg);
+    }
+}
+
+.el-footer {
+    height: auto !important;
+    padding: 0;
+}
+
+@media (max-width: 900px) {
+    .welcome {
+        height: auto;
+        min-height: calc(100vh - var(--x-topbar-height));
+    }
+
+    .table-card {
+        flex: none;
+        height: 480px;
+    }
+}
+
+@media (max-width: 768px) {
+    .page {
+        padding: 16px 16px 0;
+        gap: 16px;
+    }
 }
 </style>

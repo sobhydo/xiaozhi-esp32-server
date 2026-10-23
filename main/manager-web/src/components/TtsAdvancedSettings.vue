@@ -9,8 +9,10 @@
     custom-class="tts-advanced-drawer"
   >
     <div class="drawer-header" slot="title">
-      <span class="drawer-title">{{ $t('roleConfig.advancedSettings') }}</span>
-      <button class="drawer-close-btn" @click="handleClose">×</button>
+      <h2 class="drawer-title">{{ $t('roleConfig.advancedSettings') }}</h2>
+      <button type="button" class="drawer-close-btn" :aria-label="$t('button.close')" @click="handleClose">
+        <i class="el-icon-close" aria-hidden="true"></i>
+      </button>
     </div>
 
     <div class="drawer-content">
@@ -69,7 +71,7 @@
         <h4 class="replacement-label">
           {{ $t('roleConfig.replacementWordLabel') }}
           <el-tooltip popper-class="tts-tooltip" :content="$t('roleConfig.replacementWordTip')" effect="light" placement="top">
-            <i class="el-icon-question"></i>
+            <i class="el-icon-question" tabindex="0" :aria-label="$t('roleConfig.replacementWordTip')"></i>
           </el-tooltip>
         </h4>
         <el-select
@@ -206,59 +208,75 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 24px;
-  border-bottom: 1px solid #e8f0ff;
+  padding: 18px 20px 16px 24px;
+  border-bottom: 1px solid var(--x-divider);
 }
 
 .drawer-title {
-  font-size: 18px;
+  margin: 0;
+  font-size: 16px;
   font-weight: 600;
-  color: #3d4566;
+  color: var(--x-text);
 }
 
 .drawer-close-btn {
   width: 32px;
   height: 32px;
-  border-radius: 50%;
-  border: 2px solid #cfcfcf;
-  background: none;
-  font-size: 28px;
-  font-weight: lighter;
-  color: #cfcfcf;
+  border-radius: var(--x-radius-control);
+  border: 0;
+  background: transparent;
+  font-size: 16px;
+  color: var(--x-text-muted);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
-  outline: none;
-  transition: all 0.3s;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
-.drawer-close-btn:hover {
-  color: #409eff;
-  border-color: #409eff;
+.drawer-close-btn:hover,
+.drawer-close-btn:focus-visible {
+  color: var(--x-text);
+  background: var(--x-canvas);
+  outline: none;
 }
 
 .drawer-content {
   padding: 24px;
   flex: 1;
   overflow-y: auto;
+  text-align: left;
 }
 
 .slider-container {
   width: 100%;
+  padding: 0 8px;
+  box-sizing: border-box;
 }
 
 .slider-hint {
   display: block;
   font-size: 12px;
-  color: #909399;
-  margin-top: 8px;
+  color: var(--x-text-muted);
+  margin-top: 4px;
   line-height: 1.5;
 }
 
 .tts-slider {
   width: 100%;
+}
+
+.tts-slider ::v-deep .el-slider__runway {
+  background: var(--x-border);
+}
+
+.tts-slider ::v-deep .el-slider__bar {
+  background: var(--x-ink);
+}
+
+.tts-slider ::v-deep .el-slider__button {
+  border-color: var(--x-ink);
 }
 
 .tts-slider ::v-deep .el-slider__input {
@@ -271,54 +289,77 @@ export default {
 }
 
 .drawer-footer {
-  padding: 16px 24px;
-  border-top: 1px solid #e8f0ff;
+  padding: 14px 24px 18px;
+  border-top: 1px solid var(--x-divider);
   display: flex;
-  justify-content: center;
-  gap: 12px;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
-.drawer-footer .el-button {
-  min-width: 80px;
+.drawer-footer .el-button + .el-button {
+  margin-left: 0;
 }
 
 ::v-deep .el-form-item__label {
-  font-size: 14px !important;
-  color: #3d4566 !important;
+  font-size: 13px !important;
+  color: var(--x-text) !important;
   font-weight: 500;
-  padding-bottom: 8px;
+  line-height: 20px;
+  padding-bottom: 6px;
 }
 
 ::v-deep .el-form-item {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
+
+.replacement-label {
+  margin: 4px 0 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--x-text);
+}
+
 .replacement-label i {
   margin-left: 4px;
-  color: #909399;
+  color: var(--x-text-muted);
   cursor: pointer;
   font-size: 14px;
 }
-.replacement-label i:hover {
-  color: #409eff;
+
+.replacement-label i:hover,
+.replacement-label i:focus-visible {
+  color: var(--x-text);
+  outline: none;
 }
+
 .replacement-word-select ::v-deep .el-tag {
-  background: #e6ebff;
-  color: #5778ff;
-  border-radius: 8px;
+  background: var(--x-divider);
+  color: var(--x-text-secondary);
+  border-radius: var(--x-radius-pill);
   font-size: 12px;
   font-weight: normal;
   border: none;
 }
 
 .replacement-word-select ::v-deep .el-tag__close {
-  color: #5778ff;
+  color: var(--x-text-muted);
 }
-.replacement-word-select ::v-deep .el-icon-close {
-  background: #fff;
+
+.replacement-word-select ::v-deep .el-tag .el-icon-close {
+  background: transparent;
+}
+
+.replacement-word-select ::v-deep .el-tag .el-icon-close:hover {
+  background: var(--x-border-control);
+  color: var(--x-text);
 }
 </style>
 
 <style>
+.tts-advanced-drawer {
+  max-width: 100vw;
+}
+
 .tts-advanced-drawer .el-drawer__header {
   margin-bottom: 0;
   padding: 0;
@@ -346,14 +387,14 @@ export default {
 }
 
 .replacement-tag {
-  background-color: #409eff;
-  border-color: #409eff;
-  color: #fff;
+  background-color: var(--x-ink);
+  border-color: var(--x-ink);
+  color: var(--x-on-ink);
 }
 
 .tts-tooltip {
   max-height: 60vh !important;
-  max-width: 400px !important;
+  max-width: min(400px, calc(100vw - 32px)) !important;
   overflow-y: auto !important;
   scrollbar-width: thin;
   word-break: break-word;

@@ -1,36 +1,43 @@
 <template>
-  <div class="doc-section">
+  <section class="doc-section">
     <div class="doc-section-header">
-      <div class="doc-section-left">
-        <div class="doc-section-title">{{`${$t('knowledgeBaseManagement.currentKnowledgeBaseDocuments')}（${kb?.name}）`}}</div>
-        <div class="doc-section-count" v-if="kb">{{ $t('knowledgeBaseManagement.totalDocuments', { total }) }}</div>
+      <div class="doc-section-heading">
+        <h2 class="doc-section-title">{{ $t('knowledgeBaseManagement.currentKnowledgeBaseDocuments') }}</h2>
+        <p class="doc-section-meta" v-if="kb">
+          <span class="doc-section-kb">{{ kb.name }}</span>
+          <span class="meta-sep" aria-hidden="true">·</span>
+          <span>{{ $t('knowledgeBaseManagement.totalDocuments', { total }) }}</span>
+        </p>
       </div>
       <div class="doc-section-actions">
         <el-input
           :placeholder="$t('knowledgeFileUpload.documentNamePlaceholder')"
+          :aria-label="$t('knowledgeFileUpload.documentNamePlaceholder')"
           v-model="searchDocName"
           class="doc-search-input"
           size="small"
-          prefix-icon="el-icon-search"
           clearable
-        />
-        <CustomButton size="small" @click="handleSearch">{{ $t('knowledgeBaseManagement.search') }}</CustomButton>
-        <CustomButton type="add" size="small" @click="handleUpload">{{ $t('knowledgeBaseManagement.add') }}</CustomButton>
-        <CustomButton type="confirm" size="small" @click="handleRetrievalTest">{{ $t('knowledgeFileUpload.retrievalTest') }}</CustomButton>
+          @keyup.enter.native="handleSearch"
+        >
+          <i slot="prefix" class="el-input__icon el-icon-search" aria-hidden="true"></i>
+        </el-input>
+        <el-button size="small" @click="handleSearch">{{ $t('knowledgeBaseManagement.search') }}</el-button>
+        <el-button size="small" @click="handleRetrievalTest">{{ $t('knowledgeFileUpload.retrievalTest') }}</el-button>
+        <el-button type="primary" size="small" icon="el-icon-upload2" @click="handleUpload">{{ $t('knowledgeBaseManagement.add') }}</el-button>
       </div>
     </div>
     <div class="doc-grid" v-loading="docLoading" :element-loading-text="$t('knowledgeBaseManagement.loading')">
-      <div v-for="doc in documents" :key="doc.id" class="doc-card">
+      <article v-for="doc in documents" :key="doc.id" class="doc-card">
         <div class="doc-card-top">
-          <img class="doc-file-icon" :src="getFileIconSrc(doc.name)" />
+          <span class="doc-file-icon" aria-hidden="true">{{ getFileExt(doc.name) }}</span>
           <div class="doc-card-info">
-            <div class="doc-card-name" :title="doc.name">{{ doc.name }}</div>
+            <h3 class="doc-card-name" :title="doc.name">{{ doc.name }}</h3>
             <div class="doc-card-meta">{{ $t('knowledgeFileUpload.uploadTime') }} {{ formatDate(doc.createdAt) }}</div>
           </div>
         </div>
         <div class="doc-card-bottom">
           <div class="doc-card-progress">
-            <div class="progress-ring">
+            <div class="progress-ring" aria-hidden="true">
               <svg viewBox="0 0 40 40">
                 <circle class="bg" cx="20" cy="20" r="15"/>
                 <circle class="fg" :class="getProgressClass(doc)" cx="20" cy="20" r="15"
@@ -40,7 +47,7 @@
               <span class="progress-ring-text" :style="{ color: getProgressTextColor(doc) }">{{ getProgressText(doc) }}</span>
             </div>
             <div class="progress-container">
-              <span class="progress-label" :class="getProgressClass(doc)">{{ getDocStatusText(doc) }}</span>
+              <span class="status-pill" :class="getStatusPillClass(doc)">{{ getDocStatusText(doc) }}</span>
               <span class="doc-slice-count">{{ $t('knowledgeFileUpload.sliceCount') }} <b>{{ doc.sliceCount }}</b></span>
             </div>
           </div>
@@ -48,6 +55,8 @@
             <el-button
               v-if="doc.parseStatusCode === 3"
               type="text"
+              size="mini"
+              class="row-action"
               @click.stop="$emit('view-slices', doc)"
             >
               {{ $t('knowledgeFileUpload.viewSlices') }}
@@ -55,18 +64,21 @@
             <el-button
               v-else
               type="text"
+              size="mini"
+              class="row-action"
               :disabled="doc.parseStatusCode === 1"
               :loading="doc.parsing"
               @click.stop="handleParse(doc)"
             >
               {{ $t('knowledgeFileUpload.parse') }}
             </el-button>
-            <el-button type="text" class="delete-btn" :loading="deleteLoadingMap[doc.id]" @click.stop="handleDelete(doc)">
+            <el-button type="text" size="mini" class="row-action row-action--danger" :loading="deleteLoadingMap[doc.id]"
+              @click.stop="handleDelete(doc)">
               {{ $t('knowledgeBaseManagement.delete') }}
             </el-button>
           </div>
         </div>
-      </div>
+      </article>
       <div v-if="documents.length === 0 && !docLoading" class="doc-empty">
         <el-empty :description="$t('knowledgeBaseManagement.noData')"></el-empty>
       </div>
@@ -80,29 +92,16 @@
       @page-change="handlePageChange"
       @size-change="handleSizeChange"
     />
-  </div>
+  </section>
 </template>
 
 <script>
 import Api from "@/apis/api";
-import CustomButton from "@/components/CustomButton.vue";
 import CustomPagination from "@/components/CustomPagination.vue";
-
-const iconMap = {
-  pdf: require('@/assets/knowledge-base/pdf.png'),
-  doc: require('@/assets/knowledge-base/docX.png'),
-  docx: require('@/assets/knowledge-base/docX.png'),
-  xls: require('@/assets/knowledge-base/xlsx.png'),
-  xlsx: require('@/assets/knowledge-base/xlsx.png'),
-  csv: require('@/assets/knowledge-base/xlsx.png'),
-  md: require('@/assets/knowledge-base/MD.png'),
-  markdown: require('@/assets/knowledge-base/MD.png'),
-  txt: require('@/assets/knowledge-base/txt.png'),
-};
 
 export default {
   name: 'LibraryItem',
-  components: { CustomPagination, CustomButton },
+  components: { CustomPagination },
   props: {
     kb: {
       type: Object,
@@ -313,10 +312,17 @@ export default {
       );
     },
 
-    getFileIconSrc(fileName) {
-      if (!fileName) return require('@/assets/knowledge-base/default.png');
-      const ext = fileName.split('.').pop().toLowerCase();
-      return iconMap[ext] || require('@/assets/knowledge-base/default.png');
+    getFileExt(fileName) {
+      if (!fileName || !fileName.includes('.')) return 'DOC';
+      return fileName.split('.').pop().slice(0, 4);
+    },
+
+    getStatusPillClass(doc) {
+      const code = doc.parseStatusCode;
+      if (code === 3) return 'status-pill--success';
+      if (code === 1) return 'status-pill--warning';
+      if (code === 4) return 'status-pill--danger';
+      return 'status-pill--neutral';
     },
 
     getProgressClass(doc) {
@@ -353,9 +359,9 @@ export default {
 
     getProgressTextColor(doc) {
       const code = doc.parseStatusCode;
-      if (code === 3) return '#34c759';
-      if (code === 1) return '#2f5bff';
-      return '#7888a8';
+      if (code === 3) return 'var(--x-success-text)';
+      if (code === 1) return 'var(--x-text)';
+      return 'var(--x-text-muted)';
     },
 
     getDocStatusText(doc) {
@@ -380,160 +386,189 @@ export default {
 <style lang="scss" scoped>
 /* ========== Document Section ========== */
 .doc-section {
-  background: #fff;
-  border-radius: 10px;
-  padding: 16px 20px;
-  flex: 1;
+  background: var(--x-surface);
+  border: 1px solid var(--x-border);
+  border-radius: var(--x-radius-card);
   display: flex;
   flex-direction: column;
-  min-height: 0;
+  min-width: 0;
+  text-align: left;
 }
 
 .doc-section-header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 10px;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--x-border);
 }
 
-.doc-section-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.doc-section-heading {
+  min-width: 0;
 }
 
 .doc-section-title {
-  font-size: 18px;
-  font-weight: 500;
-  color: #1f2a44;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--x-text);
 }
 
-.doc-section-count {
-  font-size: 18px;
-  color: #788ba8;
+.doc-section-meta {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--x-text-muted);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+
+  .doc-section-kb {
+    color: var(--x-text-secondary);
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+  }
+
+  .meta-sep {
+    padding: 0 6px;
+  }
 }
 
 .doc-section-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  gap: 8px;
+
+  .el-button + .el-button {
+    margin-left: 0;
+  }
 }
 
 .doc-search-input {
-  width: 200px;
-  margin-right: 10px;
+  width: 220px;
+  max-width: 100%;
 }
 
 /* ========== Document Grid ========== */
 .doc-grid {
-  padding: 10px;
+  padding: 16px;
   display: grid;
-  grid-template-columns: repeat(auto-fill,minmax(300px, 1fr));
-  gap: 16px 20px;
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  scrollbar-width: thin;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+  min-height: 160px;
 }
 
 .doc-card {
-  max-height: 110px;
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 18px;
-  background: #fff;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--x-border);
+  border-radius: 12px;
+  background: var(--x-surface);
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.25s;
-  position: relative;
-  box-shadow: 0 0 6px rgba(47, 91, 255, 0.15);
+  gap: 12px;
+  transition: border-color 0.15s ease;
 
   &:hover {
-    box-shadow: 0 0 6px rgba(47, 91, 255, 0.15);
-    border: 1px solid #6b80eb;
+    border-color: var(--x-border-control);
   }
 }
 
 .doc-card-top {
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin-bottom: 12px;
+  gap: 12px;
 }
 
 .doc-file-icon {
-  width: 46px;
-  height: 46px;
-  border-radius: 10px;
-  object-fit: contain;
+  width: 40px;
+  height: 40px;
   flex-shrink: 0;
+  border-radius: 8px;
+  background: var(--x-divider);
+  color: var(--x-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--x-font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
 
 .doc-card-info {
   flex: 1;
   min-width: 0;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-around;
-  text-align: left;
 }
 
 .doc-card-name {
-  font-size: 15px;
-  font-weight: 500;
-  color: #1f2a44;
+  margin: 0 0 2px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--x-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-bottom: 4px;
 }
 
 .doc-card-meta {
-  font-size: 13px;
-  color: #7888a8;
+  font-size: 12px;
+  color: var(--x-text-muted);
 }
 
 .doc-card-bottom {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--x-divider);
 }
 
 .doc-card-progress {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  min-width: 0;
 }
 
 /* ========== Progress Ring ========== */
 .progress-ring {
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
   position: relative;
 
   svg {
-    width: 40px;
-    height: 40px;
+    width: 42px;
+    height: 42px;
     transform: rotate(-90deg);
   }
 
   .bg {
     fill: none;
-    stroke: #e7ecf5;
-    stroke-width: 4;
+    stroke: var(--x-divider);
+    stroke-width: 3;
   }
 
   .fg {
     fill: none;
-    stroke-width: 4;
+    stroke-width: 3;
     stroke-linecap: round;
     transition: stroke-dashoffset 0.5s ease;
 
-    &.complete { stroke: #34c759; }
-    &.processing { stroke: #2f5bff; }
-    &.pending { stroke: #e7ecf5; }
+    &.complete { stroke: var(--x-success); }
+    &.processing { stroke: var(--x-ink); }
+    &.pending { stroke: var(--x-divider); }
   }
 }
 
@@ -542,82 +577,128 @@ export default {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 600;
-  color: #7888a8;
+  letter-spacing: -0.02em;
+  color: var(--x-text-muted);
 }
 
 .progress-container {
-  height: 36px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   align-items: flex-start;
-  .progress-label {
-    font-size: 12px;
-    color: #7888a8;
-  
-    &.complete { color: #34c759; }
-    &.processing { color: #2f5bff; }
-  }
+  gap: 4px;
 
   .doc-slice-count {
     font-size: 12px;
+    color: var(--x-text-muted);
+
     > b {
-      font-weight: bold;
-      font-size: 14px;
+      font-weight: 600;
+      color: var(--x-text);
     }
   }
 }
 
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 8px;
+  border-radius: var(--x-radius-pill);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  white-space: nowrap;
+
+  &--success {
+    background: var(--x-success-bg);
+    color: var(--x-success-text);
+  }
+
+  &--warning {
+    background: var(--x-warning-bg);
+    color: var(--x-warning-text);
+  }
+
+  &--danger {
+    background: var(--x-danger-bg);
+    color: var(--x-danger-text);
+  }
+
+  &--neutral {
+    background: var(--x-divider);
+    color: var(--x-text-secondary);
+  }
+}
 
 .doc-card-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
 
-  :deep(.el-button--text) {
-    padding: 4px 8px;
-    font-size: 13px;
+  .el-button + .el-button {
+    margin-left: 0;
+  }
+}
+
+.row-action {
+  padding: 6px 8px;
+  font-size: 13px;
+  color: var(--x-text-secondary);
+
+  &:hover,
+  &:focus {
+    color: var(--x-text);
+    background: var(--x-canvas);
   }
 
-  .delete-btn {
-    color: #f56c6c !important;
-    &:hover {
-      color: #f78989 !important;
-    }
+  &.is-disabled,
+  &.is-disabled:hover {
+    color: var(--x-text-disabled);
+    background: transparent;
+  }
+
+  &--danger,
+  &--danger:hover,
+  &--danger:focus {
+    color: var(--x-danger-text);
+  }
+
+  &--danger:hover,
+  &--danger:focus {
+    background: var(--x-danger-bg);
   }
 }
 
 .doc-empty {
   grid-column: 1 / -1;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 300px;
-  color: #b0bbc9;
-  font-size: 14px;
-
-  i {
-    font-size: 48px;
-    margin-bottom: 12px;
-  }
+  min-height: 240px;
 }
 
 .pagination-wrapper {
-  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px 16px;
+  border-top: 1px solid var(--x-border);
+  overflow-x: auto;
 }
 
-@media (max-width: 1144px) {
-  .doc-grid {
-    grid-template-columns: repeat(3, 1fr);
+@media (max-width: 768px) {
+  .doc-section-actions,
+  .doc-search-input {
+    width: 100%;
   }
-}
 
-@media (max-width: 900px) {
   .doc-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: minmax(0, 1fr);
+    padding: 12px;
+  }
+
+  .pagination-wrapper {
+    justify-content: flex-start;
   }
 }
 </style>
