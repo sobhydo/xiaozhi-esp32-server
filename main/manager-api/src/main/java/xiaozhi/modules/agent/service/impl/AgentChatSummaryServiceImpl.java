@@ -157,7 +157,7 @@ public class AgentChatSummaryServiceImpl implements AgentChatSummaryService {
 
             StringBuilder conversation = new StringBuilder();
             for (int i = 0; i < meaningfulMessages.size(); i++) {
-                conversation.append("消息").append(i + 1).append(": ").append(meaningfulMessages.get(i)).append("\n");
+                conversation.append("Message ").append(i + 1).append(": ").append(meaningfulMessages.get(i)).append("\n");
             }
 
             String slmModelId = getSlmModelId(agentId);
@@ -357,7 +357,7 @@ public class AgentChatSummaryServiceImpl implements AgentChatSummaryService {
         // 构建完整的对话内容
         StringBuilder conversation = new StringBuilder();
         for (int i = 0; i < messages.size(); i++) {
-            conversation.append("消息").append(i + 1).append(": ").append(messages.get(i)).append("\n");
+            conversation.append("Message ").append(i + 1).append(": ").append(messages.get(i)).append("\n");
         }
 
         try {
