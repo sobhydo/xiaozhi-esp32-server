@@ -20,6 +20,9 @@ THINKING_DISABLED_DOMAINS = {
     "ifm.ai": {"reasoning_effort": "low"},
 }
 
+# Platforms that reject multi-turn history unless every assistant message carries reasoning_content ("" is valid)
+REASONING_HISTORY_DOMAINS = ("ifm.ai",)
+
 
 class LLMProvider(LLMProviderBase):
     def __init__(self, config):
@@ -81,6 +84,18 @@ class LLMProvider(LLMProviderBase):
                 msg["content"] = ""
         return dialogue
 
+    def _apply_reasoning_history(self, dialogue):
+        """IFM 等平台要求历史中每条 assistant 消息带 reasoning_content，缺失时补空字符串（不修改原对话）"""
+        domain = urlparse(self.base_url or "").netloc
+        if not any(d in domain for d in REASONING_HISTORY_DOMAINS):
+            return dialogue
+        return [
+            {**msg, "reasoning_content": ""}
+            if msg.get("role") == "assistant" and "reasoning_content" not in msg
+            else msg
+            for msg in dialogue
+        ]
+
     def _apply_thinking_disabled(self, request_params: dict):
         """根据域名自动禁用思考模式"""
         parsed_url = urlparse(self.base_url)
@@ -92,7 +107,7 @@ class LLMProvider(LLMProviderBase):
                 break
 
     def response(self, session_id, dialogue, **kwargs):
-        dialogue = self.normalize_dialogue(dialogue)
+        dialogue = self._apply_reasoning_history(self.normalize_dialogue(dialogue))
 
         request_params = {
             "model": self.model_name,
@@ -138,7 +153,7 @@ class LLMProvider(LLMProviderBase):
             responses.close()
 
     def response_with_functions(self, session_id, dialogue, functions=None, **kwargs):
-        dialogue = self.normalize_dialogue(dialogue)
+        dialogue = self._apply_reasoning_history(self.normalize_dialogue(dialogue))
 
         request_params = {
             "model": self.model_name,
