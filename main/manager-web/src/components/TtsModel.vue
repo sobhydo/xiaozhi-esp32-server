@@ -576,7 +576,7 @@ export default {
   flex: 1;
   overflow: auto;
   scrollbar-width: none;
-  padding-right: 12px;
+  padding-inline-end: 12px;
   width: calc(100% - 16px);
 }
 
@@ -590,7 +590,7 @@ export default {
   background: var(--x-divider);
   border-radius: var(--x-radius-pill);
   position: relative;
-  margin-left: 6px;
+  margin-inline-start: 6px;
   height: 100%;
   top: 48px;
 }
@@ -668,7 +668,7 @@ export default {
   border-top: 1px solid var(--x-divider);
 
   ::v-deep .el-button + .el-button {
-    margin-left: 0;
+    margin-inline-start: 0;
   }
 }
 

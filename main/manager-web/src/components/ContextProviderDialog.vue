@@ -200,7 +200,7 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  text-align: left;
+  text-align: start;
 }
 
 .provider-item {

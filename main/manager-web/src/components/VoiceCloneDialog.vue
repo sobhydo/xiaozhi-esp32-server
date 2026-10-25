@@ -534,7 +534,7 @@ export default {
 
 <style lang="scss" scoped>
 .dialog-content {
-    text-align: left;
+    text-align: start;
 }
 
 .steps-header {
@@ -700,8 +700,8 @@ export default {
     top: 0;
     bottom: 0;
     background: var(--x-focus-ring);
-    border-left: 1px solid var(--x-ink);
-    border-right: 1px solid var(--x-ink);
+    border-inline-start: 1px solid var(--x-ink);
+    border-inline-end: 1px solid var(--x-ink);
     pointer-events: none;
 }
 
@@ -725,7 +725,7 @@ export default {
     margin-top: 16px;
 
     .el-button + .el-button {
-        margin-left: 0;
+        margin-inline-start: 0;
     }
 }
 
@@ -739,7 +739,7 @@ export default {
     border-top: 1px solid var(--x-divider);
 
     .el-button + .el-button {
-        margin-left: 0;
+        margin-inline-start: 0;
     }
 }
 

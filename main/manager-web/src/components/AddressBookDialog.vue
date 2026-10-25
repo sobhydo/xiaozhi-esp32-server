@@ -122,12 +122,12 @@ export default {
   ::v-deep .el-dialog__header {
     padding: 18px 24px 16px;
     border-bottom: 1px solid var(--x-divider);
-    text-align: left;
+    text-align: start;
   }
 
   ::v-deep .el-dialog__body {
     padding: 20px 24px;
-    text-align: left;
+    text-align: start;
   }
 
   ::v-deep .el-dialog__footer {
@@ -155,7 +155,7 @@ export default {
     gap: 8px;
 
     .el-button + .el-button {
-      margin-left: 0;
+      margin-inline-start: 0;
     }
   }
 }

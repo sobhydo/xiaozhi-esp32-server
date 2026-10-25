@@ -709,7 +709,7 @@ export default {
   display: flex;
   flex-direction: column;
   background: var(--x-canvas);
-  text-align: left;
+  text-align: start;
 }
 
 .kb-page {
@@ -752,7 +752,7 @@ export default {
   gap: 8px;
 
   .el-button + .el-button {
-    margin-left: 0;
+    margin-inline-start: 0;
   }
 }
 
@@ -761,7 +761,7 @@ export default {
   max-width: 100%;
 
   ::v-deep .el-input__inner {
-    padding-left: 34px;
+    padding-inline-start: 34px;
   }
 
   ::v-deep .el-input__prefix {
@@ -1067,7 +1067,7 @@ export default {
   background: var(--x-surface);
   border: 1px solid var(--x-border);
   border-radius: 12px;
-  text-align: left;
+  text-align: start;
 
   & + & {
     margin-top: 10px;
@@ -1146,7 +1146,7 @@ export default {
     font-size: 12px;
     line-height: 1.5;
     color: var(--x-text-muted);
-    text-align: left;
+    text-align: start;
   }
 }
 
@@ -1164,7 +1164,7 @@ export default {
 
 .selected-files-section {
   margin-top: 16px;
-  text-align: left;
+  text-align: start;
 
   h4 {
     margin: 0 0 8px;
@@ -1226,7 +1226,7 @@ export default {
 .retrieval-test-form {
   display: flex;
   flex-direction: column;
-  text-align: left;
+  text-align: start;
 
   ::v-deep .el-form-item {
     margin-bottom: 8px;
@@ -1258,8 +1258,8 @@ export default {
 
 .chunk-similarity {
   flex: 0 0 160px;
-  padding-right: 20px;
-  border-right: 1px solid var(--x-divider);
+  padding-inline-end: 20px;
+  border-inline-end: 1px solid var(--x-divider);
 
   .similarity-label {
     margin: 0;
@@ -1348,8 +1348,8 @@ export default {
   .chunk-similarity {
     flex: none;
     width: 100%;
-    padding-right: 0;
-    border-right: 0;
+    padding-inline-end: 0;
+    border-inline-end: 0;
   }
 }
 </style>

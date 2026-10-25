@@ -538,7 +538,7 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  text-align: left;
+  text-align: start;
 }
 
 .function-manager {
@@ -649,14 +649,14 @@ export default {
   align-items: center;
   gap: 8px;
   min-height: 36px;
-  margin-left: 8px;
+  margin-inline-start: 8px;
   padding: 0;
   border: 0;
   background: transparent;
   font: inherit;
   font-size: 14px;
   color: var(--x-text);
-  text-align: left;
+  text-align: start;
   cursor: pointer;
 
   &:focus-visible {
@@ -698,7 +698,7 @@ export default {
 
 .param-label {
   font-size: 13px;
-  margin-right: 4px;
+  margin-inline-end: 4px;
 }
 
 .info-icon {
@@ -723,19 +723,19 @@ export default {
       font-size: 13px !important;
       line-height: 20px;
       color: var(--x-text);
-      text-align: left;
+      text-align: start;
       padding: 0 0 6px;
       flex-shrink: 0;
       width: auto !important;
     }
 
     .el-form-item__content {
-      margin-left: 0 !important;
+      margin-inline-start: 0 !important;
       flex-grow: 1;
       line-height: 36px;
 
       .el-input__inner {
-        text-align: left;
+        text-align: start;
         width: 100%;
       }
     }
@@ -770,7 +770,7 @@ export default {
   background: var(--x-surface);
 
   .el-button + .el-button {
-    margin-left: 0;
+    margin-inline-start: 0;
   }
 }
 

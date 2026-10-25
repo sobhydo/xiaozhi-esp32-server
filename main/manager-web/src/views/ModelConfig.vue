@@ -605,7 +605,7 @@ export default {
   font-size: 14px;
   font-weight: 500;
   line-height: 1.4;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
 
@@ -703,8 +703,8 @@ export default {
   }
 
   .cell {
-    padding-left: 12px;
-    padding-right: 12px;
+    padding-inline-start: 12px;
+    padding-inline-end: 12px;
   }
 
   .el-table__row:last-child td.el-table__cell {
@@ -840,7 +840,7 @@ export default {
   gap: 8px;
 
   ::v-deep .el-button + .el-button {
-    margin-left: 0;
+    margin-inline-start: 0;
   }
 }
 

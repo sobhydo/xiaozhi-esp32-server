@@ -151,7 +151,7 @@ export default {
   border: 1px solid var(--x-border);
   border-radius: var(--x-radius-card);
   box-sizing: border-box;
-  text-align: left;
+  text-align: start;
   transition: border-color 0.15s ease;
 
   &:hover {

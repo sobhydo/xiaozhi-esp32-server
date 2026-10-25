@@ -498,7 +498,7 @@ export default {
     font-size: 14px;
     font-weight: 600;
     color: var(--x-text);
-    text-align: left;
+    text-align: start;
   }
 
   .section-title + .section-divider {
@@ -521,7 +521,7 @@ export default {
     }
 
     .switch-label {
-      margin-right: 8px;
+      margin-inline-end: 8px;
     }
   }
 
@@ -555,18 +555,18 @@ export default {
       float: none;
       display: block;
       width: auto !important;
-      text-align: left;
+      text-align: start;
       line-height: 1.5;
       padding-bottom: 6px;
     }
 
     ::v-deep .el-form-item__label-wrap {
       float: none;
-      margin-left: 0 !important;
+      margin-inline-start: 0 !important;
     }
 
     ::v-deep .el-form-item__content {
-      margin-left: 0 !important;
+      margin-inline-start: 0 !important;
     }
   }
 }

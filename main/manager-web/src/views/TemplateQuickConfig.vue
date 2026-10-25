@@ -284,7 +284,7 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  text-align: left;
+  text-align: start;
 }
 
 // Breadcrumb
@@ -365,7 +365,7 @@ export default {
   gap: 8px;
 
   .el-button + .el-button {
-    margin-left: 0;
+    margin-inline-start: 0;
   }
 }
 
@@ -416,7 +416,7 @@ export default {
   font-size: 13px;
   font-weight: 500;
   color: var(--x-text);
-  text-align: left;
+  text-align: start;
 }
 
 .config-form ::v-deep .el-form-item__content {

@@ -685,6 +685,7 @@ export default {
   'common.name': 'Nome',
   'common.sort': 'Ordenação',
   'common.action': 'Ação',
+  'common.select': 'Selecionar',
   'common.edit': 'Editar',
   'common.delete': 'Excluir',
   'common.selectAll': 'Selecionar Tudo',
@@ -720,6 +721,7 @@ export default {
   'language.de': 'Deutsch',
   'language.vi': 'Tiếng Việt',
   'language.ptBR': 'Português (Brasil)',
+  'language.ar': 'العربية',
 
   // Página inicial
   'home.addAgent': 'Adicionar Agente',

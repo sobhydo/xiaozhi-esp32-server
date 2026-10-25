@@ -141,6 +141,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
                     } else if (primaryLanguage.startsWith("de")) {
                         // 对于其他德语变体，默认使用德语
                         return Locale.GERMANY;
+                    } else if (primaryLanguage.startsWith("ar")) {
+                        return Locale.forLanguageTag("ar");
                     } else if (primaryLanguage.startsWith("vi")) {
                         // 对于其他越南语变体，默认使用越南语
                         return Locale.forLanguageTag("vi-VN");

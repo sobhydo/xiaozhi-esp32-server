@@ -546,7 +546,7 @@ export default {
   gap: 8px;
 
   .el-button + .el-button {
-    margin-left: 0;
+    margin-inline-start: 0;
   }
 }
 
@@ -578,7 +578,7 @@ export default {
   ::v-deep .el-input__inner {
     height: 34px;
     line-height: 34px;
-    padding-left: 34px;
+    padding-inline-start: 34px;
   }
 
   ::v-deep .el-input__prefix {
@@ -612,7 +612,7 @@ export default {
   gap: 8px;
 
   .el-button + .el-button {
-    margin-left: 0;
+    margin-inline-start: 0;
   }
 }
 
@@ -650,8 +650,8 @@ export default {
 
   ::v-deep .el-table th.el-table__cell > .cell,
   ::v-deep .el-table td.el-table__cell > .cell {
-    padding-left: 12px;
-    padding-right: 12px;
+    padding-inline-start: 12px;
+    padding-inline-end: 12px;
   }
 }
 
@@ -707,7 +707,7 @@ export default {
   gap: 6px;
   max-width: 100%;
   padding: 2px 6px;
-  margin-left: -6px;
+  margin-inline-start: -6px;
   border: 0;
   border-radius: 8px;
   background: transparent;
@@ -742,7 +742,7 @@ export default {
   gap: 2px;
 
   .el-button + .el-button {
-    margin-left: 0;
+    margin-inline-start: 0;
   }
 }
 

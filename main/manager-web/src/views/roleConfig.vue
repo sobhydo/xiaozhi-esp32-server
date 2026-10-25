@@ -2009,7 +2009,7 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  text-align: left;
+  text-align: start;
 }
 
 // Breadcrumb
@@ -2098,7 +2098,7 @@ export default {
   gap: 8px;
 
   .el-button + .el-button {
-    margin-left: 0;
+    margin-inline-start: 0;
   }
 }
 
@@ -2106,7 +2106,7 @@ export default {
   font-size: 12px;
   color: var(--x-text-muted);
   font-variant-numeric: tabular-nums;
-  margin-right: 4px;
+  margin-inline-end: 4px;
 }
 
 // Tags
@@ -2191,7 +2191,7 @@ export default {
   gap: 8px;
 
   .el-button + .el-button {
-    margin-left: 0;
+    margin-inline-start: 0;
   }
 }
 
@@ -2233,7 +2233,7 @@ export default {
   font-size: 13px;
   font-weight: 500;
   color: var(--x-text);
-  text-align: left;
+  text-align: start;
 }
 
 .role-form ::v-deep .el-form-item__content {
@@ -2282,7 +2282,7 @@ export default {
 }
 
 .chat-history-options ::v-deep .el-radio-button:first-child .el-radio-button__inner {
-  border-left-color: var(--x-border-control);
+  border-inline-start-color: var(--x-border-control);
 }
 
 .chat-history-options ::v-deep .el-radio-button.is-active .el-radio-button__inner {
@@ -2486,7 +2486,7 @@ export default {
   font-weight: 500;
   text-decoration: underline;
   text-underline-offset: 2px;
-  margin-left: 4px;
+  margin-inline-start: 4px;
 
   &:hover {
     color: var(--x-ink-pressed);
@@ -2519,8 +2519,8 @@ export default {
 
   .card-head,
   .card-body {
-    padding-left: 16px;
-    padding-right: 16px;
+    padding-inline-start: 16px;
+    padding-inline-end: 16px;
   }
 }
 </style>

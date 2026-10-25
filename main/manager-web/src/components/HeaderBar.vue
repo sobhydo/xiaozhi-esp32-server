@@ -159,6 +159,7 @@ export default {
         { value: "de", label: "language.de" },
         { value: "vi", label: "language.vi" },
         { value: "pt_BR", label: "language.ptBR" },
+        { value: "ar", label: "language.ar" },
       ],
       settingsItems: [
         { key: "params", path: "/params-management", label: "header.paramManagement" },
@@ -185,7 +186,7 @@ export default {
       userInfo: (state) => state.userInfo,
     }),
     currentLanguage() {
-      return i18n.locale || "zh_CN";
+      return i18n.locale || "en";
     },
     primaryItems() {
       const admin = !!this.userInfo.superAdmin;
@@ -275,7 +276,7 @@ export default {
   position: fixed;
   top: 0;
   bottom: 0;
-  left: 0;
+  inset-inline-start: 0;
   z-index: 1000;
   width: var(--x-sidebar-width);
   box-sizing: border-box;
@@ -283,8 +284,8 @@ export default {
   flex-direction: column;
   padding: 16px 12px 12px;
   background: var(--x-surface);
-  border-right: 1px solid var(--x-border);
-  text-align: left;
+  border-inline-end: 1px solid var(--x-border);
+  text-align: start;
   font-size: 14px;
 }
 
@@ -349,7 +350,7 @@ export default {
   color: var(--x-text-secondary);
   font: inherit;
   font-weight: 500;
-  text-align: left;
+  text-align: start;
   text-decoration: none;
   cursor: pointer;
 
@@ -375,7 +376,7 @@ export default {
 }
 
 .x-nav__chevron {
-  margin-left: auto;
+  margin-inline-start: auto;
   transition: transform 0.2s ease;
 
   &.is-open {
@@ -396,9 +397,9 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  margin-left: 19px;
-  padding-left: 10px;
-  border-left: 1px solid var(--x-border);
+  margin-inline-start: 19px;
+  padding-inline-start: 10px;
+  border-inline-start: 1px solid var(--x-border);
 }
 
 .x-nav__child {
@@ -504,7 +505,12 @@ export default {
     transition: transform 0.2s ease;
     box-shadow: var(--x-shadow-raised);
 
-    &.is-open {
+    [dir="rtl"] & {
+      transform: translateX(100%);
+    }
+
+    &.is-open,
+    [dir="rtl"] &.is-open {
       transform: none;
     }
 

@@ -58,7 +58,7 @@ export default {
   display: flex;
   align-items: center;
   gap: 12px;
-  text-align: left;
+  text-align: start;
 }
 
 .head-icon {
@@ -81,7 +81,7 @@ export default {
 }
 
 .dialog-body {
-  text-align: left;
+  text-align: start;
 }
 
 .field-label {
@@ -109,7 +109,7 @@ export default {
   }
 
   .el-button + .el-button {
-    margin-left: 0;
+    margin-inline-start: 0;
   }
 }
 </style>

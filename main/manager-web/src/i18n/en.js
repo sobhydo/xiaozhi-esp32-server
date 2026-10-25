@@ -190,7 +190,7 @@ export default {
   'editVoiceDialog.remarkPlaceholder': 'Please enter remark content',
   'editVoiceDialog.generatePreview': 'Generate Preview',
   'editVoiceDialog.defaultVoiceName': 'Wawa Xiaohe',
-  'editVoiceDialog.defaultLanguageType': 'Chinese',
+  'editVoiceDialog.defaultLanguageType': 'English',
   'editVoiceDialog.requiredVoiceCode': 'Please enter voice code',
   'editVoiceDialog.requiredVoiceName': 'Please enter voice name',
 
@@ -685,6 +685,7 @@ export default {
   'common.name': 'Name',
   'common.sort': 'Sort',
   'common.action': 'Action',
+  'common.select': 'Select',
   'common.edit': 'Edit',
   'common.delete': 'Delete',
   'common.selectAll': 'Select All',
@@ -720,6 +721,7 @@ export default {
   'language.de': 'Deutsch',
   'language.vi': 'Tiếng Việt',
   'language.ptBR': 'Português (Brasil)',
+  'language.ar': 'العربية',
 
   // Home page text
   'home.addAgent': 'Add Agent',

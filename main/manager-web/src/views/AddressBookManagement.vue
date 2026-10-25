@@ -631,7 +631,7 @@ export default {
   display: flex;
   flex-direction: column;
   background: var(--x-canvas);
-  text-align: left;
+  text-align: start;
 }
 
 .address-page {
@@ -784,7 +784,7 @@ export default {
   background: transparent;
   font: inherit;
   color: inherit;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
   transition: background-color 0.15s ease;
 
@@ -958,7 +958,7 @@ export default {
   letter-spacing: -0.01em;
   line-height: 28px;
   color: var(--x-text);
-  text-align: left;
+  text-align: start;
   cursor: pointer;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1088,7 +1088,7 @@ export default {
   font: inherit;
   font-weight: 500;
   color: var(--x-text);
-  text-align: left;
+  text-align: start;
   cursor: pointer;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1140,7 +1140,7 @@ export default {
   gap: 8px;
 
   .el-button + .el-button {
-    margin-left: 0;
+    margin-inline-start: 0;
   }
 }
 
@@ -1193,7 +1193,7 @@ export default {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding-right: 24px;
+  padding-inline-end: 24px;
   box-sizing: border-box;
   min-height: 24px;
 }
@@ -1207,7 +1207,7 @@ export default {
   font-size: 14px;
   font-weight: 500;
   color: var(--x-text);
-  text-align: left;
+  text-align: start;
   cursor: pointer;
   overflow: hidden;
   text-overflow: ellipsis;

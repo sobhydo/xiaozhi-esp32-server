@@ -157,7 +157,7 @@ export default {
   padding: 18px 24px 16px;
   background: var(--x-surface);
   border-bottom: 1px solid var(--x-divider);
-  text-align: left;
+  text-align: start;
 }
 
 ::v-deep .el-dialog__title {
@@ -221,7 +221,7 @@ export default {
   }
 
   .el-button + .el-button {
-    margin-left: 0;
+    margin-inline-start: 0;
   }
 
   .confirm-inner {

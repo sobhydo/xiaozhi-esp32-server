@@ -7,7 +7,7 @@
         :class="['custom-table', tableClass]"
         height="100%"
         v-loading="loading"
-        :element-loading-text="loadingText"
+        :element-loading-text="loadingText || $t('common.loading')"
         :element-loading-spinner="loadingSpinner"
         :element-loading-background="loadingBackground"
         :header-cell-class-name="headerCellClassName"
@@ -20,7 +20,7 @@
           v-if="showSelection"
           width="76"
           align="center"
-          label="Select"
+          :label="$t('common.select')"
         >
           <template slot-scope="scope">
             <slot
@@ -67,7 +67,7 @@
         <!-- Actions column -->
         <el-table-column
           v-if="showOperations"
-          :label="operationsLabel"
+          :label="operationsLabel || $t('common.action')"
           align="center"
           :width="operationsWidth"
         >
@@ -125,7 +125,7 @@ export default {
     },
     operationsLabel: {
       type: String,
-      default: 'Actions'
+      default: ''
     },
     operationsWidth: {
       type: [String, Number],
@@ -159,7 +159,7 @@ export default {
     },
     loadingText: {
       type: String,
-      default: 'Loading'
+      default: ''
     },
     loadingSpinner: {
       type: String,

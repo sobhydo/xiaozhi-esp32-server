@@ -32,6 +32,9 @@
             <el-dropdown-item @click.native="changeLanguage('pt_BR')">
               {{ $t("language.ptBR") }}
             </el-dropdown-item>
+            <el-dropdown-item @click.native="changeLanguage('ar')">
+              {{ $t("language.ar") }}
+            </el-dropdown-item>
           </el-dropdown-menu>
         </el-dropdown>
       </header>
@@ -161,7 +164,7 @@ export default {
     }),
     // Get the current language
     currentLanguage() {
-      return i18n.locale || "zh_CN";
+      return i18n.locale || "en";
     },
     // Get display text for the current language
     currentLanguageText() {
@@ -179,8 +182,10 @@ export default {
           return this.$t("language.vi");
         case "pt_BR":
           return this.$t("language.ptBR");
+        case "ar":
+          return this.$t("language.ar");
         default:
-          return this.$t("language.zhCN");
+          return this.$t("language.en");
       }
     },
   },

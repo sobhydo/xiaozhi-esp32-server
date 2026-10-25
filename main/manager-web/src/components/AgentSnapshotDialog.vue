@@ -2163,7 +2163,7 @@ export default {
   padding: 18px 24px 16px;
   background: var(--x-surface);
   border-bottom: 1px solid var(--x-divider);
-  text-align: left;
+  text-align: start;
 }
 
 ::v-deep .el-dialog__title {
@@ -2176,7 +2176,7 @@ export default {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  padding-right: 40px;
+  padding-inline-end: 40px;
   font-size: 16px;
   color: var(--x-text);
 
@@ -2256,7 +2256,7 @@ export default {
   min-width: 96px;
 
   & + .snapshot-footer-button {
-    margin-left: 0;
+    margin-inline-start: 0;
   }
 }
 
@@ -2266,7 +2266,7 @@ export default {
 }
 
 .confirm-icon {
-  margin-right: 6px;
+  margin-inline-end: 6px;
   font-size: 14px;
 }
 
@@ -2299,8 +2299,8 @@ export default {
   }
 
   ::v-deep .cell {
-    padding-left: 12px;
-    padding-right: 12px;
+    padding-inline-start: 12px;
+    padding-inline-end: 12px;
   }
 
   ::v-deep .el-table__fixed-right::before {
@@ -2343,7 +2343,7 @@ export default {
 .row-action {
   height: 28px;
   padding: 0 8px;
-  margin-left: 0 !important;
+  margin-inline-start: 0 !important;
   font-size: 13px;
   color: var(--x-text-secondary);
 
@@ -2394,7 +2394,7 @@ export default {
 // Detail / diff
 .snapshot-diff {
   min-height: 420px;
-  padding-right: 2px;
+  padding-inline-end: 2px;
 }
 
 // global.scss styles every `.is-light` (meant for light tooltips) with !important
@@ -2402,7 +2402,7 @@ export default {
   margin-top: 12px;
   border-radius: 12px;
   box-shadow: none;
-  text-align: left;
+  text-align: start;
 
   &.el-alert--info.is-light {
     background: var(--x-surface-raised) !important;
@@ -2434,7 +2434,7 @@ export default {
   gap: 8px;
   margin-bottom: 16px;
   font-size: 12px;
-  text-align: left;
+  text-align: start;
 }
 
 .detail-summary span {
@@ -2466,7 +2466,7 @@ export default {
   color: var(--x-text);
   font-size: 14px;
   font-weight: 600;
-  text-align: left;
+  text-align: start;
 }
 
 .diff-values {
@@ -2481,20 +2481,20 @@ export default {
 .diff-pane {
   min-width: 0;
   padding: 12px 14px;
-  text-align: left;
+  text-align: start;
 }
 
 .diff-after {
-  border-left: 1px solid var(--x-divider);
+  border-inline-start: 1px solid var(--x-divider);
 }
 
 .diff-values.is-single .diff-after {
-  border-left: 0;
+  border-inline-start: 0;
 }
 
 .diff-code-wrapper {
   padding: 0 14px 1px;
-  text-align: left;
+  text-align: start;
   background: var(--x-surface);
 }
 
@@ -2504,7 +2504,7 @@ export default {
   font-size: 12px;
   font-weight: 500;
   line-height: 1.4;
-  text-align: left;
+  text-align: start;
 }
 
 .diff-value {
@@ -2518,7 +2518,7 @@ export default {
   font-size: 13px;
   line-height: 1.5;
   word-break: break-word;
-  text-align: left;
+  text-align: start;
   @include scrollbar-style;
 }
 
@@ -2546,7 +2546,7 @@ export default {
   font-size: 12px;
   line-height: 1.5;
   white-space: pre-wrap;
-  text-align: left;
+  text-align: start;
 }
 
 // v-code-diff: map its GitHub palette onto the console tokens
@@ -2777,7 +2777,7 @@ export default {
   color: var(--x-text-muted);
   font-size: 12px;
   line-height: 1.35;
-  text-align: right;
+  text-align: end;
   overflow-wrap: anywhere;
 }
 
@@ -2785,7 +2785,7 @@ export default {
   min-width: 0;
   min-height: 28px;
   padding: 5px 0 5px 10px;
-  border-left: 1px solid var(--x-border);
+  border-inline-start: 1px solid var(--x-border);
   color: var(--x-text);
   font-family: var(--x-font-mono);
   font-size: 12px;
@@ -2806,7 +2806,7 @@ export default {
   color: inherit;
   font-size: 13px;
   line-height: 1.7;
-  text-align: left;
+  text-align: start;
   white-space: normal;
 }
 
@@ -2846,7 +2846,7 @@ export default {
 .markdown-body ::v-deep ul,
 .markdown-body ::v-deep ol {
   margin: 0 0 8px;
-  padding-left: 20px;
+  padding-inline-start: 20px;
 }
 
 .markdown-body ::v-deep li {
@@ -2899,7 +2899,7 @@ export default {
   }
 
   .diff-after {
-    border-left: 0;
+    border-inline-start: 0;
     border-top: 1px solid var(--x-divider);
   }
 
@@ -2911,13 +2911,13 @@ export default {
   .param-key {
     justify-content: flex-start;
     padding: 7px 0 2px;
-    text-align: left;
+    text-align: start;
   }
 
   .param-value {
     min-height: 0;
     padding: 0 0 7px;
-    border-left: 0;
+    border-inline-start: 0;
   }
 }
 </style>

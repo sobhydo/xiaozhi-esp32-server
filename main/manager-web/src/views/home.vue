@@ -500,7 +500,7 @@ export default {
   ::v-deep .el-input__inner {
     height: 36px;
     line-height: 36px;
-    padding-left: 34px;
+    padding-inline-start: 34px;
     background: var(--x-surface);
   }
 
@@ -738,7 +738,7 @@ export default {
   gap: 8px;
 
   .el-button + .el-button {
-    margin-left: 0;
+    margin-inline-start: 0;
   }
 }
 
@@ -749,7 +749,7 @@ export default {
 .delete-agent-dialog ::v-deep .el-dialog__header {
   padding: 18px 24px 16px;
   border-bottom: 1px solid var(--x-divider);
-  text-align: left;
+  text-align: start;
 }
 
 .delete-agent-dialog ::v-deep .el-dialog__headerbtn {

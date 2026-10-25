@@ -402,7 +402,7 @@ export default {
   display: flex;
   flex-direction: column;
   background: var(--x-canvas);
-  text-align: left;
+  text-align: start;
 }
 
 .page {
@@ -512,8 +512,8 @@ export default {
 
   ::v-deep .el-table th.el-table__cell > .cell,
   ::v-deep .el-table td.el-table__cell > .cell {
-    padding-left: 12px;
-    padding-right: 12px;
+    padding-inline-start: 12px;
+    padding-inline-end: 12px;
   }
 }
 
@@ -523,7 +523,7 @@ export default {
   gap: 8px;
 
   ::v-deep .el-button + .el-button {
-    margin-left: 0;
+    margin-inline-start: 0;
   }
 }
 
@@ -624,7 +624,7 @@ export default {
 
 .replace-word-tooltip .popper__arrow {
   border-top-color: transparent !important;
-  border-right-color: var(--x-border) !important;
+  border-inline-end-color: var(--x-border) !important;
 }
 
 .replace-word-content {

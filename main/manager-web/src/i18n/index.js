@@ -6,6 +6,7 @@ import en from './en';
 import de from './de';
 import vi from './vi';
 import ptBR from './pt_BR';
+import ar from './ar';
 
 import enLocale from 'element-ui/lib/locale/lang/en'
 import zhLocale from 'element-ui/lib/locale/lang/zh-CN'
@@ -13,6 +14,7 @@ import twLocale from 'element-ui/lib/locale/lang/zh-TW'
 import deLocale from 'element-ui/lib/locale/lang/de'
 import viLocale from 'element-ui/lib/locale/lang/vi'
 import ptBRLocale from 'element-ui/lib/locale/lang/pt-br'
+import arLocale from 'element-ui/lib/locale/lang/ar'
 
 
 Vue.use(VueI18n);
@@ -36,9 +38,21 @@ const i18n = new VueI18n({
     'en': { ...en, ...enLocale },
     'de': { ...de, ...deLocale },
     'vi': { ...vi, ...viLocale },
-    'pt_BR': { ...ptBR, ...ptBRLocale }
+    'pt_BR': { ...ptBR, ...ptBRLocale },
+    'ar': { ...ar, ...arLocale }
   }
 });
+
+// Right-to-left languages flip the page layout
+const RTL_LANGUAGES = ['ar'];
+
+export const applyDocumentLanguage = (lang) => {
+  const root = document.documentElement;
+  root.setAttribute('lang', lang.replace('_', '-'));
+  root.setAttribute('dir', RTL_LANGUAGES.includes(lang) ? 'rtl' : 'ltr');
+};
+
+applyDocumentLanguage(i18n.locale);
 
 export default i18n;
 
@@ -46,6 +60,7 @@ export default i18n;
 export const changeLanguage = (lang) => {
   i18n.locale = lang;
   localStorage.setItem('userLanguage', lang);
+  applyDocumentLanguage(lang);
   // Notify components that the language changed
   Vue.prototype.$eventBus.$emit('languageChanged', lang);
 };

@@ -225,7 +225,7 @@ export default {
   }
 
   .upload-demo {
-    text-align: left;
+    text-align: start;
   }
 
   .el-upload__tip {
@@ -263,7 +263,7 @@ export default {
     font-size: 13px;
     line-height: 1.5;
     color: var(--x-text-muted);
-    text-align: left;
+    text-align: start;
   }
 
   ::v-deep .el-upload-list__item {
@@ -281,18 +281,18 @@ export default {
       float: none;
       display: block;
       width: auto !important;
-      text-align: left;
+      text-align: start;
       line-height: 1.5;
       padding-bottom: 6px;
     }
 
     ::v-deep .el-form-item__label-wrap {
       float: none;
-      margin-left: 0 !important;
+      margin-inline-start: 0 !important;
     }
 
     ::v-deep .el-form-item__content {
-      margin-left: 0 !important;
+      margin-inline-start: 0 !important;
     }
   }
 }

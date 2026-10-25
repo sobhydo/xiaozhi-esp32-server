@@ -392,7 +392,7 @@ export default {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  text-align: left;
+  text-align: start;
 }
 
 .doc-section-header {
@@ -446,7 +446,7 @@ export default {
   gap: 8px;
 
   .el-button + .el-button {
-    margin-left: 0;
+    margin-inline-start: 0;
   }
 }
 
@@ -637,7 +637,7 @@ export default {
   gap: 2px;
 
   .el-button + .el-button {
-    margin-left: 0;
+    margin-inline-start: 0;
   }
 }
 

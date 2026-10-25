@@ -246,7 +246,7 @@ export default {
   padding: 24px;
   flex: 1;
   overflow-y: auto;
-  text-align: left;
+  text-align: start;
 }
 
 .slider-container {
@@ -297,7 +297,7 @@ export default {
 }
 
 .drawer-footer .el-button + .el-button {
-  margin-left: 0;
+  margin-inline-start: 0;
 }
 
 ::v-deep .el-form-item__label {
@@ -320,7 +320,7 @@ export default {
 }
 
 .replacement-label i {
-  margin-left: 4px;
+  margin-inline-start: 4px;
   color: var(--x-text-muted);
   cursor: pointer;
   font-size: 14px;
@@ -377,7 +377,7 @@ export default {
 }
 
 .replacement-label {
-  text-align: left;
+  text-align: start;
 }
 
 .selected-tags {

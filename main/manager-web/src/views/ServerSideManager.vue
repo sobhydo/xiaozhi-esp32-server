@@ -149,7 +149,7 @@ export default {
   display: flex;
   flex-direction: column;
   background: var(--x-canvas);
-  text-align: left;
+  text-align: start;
 }
 
 .page {
@@ -277,7 +277,7 @@ export default {
   gap: 8px;
 
   .el-button + .el-button {
-    margin-left: 0;
+    margin-inline-start: 0;
   }
 }
 

@@ -685,6 +685,7 @@ export default {
   'common.name': '名稱',
   'common.sort': '排序',
   'common.action': '操作',
+  'common.select': '選擇',
   'common.edit': '編輯',
   'common.delete': '刪除',
   'common.selectAll': '全選',
@@ -720,6 +721,7 @@ export default {
   'language.de': 'Deutsch',
   'language.vi': 'Tiếng Việt',
   'language.ptBR': 'Português (Brasil)',
+  'language.ar': 'العربية',
 
   // 首頁文本
   'home.addAgent': '添加智能體',

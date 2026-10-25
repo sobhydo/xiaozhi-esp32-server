@@ -9,6 +9,7 @@ const locales = [
   { name: 'de', file: 'src/i18n/de.js' },
   { name: 'vi', file: 'src/i18n/vi.js' },
   { name: 'pt_BR', file: 'src/i18n/pt_BR.js' },
+  { name: 'ar', file: 'src/i18n/ar.js' },
 ];
 
 function readLocale(locale) {

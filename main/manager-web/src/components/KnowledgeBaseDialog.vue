@@ -176,7 +176,7 @@ export default {
   }
 
   ::v-deep .el-form {
-    text-align: left;
+    text-align: start;
   }
 
   ::v-deep .el-form-item {

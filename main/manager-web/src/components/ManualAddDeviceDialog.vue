@@ -122,7 +122,7 @@ export default {
 }
 
 .manual-add-form {
-  text-align: left;
+  text-align: start;
 
   ::v-deep .el-form-item {
     margin-bottom: 18px;
@@ -135,7 +135,7 @@ export default {
   ::v-deep .el-form-item__label {
     display: block;
     float: none;
-    text-align: left;
+    text-align: start;
     padding: 0 0 6px;
     line-height: 20px;
     font-size: 14px;

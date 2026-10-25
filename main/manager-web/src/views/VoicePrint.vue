@@ -242,7 +242,7 @@ export default {
     display: flex;
     flex-direction: column;
     background: var(--x-canvas);
-    text-align: left;
+    text-align: start;
 }
 
 .page {
@@ -340,8 +340,8 @@ export default {
 
     ::v-deep .el-table th.el-table__cell > .cell,
     ::v-deep .el-table td.el-table__cell > .cell {
-        padding-left: 12px;
-        padding-right: 12px;
+        padding-inline-start: 12px;
+        padding-inline-end: 12px;
     }
 }
 
@@ -357,7 +357,7 @@ export default {
     gap: 2px;
 
     .el-button + .el-button {
-        margin-left: 0;
+        margin-inline-start: 0;
     }
 }
 

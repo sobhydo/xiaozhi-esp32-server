@@ -431,7 +431,7 @@ export default {
     font-weight: 600;
     line-height: 24px;
     color: var(--x-text);
-    padding-right: 32px;
+    padding-inline-end: 32px;
 }
 
 .chat-title-mac {
@@ -449,7 +449,7 @@ export default {
     display: flex;
     flex: 1;
     min-height: 0;
-    text-align: left;
+    text-align: start;
 }
 
 .session-list {
@@ -457,7 +457,7 @@ export default {
     min-height: 0;
     flex-shrink: 0;
     box-sizing: border-box;
-    border-right: 1px solid var(--x-border);
+    border-inline-end: 1px solid var(--x-border);
     background: var(--x-surface-raised);
     overflow-y: auto;
     padding: 8px;
@@ -475,7 +475,7 @@ export default {
     background: transparent;
     font: inherit;
     color: inherit;
-    text-align: left;
+    text-align: start;
     cursor: pointer;
     transition: background-color 0.15s ease;
 }
@@ -576,7 +576,7 @@ export default {
     color: var(--x-text);
     font-size: 14px;
     line-height: 1.55;
-    text-align: left;
+    text-align: start;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -654,7 +654,7 @@ export default {
 
 .tool-result-wrapper {
     position: relative;
-    padding-right: 28px;
+    padding-inline-end: 28px;
 }
 
 .tool-result-collapsed {
@@ -738,7 +738,7 @@ export default {
 }
 
 .download-buttons .el-button + .el-button {
-    margin-left: 0;
+    margin-inline-start: 0;
 }
 
 @media (max-width: 768px) {
@@ -749,7 +749,7 @@ export default {
     .session-list {
         width: 100%;
         max-height: 168px;
-        border-right: 0;
+        border-inline-end: 0;
         border-bottom: 1px solid var(--x-border);
     }
 

@@ -362,7 +362,7 @@ export default {
   display: flex;
   flex-direction: column;
   background: var(--x-canvas);
-  text-align: left;
+  text-align: start;
 }
 
 .page {
@@ -403,7 +403,7 @@ export default {
   gap: 8px;
 
   .el-button + .el-button {
-    margin-left: 0;
+    margin-inline-start: 0;
   }
 }
 
@@ -600,7 +600,7 @@ export default {
   border-top: 1px solid var(--x-divider);
 
   .el-button + .el-button {
-    margin-left: 0;
+    margin-inline-start: 0;
   }
 }
 
@@ -612,7 +612,7 @@ export default {
   color: var(--x-text-secondary);
 
   ::v-deep [class*="el-icon-"] + span {
-    margin-left: 4px;
+    margin-inline-start: 4px;
   }
 
   &:hover,

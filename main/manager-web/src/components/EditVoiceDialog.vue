@@ -110,7 +110,7 @@ export default {
 
   ::v-deep .el-dialog__body {
     padding: 20px 24px;
-    text-align: left;
+    text-align: start;
   }
 
   ::v-deep .el-dialog__footer {
@@ -135,8 +135,8 @@ export default {
   }
 
   .compact-number ::v-deep .el-input__inner {
-    padding-right: 10px;
-    text-align: left;
+    padding-inline-end: 10px;
+    text-align: start;
   }
 
   .compact-textarea {
@@ -168,7 +168,7 @@ export default {
     gap: 8px;
 
     .el-button + .el-button {
-      margin-left: 0;
+      margin-inline-start: 0;
     }
   }
 }

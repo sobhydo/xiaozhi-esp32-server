@@ -119,7 +119,7 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  text-align: left;
+  text-align: start;
 }
 
 .form-label {
@@ -132,7 +132,7 @@ export default {
 }
 
 .required {
-  margin-right: 2px;
+  margin-inline-end: 2px;
   color: var(--x-danger);
 }
 

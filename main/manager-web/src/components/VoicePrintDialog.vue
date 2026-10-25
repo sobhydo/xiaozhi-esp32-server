@@ -225,7 +225,7 @@ export default {
 }
 
 .param-form {
-  text-align: left;
+  text-align: start;
 
   .form-item {
     margin-bottom: 18px;

@@ -743,7 +743,7 @@ export default {
   display: flex;
   flex-direction: column;
   background: var(--x-canvas);
-  text-align: left;
+  text-align: start;
 }
 
 .page {
@@ -784,7 +784,7 @@ export default {
   gap: 8px;
 
   .el-button + .el-button {
-    margin-left: 0;
+    margin-inline-start: 0;
   }
 }
 
@@ -914,7 +914,7 @@ export default {
 
   em {
     font-style: normal;
-    margin-left: 4px;
+    margin-inline-start: 4px;
     color: var(--x-text-muted);
   }
 
@@ -988,7 +988,7 @@ export default {
   align-items: center;
   gap: 8px;
   min-width: 0;
-  padding-right: 8px;
+  padding-inline-end: 8px;
 }
 
 .section-name {
@@ -1043,8 +1043,8 @@ export default {
   }
 
   .cell {
-    padding-left: 12px;
-    padding-right: 12px;
+    padding-inline-start: 12px;
+    padding-inline-end: 12px;
   }
 
   th.el-table__cell > .cell {
@@ -1138,7 +1138,7 @@ export default {
   gap: 8px;
 
   ::v-deep .el-button + .el-button {
-    margin-left: 0;
+    margin-inline-start: 0;
   }
 }
 

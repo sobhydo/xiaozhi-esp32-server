@@ -34,12 +34,12 @@ samp {
 
 // Room for the fixed sidebar rendered by HeaderBar
 body.x-has-sidenav #app {
-  padding-left: var(--x-sidebar-width);
+  padding-inline-start: var(--x-sidebar-width);
 }
 
 @media (max-width: 900px) {
   body.x-has-sidenav #app {
-    padding-left: 0;
+    padding-inline-start: 0;
     padding-top: var(--x-topbar-height);
   }
 }
@@ -47,7 +47,7 @@ body.x-has-sidenav #app {
 // Page headers are left-aligned
 .page-header,
 .page-heading {
-  text-align: left;
+  text-align: start;
 }
 
 // Muted line under a page title

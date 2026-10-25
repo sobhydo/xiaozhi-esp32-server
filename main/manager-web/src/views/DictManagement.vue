@@ -418,7 +418,7 @@ export default {
   display: flex;
   flex-direction: column;
   background: var(--x-canvas);
-  text-align: left;
+  text-align: start;
 }
 
 .page {
@@ -533,7 +533,7 @@ export default {
 
   .dict-type-all {
     padding: 8px 10px;
-    margin-right: 0;
+    margin-inline-end: 0;
     color: var(--x-text-muted);
 
     ::v-deep .el-checkbox__label {
@@ -562,12 +562,12 @@ export default {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding-left: 10px;
+  padding-inline-start: 10px;
   border-radius: var(--x-radius-control);
   transition: background 0.15s;
 
   .el-checkbox {
-    margin-right: 0;
+    margin-inline-end: 0;
   }
 
   &:hover {
@@ -598,7 +598,7 @@ export default {
   border: 0;
   background: transparent;
   font: inherit;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
   border-radius: 8px;
 
@@ -704,8 +704,8 @@ export default {
 
   ::v-deep .el-table th.el-table__cell > .cell,
   ::v-deep .el-table td.el-table__cell > .cell {
-    padding-left: 12px;
-    padding-right: 12px;
+    padding-inline-start: 12px;
+    padding-inline-end: 12px;
   }
 }
 
@@ -715,7 +715,7 @@ export default {
   gap: 8px;
 
   ::v-deep .el-button + .el-button {
-    margin-left: 0;
+    margin-inline-start: 0;
   }
 }
 

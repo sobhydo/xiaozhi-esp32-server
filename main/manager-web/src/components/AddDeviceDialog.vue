@@ -108,11 +108,11 @@ export default {
   font-size: 14px;
   font-weight: 500;
   color: var(--x-text);
-  text-align: left;
+  text-align: start;
 
   .required {
     color: var(--x-danger);
-    margin-left: 2px;
+    margin-inline-start: 2px;
   }
 }
 

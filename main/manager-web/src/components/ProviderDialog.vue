@@ -393,7 +393,7 @@ export default {
     gap: 8px;
 
     .el-button + .el-button {
-      margin-left: 0;
+      margin-inline-start: 0;
     }
   }
 
@@ -487,18 +487,18 @@ export default {
       float: none;
       display: block;
       width: auto !important;
-      text-align: left;
+      text-align: start;
       line-height: 1.5;
       padding-bottom: 6px;
     }
 
     ::v-deep .provider-form > .form-row .el-form-item__label-wrap {
       float: none;
-      margin-left: 0 !important;
+      margin-inline-start: 0 !important;
     }
 
     ::v-deep .provider-form > .form-row .el-form-item__content {
-      margin-left: 0 !important;
+      margin-inline-start: 0 !important;
     }
   }
 }

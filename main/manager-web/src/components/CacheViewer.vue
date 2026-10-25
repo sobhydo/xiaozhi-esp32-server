@@ -203,7 +203,7 @@ export default {
   font-size: 15px;
   font-weight: 600;
   color: var(--x-text);
-  text-align: left;
+  text-align: start;
 }
 
 .cache-table {
@@ -256,7 +256,7 @@ export default {
 ::v-deep .el-alert {
   border-radius: 12px;
   box-shadow: none;
-  text-align: left;
+  text-align: start;
 }
 
 ::v-deep .el-alert--success.is-light {
@@ -282,7 +282,7 @@ export default {
   .el-dialog__header {
     padding: 18px 24px 16px;
     border-bottom: 1px solid var(--x-divider);
-    text-align: left;
+    text-align: start;
   }
 
   .el-dialog__body {
@@ -309,7 +309,7 @@ export default {
   gap: 8px;
 
   .el-button + .el-button {
-    margin-left: 0;
+    margin-inline-start: 0;
   }
 }
 </style>

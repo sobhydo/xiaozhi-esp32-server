@@ -52,7 +52,7 @@ export default {
   font-weight: 400;
   line-height: 18px;
   color: var(--x-text-muted);
-  text-align: left;
+  text-align: start;
 }
 
 .footer-content {

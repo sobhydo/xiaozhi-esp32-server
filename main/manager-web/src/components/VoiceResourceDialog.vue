@@ -169,7 +169,7 @@ export default {
 }
 
 .resource-form {
-  text-align: left;
+  text-align: start;
 
   ::v-deep .el-form-item {
     margin-bottom: 18px;

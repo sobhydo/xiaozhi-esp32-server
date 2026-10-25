@@ -685,6 +685,7 @@ export default {
   'common.name': 'Tên',
   'common.sort': 'Sắp xếp',
   'common.action': 'Hành động',
+  'common.select': 'Chọn',
   'common.edit': 'Chỉnh sửa',
   'common.delete': 'Xóa',
   'common.selectAll': 'Chọn tất cả',
@@ -720,6 +721,7 @@ export default {
   'language.de': 'Deutsch',
   'language.vi': 'Tiếng Việt',
   'language.ptBR': 'Português (Brasil)',
+  'language.ar': 'العربية',
 
   // Home page text
   'home.addAgent': 'Thêm tác nhân',
