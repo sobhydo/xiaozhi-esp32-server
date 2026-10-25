@@ -5,11 +5,11 @@ import java.util.Date;
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 
 import cn.hutool.json.JSONObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import xiaozhi.modules.model.handler.EncryptedJsonTypeHandler;
 
 @Data
 @TableName(value = "ai_model_config", autoResultMap = true)
@@ -34,7 +34,10 @@ public class ModelConfigEntity {
     @Schema(description = "是否启用")
     private Integer isEnabled;
 
-    @TableField(typeHandler = JacksonTypeHandler.class)
+    @Schema(description = "Owner user id; NULL = system model")
+    private Long userId;
+
+    @TableField(typeHandler = EncryptedJsonTypeHandler.class)
     @Schema(description = "模型配置(JSON格式)")
     private JSONObject configJson;
 

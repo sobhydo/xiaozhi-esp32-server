@@ -99,3 +99,29 @@ test('function dialog footer stays above the expanding MCP tools section', () =>
   assert.ok(footerLayer, 'drawer footer should define its stacking layer');
   assert.ok(Number(footerLayer[1]) > Number(mcpLayer[1]));
 });
+
+test('my-models page is routed, listed for every user and wired to /models/mine', async () => {
+  const [router, headerBar, modelApi] = await Promise.all([
+    readFile(new URL('../src/router/index.js', import.meta.url), 'utf8'),
+    readFile(new URL('../src/components/HeaderBar.vue', import.meta.url), 'utf8'),
+    readFile(new URL('../src/apis/module/model.js', import.meta.url), 'utf8'),
+  ]);
+
+  assert.match(router, /path: '\/my-models',\s*name: 'MyModels'/);
+  assert.match(router, /import\('\.\.\/views\/MyModels\.vue'\)/);
+
+  // Sidebar entry is not gated on superAdmin and uses the key icon
+  assert.match(headerBar, /\n\s+\{ key: "myModels", path: "\/my-models", label: "header\.myModels", icon: "key" \},/);
+  assert.match(headerBar, /\n\s+key: '<[^']+',/);
+
+  for (const endpoint of [
+    /\/models\/mine\/providers\?/,
+    /\/models\/mine\?\$\{query\}/,
+    /\/models\/mine\/\$\{encodeURIComponent\(modelType\)\}\/\$\{encodeURIComponent\(provideCode\)\}`,\s*'POST'/,
+    /\/models\/mine\/\$\{encodeURIComponent\(id\)\}`, 'PUT'/,
+    /\/models\/mine\/\$\{encodeURIComponent\(id\)\}`, 'DELETE'/,
+    /\/models\/mine\/test`, 'POST'/,
+  ]) {
+    assert.match(modelApi, endpoint);
+  }
+});

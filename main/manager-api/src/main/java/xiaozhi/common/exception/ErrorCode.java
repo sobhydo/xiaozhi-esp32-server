@@ -260,4 +260,7 @@ public interface ErrorCode {
     // 替换词相关错误码
     int CORRECT_WORD_FILE_NAME_EXISTS = 10203; // 文件名已存在
     int FILE_SIZE_OVER_LIMIT = 10204; // 文件大小超过限制
+
+    // Bring-your-own-key models
+    int MODEL_NOT_ACCESSIBLE = 10205; // model belongs to another user
 }

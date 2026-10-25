@@ -372,6 +372,10 @@ public class AgentServiceImpl extends BaseServiceImpl<AgentDao, AgentEntity> imp
         } else {
             requireAgentPermission(lockedAgent, userId);
         }
+        // BYOK: user-owned models may only be used by their owner's agents
+        assertModelsUsable(lockedAgent.getUserId(), dto.getAsrModelId(), dto.getVadModelId(), dto.getLlmModelId(),
+                dto.getSlmModelId(), dto.getVllmModelId(), dto.getTtsModelId(), dto.getMemModelId(),
+                dto.getIntentModelId());
 
         // 锁定后查询现有实体和关联配置
         AgentEntity existingEntity = this.getAgentById(agentId);
@@ -657,6 +661,9 @@ public class AgentServiceImpl extends BaseServiceImpl<AgentDao, AgentEntity> imp
         // 设置用户ID和创建者信息
         UserDetail user = SecurityUser.getUser();
         entity.setUserId(user.getId());
+        assertModelsUsable(user.getId(), entity.getAsrModelId(), entity.getVadModelId(), entity.getLlmModelId(),
+                entity.getSlmModelId(), entity.getVllmModelId(), entity.getTtsModelId(), entity.getMemModelId(),
+                entity.getIntentModelId());
         entity.setCreator(user.getId());
         entity.setCreatedAt(new Date());
 
@@ -716,4 +723,9 @@ public class AgentServiceImpl extends BaseServiceImpl<AgentDao, AgentEntity> imp
         }
     }
 
+    private void assertModelsUsable(Long ownerUserId, String... modelIds) {
+        for (String modelId : modelIds) {
+            modelConfigService.assertModelUsable(modelId, ownerUserId);
+        }
+    }
 }

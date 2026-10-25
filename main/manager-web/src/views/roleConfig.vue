@@ -201,7 +201,10 @@
                   :key="`option-vad-${optionIndex}`"
                   :label="item.label"
                   :value="item.value"
-                />
+                >
+                  <span>{{ item.label }}</span>
+                  <span v-if="item.owned" class="owned-model-tag">{{ $t("myModels.mineTag") }}</span>
+                </el-option>
               </el-select>
             </el-form-item>
             <el-form-item
@@ -225,7 +228,10 @@
                   :key="`option-asr-${optionIndex}`"
                   :label="item.label"
                   :value="item.value"
-                />
+                >
+                  <span>{{ item.label }}</span>
+                  <span v-if="item.owned" class="owned-model-tag">{{ $t("myModels.mineTag") }}</span>
+                </el-option>
               </el-select>
             </el-form-item>
             <el-form-item class="model-item">
@@ -246,7 +252,10 @@
                   :key="`option-asr-${optionIndex}`"
                   :label="item.label"
                   :value="item.value"
-                />
+                >
+                  <span>{{ item.label }}</span>
+                  <span v-if="item.owned" class="owned-model-tag">{{ $t("myModels.mineTag") }}</span>
+                </el-option>
               </el-select>
             </el-form-item>
             <el-form-item class="model-item">
@@ -266,7 +275,10 @@
                   :key="`option-asr-${optionIndex}`"
                   :label="item.label"
                   :value="item.value"
-                />
+                >
+                  <span>{{ item.label }}</span>
+                  <span v-if="item.owned" class="owned-model-tag">{{ $t("myModels.mineTag") }}</span>
+                </el-option>
               </el-select>
             </el-form-item>
             <el-form-item
@@ -295,7 +307,10 @@
                     :key="`option-${index}-${optionIndex}`"
                     :label="item.label"
                     :value="item.value"
-                  />
+                  >
+                    <span>{{ item.label }}</span>
+                    <span v-if="item.owned" class="owned-model-tag">{{ $t("myModels.mineTag") }}</span>
+                  </el-option>
                 </el-select>
                 <div
                   v-if="
@@ -366,7 +381,10 @@
                   :key="`option-${index}-${optionIndex}`"
                   :label="item.label"
                   :value="item.value"
-                />
+                >
+                  <span>{{ item.label }}</span>
+                  <span v-if="item.owned" class="owned-model-tag">{{ $t("myModels.mineTag") }}</span>
+                </el-option>
               </el-select>
             </el-form-item>
 
@@ -1112,6 +1130,10 @@ export default {
         }, handleFailure);
       });
     },
+    // The user's own models (bring your own key) are listed after system models; the sort is stable
+    ownedModelsLast(options) {
+      return options.slice().sort((a, b) => Number(!!a.owned) - Number(!!b.owned));
+    },
     fetchModelOptions() {
       this.models.forEach((model) => {
         if (model.type != "LLM") {
@@ -1120,11 +1142,14 @@ export default {
               this.$set(
                 this.modelOptions,
                 model.type,
-                data.data.map((item) => ({
-                  value: item.id,
-                  label: item.modelName,
-                  isHidden: false,
-                }))
+                this.ownedModelsLast(
+                  data.data.map((item) => ({
+                    value: item.id,
+                    label: item.modelName,
+                    isHidden: false,
+                    owned: !!item.owned,
+                  }))
+                )
               );
 
               // For intent options, update visibility based on the current LLM type
@@ -1144,10 +1169,11 @@ export default {
                   value: item.id,
                   label: item.modelName,
                   isHidden: false,
+                  owned: !!item.owned,
                 });
                 this.llmModeTypeMap.set(item.id, item.type);
               });
-              this.$set(this.modelOptions, model.type, LLMdata);
+              this.$set(this.modelOptions, model.type, this.ownedModelsLast(LLMdata));
             } else {
               this.$message.error(data.msg || i18n.t("roleConfig.fetchModelsFailed"));
             }
@@ -2526,6 +2552,22 @@ export default {
     padding-inline-start: 16px;
     padding-inline-end: 16px;
   }
+}
+
+// "Mine" tag on the user's own models in the model dropdowns
+.owned-model-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  margin-inline-start: 8px;
+  padding: 0 6px;
+  border: 1px solid var(--x-border-control);
+  border-radius: var(--x-radius-pill);
+  color: var(--x-text-muted);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
+  vertical-align: middle;
 }
 </style>
 

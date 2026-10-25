@@ -1,6 +1,8 @@
 package xiaozhi.modules.model.service.impl;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +41,7 @@ import xiaozhi.modules.model.dto.ModelProviderDTO;
 import xiaozhi.modules.model.entity.ModelConfigEntity;
 import xiaozhi.modules.model.service.ModelConfigService;
 import xiaozhi.modules.model.service.ModelProviderService;
+import xiaozhi.modules.security.user.SecurityUser;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -54,33 +57,87 @@ public class ModelConfigServiceImpl extends BaseServiceImpl<ModelConfigDao, Mode
 
     @Override
     public List<ModelBasicInfoDTO> getModelCodeList(String modelType, String modelName) {
+        Long userId = SecurityUser.getUserId();
         List<ModelConfigEntity> entities = modelConfigDao.selectList(
-                new QueryWrapper<ModelConfigEntity>()
+                visibleToUser(new QueryWrapper<ModelConfigEntity>(), userId)
                         .eq("model_type", modelType)
                         .eq("is_enabled", 1)
                         .like(StringUtils.isNotBlank(modelName), "model_name", modelName)
-                        .select("id", "model_name")
-                        .orderByAsc("sort"));
-        return ConvertUtils.sourceToTarget(entities, ModelBasicInfoDTO.class);
+                        .select("id", "model_name", "user_id", "sort"));
+        return sortSystemFirst(entities).stream().map(item -> {
+            ModelBasicInfoDTO dto = new ModelBasicInfoDTO();
+            dto.setId(item.getId());
+            dto.setModelName(item.getModelName());
+            dto.setOwned(item.getUserId() != null);
+            return dto;
+        }).toList();
     }
 
     @Override
     public List<LlmModelBasicInfoDTO> getLlmModelCodeList(String modelName) {
+        Long userId = SecurityUser.getUserId();
         List<ModelConfigEntity> entities = modelConfigDao.selectList(
-                new QueryWrapper<ModelConfigEntity>()
+                visibleToUser(new QueryWrapper<ModelConfigEntity>(), userId)
                         .eq("model_type", "llm")
                         .eq("is_enabled", 1)
                         .like(StringUtils.isNotBlank(modelName), "model_name", modelName)
-                        .select("id", "model_name", "config_json"));
+                        .select("id", "model_name", "config_json", "user_id", "sort"));
 
-        return entities.stream().map(item -> {
+        return sortSystemFirst(entities).stream().map(item -> {
             LlmModelBasicInfoDTO dto = new LlmModelBasicInfoDTO();
             dto.setId(item.getId());
             dto.setModelName(item.getModelName());
-            String type = item.getConfigJson().getOrDefault("type", "").toString();
+            JSONObject configJson = item.getConfigJson();
+            String type = configJson == null ? "" : configJson.getOrDefault("type", "").toString();
             dto.setType(type);
+            dto.setOwned(item.getUserId() != null);
             return dto;
         }).toList();
+    }
+
+    /** BYOK: system models (user_id IS NULL) plus models owned by userId. */
+    private QueryWrapper<ModelConfigEntity> visibleToUser(QueryWrapper<ModelConfigEntity> wrapper, Long userId) {
+        if (userId == null) {
+            return wrapper.isNull("user_id");
+        }
+        return wrapper.and(w -> w.isNull("user_id").or().eq("user_id", userId));
+    }
+
+    /** BYOK: system models first (by sort), then the user's own models by name. */
+    private static List<ModelConfigEntity> sortSystemFirst(List<ModelConfigEntity> entities) {
+        Comparator<ModelConfigEntity> systemOrder = Comparator.comparing(ModelConfigEntity::getSort,
+                Comparator.nullsLast(Comparator.naturalOrder()));
+        Comparator<ModelConfigEntity> ownOrder = Comparator.comparing(
+                e -> StringUtils.defaultString(e.getModelName()), String.CASE_INSENSITIVE_ORDER);
+        List<ModelConfigEntity> sorted = new ArrayList<>();
+        entities.stream().filter(e -> e.getUserId() == null).sorted(systemOrder).forEach(sorted::add);
+        entities.stream().filter(e -> e.getUserId() != null).sorted(ownOrder).forEach(sorted::add);
+        return sorted;
+    }
+
+    @Override
+    public void assertModelUsable(String modelId, Long ownerUserId) {
+        if (StringUtils.isBlank(modelId)) {
+            return;
+        }
+        ModelConfigEntity model = modelConfigDao.selectOne(new QueryWrapper<ModelConfigEntity>()
+                .select("id", "user_id").eq("id", modelId));
+        // Missing ids keep the old behaviour (agents may hold stale ids); only other users' models are blocked
+        if (model != null && model.getUserId() != null && !model.getUserId().equals(ownerUserId)) {
+            throw new RenException(ErrorCode.MODEL_NOT_ACCESSIBLE);
+        }
+    }
+
+    @Override
+    public void assertSystemModel(String modelId) {
+        if (StringUtils.isBlank(modelId)) {
+            return;
+        }
+        ModelConfigEntity model = modelConfigDao.selectOne(new QueryWrapper<ModelConfigEntity>()
+                .select("id", "user_id").eq("id", modelId));
+        if (model != null && model.getUserId() != null) {
+            throw new RenException(ErrorCode.MODEL_NOT_ACCESSIBLE);
+        }
     }
 
     @Override
@@ -100,6 +157,7 @@ public class ModelConfigServiceImpl extends BaseServiceImpl<ModelConfigDao, Mode
                 pageInfo,
                 new QueryWrapper<ModelConfigEntity>()
                         .eq("model_type", modelType)
+                        .isNull("user_id")
                         .like(StringUtils.isNotBlank(modelName), "model_name", modelName));
 
         return getPageData(modelConfigEntityIPage, ModelConfigDTO.class);
@@ -276,7 +334,8 @@ public class ModelConfigServiceImpl extends BaseServiceImpl<ModelConfigDao, Mode
         ModelConfigEntity entity = new ModelConfigEntity();
         entity.setIsDefault(isDefault);
         modelConfigDao.update(entity, new QueryWrapper<ModelConfigEntity>()
-                .eq("model_type", modelType));
+                .eq("model_type", modelType)
+                .isNull("user_id"));
 
         // 清除相关缓存
         clearModelCacheByType(modelType);
@@ -556,6 +615,7 @@ public class ModelConfigServiceImpl extends BaseServiceImpl<ModelConfigDao, Mode
                 new QueryWrapper<ModelConfigEntity>()
                         .eq("model_type", modelType)
                         .eq("is_enabled", 1)
+                        .isNull("user_id")
                         .orderByAsc("sort"));
 
         return entities;

@@ -63,4 +63,14 @@ public interface ModelConfigService extends BaseService<ModelConfigEntity> {
      * @return 启用的模型配置列表
      */
     List<ModelConfigEntity> getEnabledModelsByType(String modelType);
+
+    /**
+     * BYOK: the model must exist and be a system model or owned by ownerUserId, else MODEL_NOT_ACCESSIBLE.
+     */
+    void assertModelUsable(String modelId, Long ownerUserId);
+
+    /**
+     * BYOK: admin model endpoints only operate on system models (user_id IS NULL).
+     */
+    void assertSystemModel(String modelId);
 }

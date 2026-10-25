@@ -32,6 +32,9 @@ public class ModelConfigDTO implements Serializable {
     @Schema(description = "是否启用")
     private Integer isEnabled;
 
+    @Schema(description = "Owner user id; NULL = system model")
+    private Long userId;
+
     @Schema(description = "模型配置(JSON格式)")
     private JSONObject configJson;
 

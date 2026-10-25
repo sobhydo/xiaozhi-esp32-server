@@ -9,7 +9,8 @@
         <result column="model_name" property="modelName"/>
         <result column="is_default" property="isDefault"/>
         <result column="is_enabled" property="isEnabled"/>
-        <result column="config_json" property="configJson" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+        <result column="user_id" property="userId"/>
+        <result column="config_json" property="configJson" typeHandler="xiaozhi.modules.model.handler.EncryptedJsonTypeHandler"/>
         <result column="doc_link" property="docLink"/>
         <result column="remark" property="remark"/>
         <result column="sort" property="sort"/>
@@ -28,6 +29,7 @@
     <select id="getTtsPlatformList" resultType="map">
         select id, model_name as modelName from ai_model_config
         where model_type = 'TTS'
+        and user_id is null
         and JSON_UNQUOTE(JSON_EXTRACT(config_json, '$.type')) in ('huoshan_double_stream', 'elevenlabs')
     </select>
 </mapper>

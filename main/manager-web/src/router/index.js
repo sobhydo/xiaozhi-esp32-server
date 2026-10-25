@@ -76,6 +76,15 @@ const routes = [
       return import('../views/ModelConfig.vue')
     }
   },
+  // Bring-your-own-key models, available to every signed-in user
+  {
+    path: '/my-models',
+    name: 'MyModels',
+    meta: { requiresAuth: true },
+    component: function () {
+      return import('../views/MyModels.vue')
+    }
+  },
   {
     path: '/params-management',
     name: 'ParamsManagement',

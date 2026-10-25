@@ -99,6 +99,7 @@ public class ModelController {
             @PathVariable String provideCode,
             @PathVariable String id,
             @RequestBody ModelConfigBodyDTO modelConfigBodyDTO) {
+        modelConfigService.assertSystemModel(id);
         ModelConfigDTO modelConfigDTO = modelConfigService.edit(modelType, provideCode, id, modelConfigBodyDTO);
         configService.getConfig(false);
         return new Result<ModelConfigDTO>().ok(modelConfigDTO);
@@ -108,6 +109,7 @@ public class ModelController {
     @Operation(summary = "删除模型配置")
     @RequiresPermissions("sys:role:superAdmin")
     public Result<Void> deleteModelConfig(@PathVariable String id) {
+        modelConfigService.assertSystemModel(id);
         modelConfigService.delete(id);
         return new Result<>();
     }
@@ -116,6 +118,7 @@ public class ModelController {
     @Operation(summary = "获取模型配置")
     @RequiresPermissions("sys:role:superAdmin")
     public Result<ModelConfigDTO> getModelConfig(@PathVariable String id) {
+        modelConfigService.assertSystemModel(id);
         ModelConfigEntity item = modelConfigService.selectById(id);
         ModelConfigDTO modelConfigDTO = ConvertUtils.sourceToTarget(item, ModelConfigDTO.class);
         return new Result<ModelConfigDTO>().ok(modelConfigDTO);
@@ -125,6 +128,7 @@ public class ModelController {
     @Operation(summary = "启用/关闭模型配置")
     @RequiresPermissions("sys:role:superAdmin")
     public Result<Void> enableModelConfig(@PathVariable String id, @PathVariable Integer status) {
+        modelConfigService.assertSystemModel(id);
         ModelConfigEntity entity = modelConfigService.selectById(id);
         if (entity == null) {
             return new Result<Void>().error("模型配置不存在");
@@ -144,6 +148,7 @@ public class ModelController {
     @Operation(summary = "设置默认模型")
     @RequiresPermissions("sys:role:superAdmin")
     public Result<Void> setDefaultModel(@PathVariable String id) {
+        modelConfigService.assertSystemModel(id);
         ModelConfigEntity entity = modelConfigService.selectById(id);
         if (entity == null) {
             return new Result<Void>().error("模型配置不存在");

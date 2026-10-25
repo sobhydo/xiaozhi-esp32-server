@@ -179,7 +179,8 @@ export default {
 
 ::v-deep .el-dialog__headerbtn {
   top: 14px;
-  right: 16px;
+  right: auto;
+  inset-inline-end: 16px;
   width: 32px;
   height: 32px;
   border: none;

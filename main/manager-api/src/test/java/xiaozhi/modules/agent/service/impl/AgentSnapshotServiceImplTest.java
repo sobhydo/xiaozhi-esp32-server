@@ -65,6 +65,7 @@ import xiaozhi.modules.agent.service.AgentTemplateService;
 import xiaozhi.modules.agent.vo.AgentSnapshotVO;
 import xiaozhi.modules.agent.vo.AgentInfoVO;
 import xiaozhi.modules.correctword.service.CorrectWordFileService;
+import xiaozhi.modules.model.service.ModelConfigService;
 import xiaozhi.modules.model.service.ModelProviderService;
 import xiaozhi.modules.timbre.service.TimbreService;
 
@@ -1079,7 +1080,7 @@ class AgentSnapshotServiceImplTest {
         AgentContextProviderService contextProviderService = mock(AgentContextProviderService.class);
         CorrectWordFileService correctWordFileService = mock(CorrectWordFileService.class);
         AgentSnapshotService snapshotService = mock(AgentSnapshotService.class);
-        AgentServiceImpl service = new AgentServiceImpl(agentDao, null, null, null, null, null, null, null,
+        AgentServiceImpl service = new AgentServiceImpl(agentDao, null, null, mock(ModelConfigService.class), null, null, null, null,
                 null, null, contextProviderService, null, correctWordFileService, snapshotService);
         ReflectionTestUtils.setField(service, "baseDao", agentDao);
 
@@ -1113,7 +1114,7 @@ class AgentSnapshotServiceImplTest {
         AgentContextProviderService contextProviderService = mock(AgentContextProviderService.class);
         CorrectWordFileService correctWordFileService = mock(CorrectWordFileService.class);
         AgentSnapshotService snapshotService = mock(AgentSnapshotService.class);
-        AgentServiceImpl service = new AgentServiceImpl(agentDao, null, null, null, null, null, null, null,
+        AgentServiceImpl service = new AgentServiceImpl(agentDao, null, null, mock(ModelConfigService.class), null, null, null, null,
                 null, null, contextProviderService, null, correctWordFileService, snapshotService);
         ReflectionTestUtils.setField(service, "baseDao", agentDao);
 
@@ -1149,7 +1150,7 @@ class AgentSnapshotServiceImplTest {
         AgentTemplateService templateService = mock(AgentTemplateService.class);
         ModelProviderService providerService = mock(ModelProviderService.class);
         AgentSnapshotService snapshotService = mock(AgentSnapshotService.class);
-        AgentServiceImpl service = new AgentServiceImpl(agentDao, null, timbreService, null, null, null,
+        AgentServiceImpl service = new AgentServiceImpl(agentDao, null, timbreService, mock(ModelConfigService.class), null, null,
                 pluginMappingService, null, templateService, providerService, null, null, null, snapshotService);
         ReflectionTestUtils.setField(service, "baseDao", agentDao);
 

@@ -21,6 +21,31 @@ function retryCallbackRequest(retry, retryCount, onTerminalFailure, error, retry
   setTimeout(() => retry(retryCount + 1, startedAt), CALLBACK_RETRY_DELAY_MS);
 }
 
+// Bring-your-own-key requests: business errors (code != 0) reach the callback too, so pages
+// can show the backend message; network errors become a synthetic { code: -1 } response.
+function sendUserModelRequest(url, method, data, callback) {
+  const request = RequestService.sendRequest()
+    .url(url)
+    .method(method)
+    .success((res) => {
+      RequestService.clearRequestTime();
+      callback(res);
+    })
+    .fail((res) => {
+      RequestService.clearRequestTime();
+      callback(res);
+    })
+    .networkFail((err) => {
+      console.error(`User model request failed: ${method} ${url}`, err);
+      RequestService.clearRequestTime();
+      callback({ data: { code: -1, msg: (err && err.msg) || '' } });
+    });
+  if (data !== undefined) {
+    request.data(data);
+  }
+  request.send();
+}
+
 export default {
   // Get model config list
   getModelList(params, callback) {
@@ -433,6 +458,39 @@ export default {
       });
     }
     request.send()
+  },
+
+  // ---- My models (bring your own key), base path /models/mine ----
+  // Providers a user may add for a model type
+  getUserModelProviders(modelType, callback) {
+    const query = new URLSearchParams({ modelType }).toString();
+    sendUserModelRequest(`${getServiceUrl()}/models/mine/providers?${query}`, 'GET', undefined, callback);
+  },
+  // Models owned by the current user (secrets masked)
+  getUserModels(modelType, callback) {
+    const query = new URLSearchParams({ modelType }).toString();
+    sendUserModelRequest(`${getServiceUrl()}/models/mine?${query}`, 'GET', undefined, callback);
+  },
+  // Create an own model; body: { modelName, configJson, remark?, isEnabled? }
+  addUserModel(modelType, provideCode, body, callback) {
+    sendUserModelRequest(
+      `${getServiceUrl()}/models/mine/${encodeURIComponent(modelType)}/${encodeURIComponent(provideCode)}`,
+      'POST',
+      body,
+      callback
+    );
+  },
+  // Update an own model; masked secrets sent back keep the stored value
+  updateUserModel(id, body, callback) {
+    sendUserModelRequest(`${getServiceUrl()}/models/mine/${encodeURIComponent(id)}`, 'PUT', body, callback);
+  },
+  // Delete an own model (refused while an agent uses it)
+  deleteUserModel(id, callback) {
+    sendUserModelRequest(`${getServiceUrl()}/models/mine/${encodeURIComponent(id)}`, 'DELETE', undefined, callback);
+  },
+  // Test a connection; body: { id?, modelType, provideCode, configJson } -> { ok, message, latencyMs }
+  testUserModel(body, callback) {
+    sendUserModelRequest(`${getServiceUrl()}/models/mine/test`, 'POST', body, callback);
   },
 
   // Get RAG model list
