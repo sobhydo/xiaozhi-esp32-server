@@ -17,28 +17,13 @@ import ptBRLocale from 'element-ui/lib/locale/lang/pt-br'
 
 Vue.use(VueI18n);
 
-// Get language setting from local storage; fall back to browser language or default
+// Get language setting from local storage; otherwise default to English
 const getDefaultLanguage = () => {
   const savedLang = localStorage.getItem('userLanguage');
   if (savedLang) {
     return savedLang;
   }
-  const browserLang = navigator.language || navigator.userLanguage;
-  if (browserLang.indexOf('zh') === 0) {
-    if (browserLang === 'zh-TW' || browserLang === 'zh-HK' || browserLang === 'zh-MO') {
-      return 'zh_TW';
-    }
-    return 'zh_CN';
-  }
-  if (browserLang.indexOf('de') === 0) {
-    return 'de';
-  }
-  if (browserLang.indexOf('vi') === 0) {
-    return 'vi';
-  }
-  if (browserLang === 'pt-BR' || browserLang === 'pt') {
-    return 'pt_BR';
-  }
+  // English by default; users pick another language from the account menu
   return 'en';
 };
 

@@ -72,7 +72,7 @@ public class HttpContextUtils {
 
     public static String getLanguage() {
         // 默认语言
-        String defaultLanguage = "zh-CN";
+        String defaultLanguage = "en-US";
         // request
         HttpServletRequest request = getHttpServletRequest();
         if (request == null) {

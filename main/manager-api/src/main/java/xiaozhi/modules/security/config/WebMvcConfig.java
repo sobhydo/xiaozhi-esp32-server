@@ -111,7 +111,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
             public Locale resolveLocale(HttpServletRequest request) {
                 String acceptLanguage = request.getHeader("Accept-Language");
                 if (acceptLanguage == null || acceptLanguage.isEmpty()) {
-                    return Locale.getDefault();
+                    return Locale.US;
                 }
 
                 // 解析Accept-Language请求头中的首选语言
@@ -148,7 +148,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 }
 
                 // 如果没有匹配的语言，使用默认语言
-                return Locale.getDefault();
+                return Locale.US;
             }
         };
     }
