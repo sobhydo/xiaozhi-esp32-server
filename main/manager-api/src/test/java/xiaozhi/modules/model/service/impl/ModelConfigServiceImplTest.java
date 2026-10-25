@@ -29,6 +29,8 @@ import xiaozhi.modules.model.dto.ModelConfigDTO;
 import xiaozhi.modules.model.dto.ModelProviderDTO;
 import xiaozhi.modules.model.entity.ModelConfigEntity;
 import xiaozhi.modules.model.service.ModelProviderService;
+import xiaozhi.modules.timbre.dao.TimbreDao;
+import xiaozhi.modules.voiceclone.dao.VoiceCloneDao;
 
 class ModelConfigServiceImplTest {
 
@@ -41,7 +43,8 @@ class ModelConfigServiceImplTest {
         modelConfigDao = mock(ModelConfigDao.class);
         modelProviderService = mock(ModelProviderService.class);
         service = new ModelConfigServiceImpl(
-                modelConfigDao, modelProviderService, mock(RedisUtils.class), mock(AgentDao.class));
+                modelConfigDao, modelProviderService, mock(RedisUtils.class), mock(AgentDao.class),
+                mock(TimbreDao.class), mock(VoiceCloneDao.class));
     }
 
     @ParameterizedTest

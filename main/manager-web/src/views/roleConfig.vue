@@ -422,7 +422,7 @@
                 v-model="form.ttsVoiceId"
                 filterable
                 :disabled="voiceOptionsLoading"
-                :placeholder="$t('roleConfig.pleaseSelect')"
+                :placeholder="ownedTtsWithoutVoices ? $t('myModels.defaultVoice') : $t('roleConfig.pleaseSelect')"
                 class="form-select"
                 @change="handleVoiceChange"
               >
@@ -454,6 +454,10 @@
                   </div>
                 </el-option>
               </el-select>
+              <p v-if="ownedTtsWithoutVoices" class="owned-voice-hint">
+                {{ $t("roleConfig.ownTtsDefaultVoice") }}
+                <router-link :to="{ path: '/my-models', query: { type: 'tts' } }">{{ $t("header.myModels") }}</router-link>
+              </p>
             </el-form-item>
 
             <!-- Read-only summary of the TTS parameters edited in the advanced dialog -->
@@ -697,6 +701,12 @@ export default {
         || !this.agentConfigLoaded
         || !this.agentFunctionsLoaded
         || !this.agentTagsLoaded;
+    },
+    // An own TTS model without saved voices runs with its configured default voice
+    ownedTtsWithoutVoices() {
+      return !this.voiceOptionsLoading
+        && this.voiceOptions.length === 0
+        && this.isOwnedTtsModel(this.form.model.ttsModelId, this.modelOptions.TTS);
     }
   },
   methods: {
@@ -1197,6 +1207,10 @@ export default {
         if (requestSeq !== this.voiceFetchSeq) {
           return;
         }
+        if (data.code === 0 && !(Array.isArray(data.data) && data.data.length)) {
+          this.acceptOwnedTtsWithoutVoices(requestSeq, modelId, options);
+          return;
+        }
         const draft = data.code === 0
           ? this.buildTtsDraft(modelId, data.data, options)
           : null;
@@ -1209,6 +1223,38 @@ export default {
         this.lastValidTtsDraft = this.captureTtsDraft();
       }, () => {
         this.handleVoiceOptionsFailure(requestSeq, options.rollbackState);
+      });
+    },
+    isOwnedTtsModel(modelId, ttsOptions) {
+      return !!modelId && (ttsOptions || []).some((item) => item.value === modelId && item.owned);
+    },
+    // Own TTS models may have no voices: keep the model and clear the voice so its default voice is used.
+    // System models keep the old behaviour (an empty voice list is an error).
+    acceptOwnedTtsWithoutVoices(requestSeq, modelId, options) {
+      const decide = (ttsOptions) => {
+        if (requestSeq !== this.voiceFetchSeq) {
+          return;
+        }
+        if (!this.isOwnedTtsModel(modelId, ttsOptions)) {
+          this.handleVoiceOptionsFailure(requestSeq, options.rollbackState);
+          return;
+        }
+        this.applyTtsDraft({
+          modelId, language: "", voiceId: "", voiceDetails: {}, languageOptions: [], voiceOptions: []
+        }, options);
+        this.voiceOptionsLoading = false;
+        this.lastValidTtsDraft = this.captureTtsDraft();
+      };
+      if (this.modelOptions.TTS) {
+        decide(this.modelOptions.TTS);
+        return;
+      }
+      // Model names are still loading; decide once they arrive
+      const unwatch = this.$watch(() => this.modelOptions.TTS, (ttsOptions) => {
+        if (ttsOptions) {
+          unwatch();
+          decide(ttsOptions);
+        }
       });
     },
     cloneTtsDraft(draft) {
@@ -2551,6 +2597,22 @@ export default {
   .card-body {
     padding-inline-start: 16px;
     padding-inline-end: 16px;
+  }
+}
+
+// Hint under the voice select for own TTS models without voices
+.owned-voice-hint {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--x-text-muted);
+  text-align: start;
+
+  a {
+    color: var(--x-text);
+    font-weight: 500;
+    text-decoration: underline;
+    text-underline-offset: 2px;
   }
 }
 

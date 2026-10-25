@@ -42,6 +42,10 @@ import xiaozhi.modules.model.entity.ModelConfigEntity;
 import xiaozhi.modules.model.service.ModelConfigService;
 import xiaozhi.modules.model.service.ModelProviderService;
 import xiaozhi.modules.security.user.SecurityUser;
+import xiaozhi.modules.timbre.dao.TimbreDao;
+import xiaozhi.modules.timbre.entity.TimbreEntity;
+import xiaozhi.modules.voiceclone.dao.VoiceCloneDao;
+import xiaozhi.modules.voiceclone.entity.VoiceCloneEntity;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -54,6 +58,8 @@ public class ModelConfigServiceImpl extends BaseServiceImpl<ModelConfigDao, Mode
     private final ModelProviderService modelProviderService;
     private final RedisUtils redisUtils;
     private final AgentDao agentDao;
+    private final TimbreDao timbreDao;
+    private final VoiceCloneDao voiceCloneDao;
 
     @Override
     public List<ModelBasicInfoDTO> getModelCodeList(String modelType, String modelName) {
@@ -124,6 +130,24 @@ public class ModelConfigServiceImpl extends BaseServiceImpl<ModelConfigDao, Mode
                 .select("id", "user_id").eq("id", modelId));
         // Missing ids keep the old behaviour (agents may hold stale ids); only other users' models are blocked
         if (model != null && model.getUserId() != null && !model.getUserId().equals(ownerUserId)) {
+            throw new RenException(ErrorCode.MODEL_NOT_ACCESSIBLE);
+        }
+    }
+
+    @Override
+    public void assertVoiceUsable(String voiceId, Long ownerUserId) {
+        if (StringUtils.isBlank(voiceId)) {
+            return;
+        }
+        TimbreEntity timbre = timbreDao.selectOne(new QueryWrapper<TimbreEntity>()
+                .select("id", "tts_model_id").eq("id", voiceId));
+        if (timbre != null) {
+            assertModelUsable(timbre.getTtsModelId(), ownerUserId);
+            return;
+        }
+        VoiceCloneEntity clone = voiceCloneDao.selectOne(new QueryWrapper<VoiceCloneEntity>()
+                .select("id", "user_id").eq("id", voiceId));
+        if (clone != null && (clone.getUserId() == null || !clone.getUserId().equals(ownerUserId))) {
             throw new RenException(ErrorCode.MODEL_NOT_ACCESSIBLE);
         }
     }

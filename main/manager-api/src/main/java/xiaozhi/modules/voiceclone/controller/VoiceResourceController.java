@@ -22,9 +22,12 @@ import lombok.extern.slf4j.Slf4j;
 import xiaozhi.common.constant.Constant;
 import xiaozhi.common.exception.ErrorCode;
 import xiaozhi.common.page.PageData;
+import xiaozhi.common.user.UserDetail;
 import xiaozhi.common.utils.Result;
 import xiaozhi.common.validator.ValidatorUtils;
 import xiaozhi.modules.model.service.ModelConfigService;
+import xiaozhi.modules.security.user.SecurityUser;
+import xiaozhi.modules.sys.enums.SuperAdminEnum;
 import xiaozhi.modules.voiceclone.dto.VoiceCloneDTO;
 import xiaozhi.modules.voiceclone.dto.VoiceCloneResponseDTO;
 import xiaozhi.modules.voiceclone.service.VoiceCloneService;
@@ -102,6 +105,11 @@ public class VoiceResourceController {
     @Operation(summary = "根据用户ID获取音色资源列表")
     @RequiresPermissions("sys:role:normal")
     public Result<List<VoiceCloneResponseDTO>> getByUserId(@PathVariable("userId") Long userId) {
+        UserDetail user = SecurityUser.getUser();
+        boolean superAdmin = user.getSuperAdmin() != null && user.getSuperAdmin() == SuperAdminEnum.YES.value();
+        if (!superAdmin && (userId == null || !userId.equals(user.getId()))) {
+            return new Result<List<VoiceCloneResponseDTO>>().error(ErrorCode.VOICE_RESOURCE_NO_PERMISSION);
+        }
         List<VoiceCloneResponseDTO> list = voiceCloneService.getByUserIdWithNames(userId);
         return new Result<List<VoiceCloneResponseDTO>>().ok(list);
     }

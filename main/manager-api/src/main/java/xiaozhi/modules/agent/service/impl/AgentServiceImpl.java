@@ -376,6 +376,7 @@ public class AgentServiceImpl extends BaseServiceImpl<AgentDao, AgentEntity> imp
         assertModelsUsable(lockedAgent.getUserId(), dto.getAsrModelId(), dto.getVadModelId(), dto.getLlmModelId(),
                 dto.getSlmModelId(), dto.getVllmModelId(), dto.getTtsModelId(), dto.getMemModelId(),
                 dto.getIntentModelId());
+        modelConfigService.assertVoiceUsable(dto.getTtsVoiceId(), lockedAgent.getUserId());
 
         // 锁定后查询现有实体和关联配置
         AgentEntity existingEntity = this.getAgentById(agentId);
@@ -664,6 +665,7 @@ public class AgentServiceImpl extends BaseServiceImpl<AgentDao, AgentEntity> imp
         assertModelsUsable(user.getId(), entity.getAsrModelId(), entity.getVadModelId(), entity.getLlmModelId(),
                 entity.getSlmModelId(), entity.getVllmModelId(), entity.getTtsModelId(), entity.getMemModelId(),
                 entity.getIntentModelId());
+        modelConfigService.assertVoiceUsable(entity.getTtsVoiceId(), user.getId());
         entity.setCreator(user.getId());
         entity.setCreatedAt(new Date());
 

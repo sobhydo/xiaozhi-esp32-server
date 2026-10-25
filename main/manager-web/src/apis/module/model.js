@@ -492,6 +492,32 @@ export default {
   testUserModel(body, callback) {
     sendUserModelRequest(`${getServiceUrl()}/models/mine/test`, 'POST', body, callback);
   },
+  // Voices of an own TTS model -> [{ id, name, ttsVoice, languages }]
+  getUserModelVoices(modelId, callback) {
+    sendUserModelRequest(`${getServiceUrl()}/models/mine/${encodeURIComponent(modelId)}/voices`, 'GET', undefined, callback);
+  },
+  // Add a voice to an own TTS model; body: { name, ttsVoice, languages }
+  addUserModelVoice(modelId, body, callback) {
+    sendUserModelRequest(`${getServiceUrl()}/models/mine/${encodeURIComponent(modelId)}/voices`, 'POST', body, callback);
+  },
+  // Remove a voice from an own TTS model
+  deleteUserModelVoice(modelId, voiceId, callback) {
+    sendUserModelRequest(
+      `${getServiceUrl()}/models/mine/${encodeURIComponent(modelId)}/voices/${encodeURIComponent(voiceId)}`,
+      'DELETE',
+      undefined,
+      callback
+    );
+  },
+  // Voices available on the provider for the model's key -> [{ voiceId, name, category?, previewUrl?, labels? }]
+  getUserModelProviderVoices(modelId, callback) {
+    sendUserModelRequest(
+      `${getServiceUrl()}/models/mine/${encodeURIComponent(modelId)}/provider-voices`,
+      'GET',
+      undefined,
+      callback
+    );
+  },
 
   // Get RAG model list
   getRAGModels(callback) {

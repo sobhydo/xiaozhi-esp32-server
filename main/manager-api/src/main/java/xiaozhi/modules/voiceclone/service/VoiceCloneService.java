@@ -7,6 +7,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import xiaozhi.common.page.PageData;
 import xiaozhi.common.service.BaseService;
+import xiaozhi.modules.voiceclone.dto.VoiceCloneCreateDTO;
 import xiaozhi.modules.voiceclone.dto.VoiceCloneDTO;
 import xiaozhi.modules.voiceclone.dto.VoiceCloneResponseDTO;
 import xiaozhi.modules.voiceclone.entity.VoiceCloneEntity;
@@ -75,4 +76,14 @@ public interface VoiceCloneService extends BaseService<VoiceCloneEntity> {
      * @param cloneId 语音克隆记录ID
      */
     void cloneAudio(String cloneId);
+
+    /**
+     * BYOK: create a self-managed clone slot on the user's own ElevenLabs TTS model.
+     */
+    VoiceCloneResponseDTO createOwn(VoiceCloneCreateDTO dto, Long userId);
+
+    /**
+     * BYOK: delete a self-managed clone slot (best-effort removal of the trained ElevenLabs voice).
+     */
+    void deleteOwn(String id, Long userId);
 }

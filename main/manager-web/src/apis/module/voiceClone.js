@@ -1,7 +1,42 @@
 import { getServiceUrl } from '../api';
 import RequestService from '../httpRequest';
 
+// Self-service requests: business errors (code != 0) reach the callback so the page can show
+// the backend message; network errors become a synthetic { code: -1 } response.
+function sendSelfServiceRequest(url, method, data, callback) {
+    const request = RequestService.sendRequest()
+        .url(url)
+        .method(method)
+        .success((res) => {
+            RequestService.clearRequestTime();
+            callback(res);
+        })
+        .fail((res) => {
+            RequestService.clearRequestTime();
+            callback(res);
+        })
+        .networkFail((err) => {
+            console.error(`Voice clone request failed: ${method} ${url}`, err);
+            RequestService.clearRequestTime();
+            callback({ data: { code: -1, msg: (err && err.msg) || '' } });
+        });
+    if (data !== undefined) {
+        request.data(data);
+    }
+    request.send();
+}
+
 export default {
+    // Create a clone slot on one of the user's own ElevenLabs models; body: { modelId, name, languages? }
+    createOwnVoiceClone(body, callback) {
+        sendSelfServiceRequest(`${getServiceUrl()}/voiceClone/mine`, 'POST', body, callback);
+    },
+
+    // Delete a self-managed clone slot (and its ElevenLabs voice)
+    deleteVoiceClone(id, callback) {
+        sendSelfServiceRequest(`${getServiceUrl()}/voiceClone/${encodeURIComponent(id)}`, 'DELETE', undefined, callback);
+    },
+
     // Query voice resources with pagination
     getVoiceCloneList(params, callback) {
         RequestService.sendRequest()

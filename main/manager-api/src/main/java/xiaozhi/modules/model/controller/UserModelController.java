@@ -22,6 +22,9 @@ import xiaozhi.modules.model.dto.ModelConfigDTO;
 import xiaozhi.modules.model.dto.ModelProviderDTO;
 import xiaozhi.modules.model.dto.ModelTestRequestDTO;
 import xiaozhi.modules.model.dto.ModelTestResultDTO;
+import xiaozhi.modules.model.dto.ProviderVoiceDTO;
+import xiaozhi.modules.model.dto.UserVoiceBodyDTO;
+import xiaozhi.modules.model.dto.UserVoiceDTO;
 import xiaozhi.modules.model.service.UserModelService;
 import xiaozhi.modules.security.user.SecurityUser;
 
@@ -79,5 +82,35 @@ public class UserModelController {
     public Result<Void> delete(@PathVariable String id) {
         userModelService.deleteOwn(id, SecurityUser.getUserId());
         return new Result<>();
+    }
+
+    @GetMapping("/{modelId}/voices")
+    @Operation(summary = "Voices of an own TTS model")
+    @RequiresPermissions("sys:role:normal")
+    public Result<List<UserVoiceDTO>> listVoices(@PathVariable String modelId) {
+        return new Result<List<UserVoiceDTO>>().ok(userModelService.listVoices(modelId, SecurityUser.getUserId()));
+    }
+
+    @PostMapping("/{modelId}/voices")
+    @Operation(summary = "Add a voice to an own TTS model")
+    @RequiresPermissions("sys:role:normal")
+    public Result<UserVoiceDTO> addVoice(@PathVariable String modelId, @RequestBody UserVoiceBodyDTO body) {
+        return new Result<UserVoiceDTO>().ok(userModelService.addVoice(modelId, body, SecurityUser.getUserId()));
+    }
+
+    @DeleteMapping("/{modelId}/voices/{voiceId}")
+    @Operation(summary = "Delete a voice of an own TTS model")
+    @RequiresPermissions("sys:role:normal")
+    public Result<Void> deleteVoice(@PathVariable String modelId, @PathVariable String voiceId) {
+        userModelService.deleteVoice(modelId, voiceId, SecurityUser.getUserId());
+        return new Result<>();
+    }
+
+    @GetMapping("/{modelId}/provider-voices")
+    @Operation(summary = "Voices available on the provider for an own TTS model's key")
+    @RequiresPermissions("sys:role:normal")
+    public Result<List<ProviderVoiceDTO>> providerVoices(@PathVariable String modelId) {
+        return new Result<List<ProviderVoiceDTO>>()
+                .ok(userModelService.providerVoices(modelId, SecurityUser.getUserId()));
     }
 }

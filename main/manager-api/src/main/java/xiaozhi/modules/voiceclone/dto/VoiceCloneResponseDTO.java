@@ -48,4 +48,7 @@ public class VoiceCloneResponseDTO {
 
     @Schema(description = "是否有音频数据")
     private Boolean hasVoice;
+
+    @Schema(description = "BYOK: the slot's model belongs to the slot owner, so the owner may delete it")
+    private Boolean selfManaged;
 }

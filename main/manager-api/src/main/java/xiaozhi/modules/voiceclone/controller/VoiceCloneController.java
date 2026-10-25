@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,6 +32,7 @@ import xiaozhi.common.user.UserDetail;
 import xiaozhi.common.utils.Result;
 import xiaozhi.common.validator.ValidatorUtils;
 import xiaozhi.modules.security.user.SecurityUser;
+import xiaozhi.modules.voiceclone.dto.VoiceCloneCreateDTO;
 import xiaozhi.modules.voiceclone.dto.VoiceCloneResponseDTO;
 import xiaozhi.modules.voiceclone.entity.VoiceCloneEntity;
 import xiaozhi.modules.voiceclone.service.VoiceCloneService;
@@ -186,6 +188,21 @@ public class VoiceCloneController {
         // 调用服务层进行语音克隆训练
         voiceCloneService.cloneAudio(cloneId);
         return new Result<String>();
+    }
+
+    @PostMapping("/mine")
+    @Operation(summary = "BYOK: create a clone slot on an own ElevenLabs TTS model")
+    @RequiresPermissions("sys:role:normal")
+    public Result<VoiceCloneResponseDTO> createOwn(@RequestBody VoiceCloneCreateDTO dto) {
+        return new Result<VoiceCloneResponseDTO>().ok(voiceCloneService.createOwn(dto, SecurityUser.getUserId()));
+    }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "BYOK: delete a self-managed clone slot")
+    @RequiresPermissions("sys:role:normal")
+    public Result<Void> deleteOwn(@PathVariable("id") String id) {
+        voiceCloneService.deleteOwn(id, SecurityUser.getUserId());
+        return new Result<>();
     }
 
     private void checkPermission(String id) {

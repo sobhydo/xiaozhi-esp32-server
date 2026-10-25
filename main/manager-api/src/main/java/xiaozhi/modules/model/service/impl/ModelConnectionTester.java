@@ -10,6 +10,10 @@ import java.net.http.HttpResponse;
 import java.net.http.HttpTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
@@ -18,7 +22,9 @@ import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import lombok.extern.slf4j.Slf4j;
+import xiaozhi.common.exception.RenException;
 import xiaozhi.modules.model.dto.ModelTestResultDTO;
+import xiaozhi.modules.model.dto.ProviderVoiceDTO;
 
 /**
  * BYOK: checks that a provider accepts the given key/model. Never throws; failures are reported as ok=false.
@@ -32,6 +38,10 @@ public class ModelConnectionTester {
     static final String DEFAULT_OPENAI_BASE = "https://api.openai.com/v1";
     static final String DEFAULT_CLAUDE_BASE = "https://api.anthropic.com";
     static final String GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models/";
+    public static final String DEFAULT_ELEVENLABS_BASE = "https://api.elevenlabs.io/v1";
+    /** OpenAI TTS voices (the API has no voice listing endpoint). */
+    static final List<String> OPENAI_VOICES = List.of("alloy", "ash", "ballad", "coral", "echo", "fable", "nova",
+            "onyx", "sage", "shimmer", "verse", "marin", "cedar");
 
     private final HttpClient httpClient;
 
@@ -76,7 +86,13 @@ public class ModelConnectionTester {
 
     /** Returns the provider request, or null when no test exists for this type/provider. */
     HttpRequest buildRequest(String modelType, String provideCode, JSONObject config) {
-        if (!"LLM".equalsIgnoreCase(modelType) || provideCode == null) {
+        if (provideCode == null || modelType == null) {
+            return null;
+        }
+        if ("ASR".equalsIgnoreCase(modelType) || "TTS".equalsIgnoreCase(modelType)) {
+            return buildSpeechRequest(modelType.toUpperCase(), provideCode, config);
+        }
+        if (!"LLM".equalsIgnoreCase(modelType)) {
             return null;
         }
         String apiKey = config.getStr("api_key", "").trim();
@@ -127,6 +143,166 @@ public class ModelConnectionTester {
             default:
                 return null;
         }
+    }
+
+    /** ASR/TTS: validate the key by listing models (no audio is generated, nothing is billed). */
+    private HttpRequest buildSpeechRequest(String modelType, String provideCode, JSONObject config) {
+        String apiKey = config.getStr("api_key", "").trim();
+        switch (provideCode) {
+            case "elevenlabs": {
+                require(apiKey, "API key is required");
+                return HttpRequest.newBuilder(URI.create(elevenLabsBase(modelType, config) + "/models"))
+                        .timeout(TIMEOUT)
+                        .header("xi-api-key", apiKey)
+                        .GET()
+                        .build();
+            }
+            case "openai": {
+                require(apiKey, "API key is required");
+                return HttpRequest.newBuilder(URI.create(openAiSpeechBase(modelType, config) + "/models"))
+                        .timeout(TIMEOUT)
+                        .header("Authorization", "Bearer " + apiKey)
+                        .GET()
+                        .build();
+            }
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * ElevenLabs API base (".../v1"): TTS configs use api_base; ASR configs hold a full endpoint in base_url,
+     * cut after "/v1". Falls back to the public API.
+     */
+    public static String elevenLabsBase(String modelType, JSONObject config) {
+        if (config == null) {
+            return DEFAULT_ELEVENLABS_BASE;
+        }
+        String apiBase = config.getStr("api_base", "").trim();
+        if (StringUtils.isNotBlank(apiBase)) {
+            return stripTrailingSlash(apiBase);
+        }
+        String baseUrl = config.getStr("base_url", "").trim();
+        if ("ASR".equalsIgnoreCase(modelType) && StringUtils.isNotBlank(baseUrl)) {
+            int idx = baseUrl.indexOf("/v1");
+            if (idx > 0) {
+                return baseUrl.substring(0, idx + 3);
+            }
+        }
+        return DEFAULT_ELEVENLABS_BASE;
+    }
+
+    /** OpenAI API base (".../v1") derived from a speech endpoint (api_url for TTS, base_url for ASR). */
+    static String openAiSpeechBase(String modelType, JSONObject config) {
+        String first = "TTS".equalsIgnoreCase(modelType) ? "api_url" : "base_url";
+        String second = "TTS".equalsIgnoreCase(modelType) ? "base_url" : "api_url";
+        String url = StringUtils.defaultIfBlank(config.getStr(first, "").trim(), config.getStr(second, "").trim());
+        if (StringUtils.isBlank(url)) {
+            return DEFAULT_OPENAI_BASE;
+        }
+        int idx = url.indexOf("/audio/");
+        if (idx < 0 && url.endsWith("/audio")) {
+            idx = url.length() - "/audio".length();
+        }
+        return stripTrailingSlash(idx > 0 ? url.substring(0, idx) : url);
+    }
+
+    /**
+     * Voices available on the provider for this TTS config, for a picker. Throws RenException with the
+     * provider's error (max 300 chars).
+     */
+    public List<ProviderVoiceDTO> listProviderVoices(String provideCode, JSONObject config) {
+        JSONObject cfg = config == null ? new JSONObject() : config;
+        if ("openai".equals(provideCode)) {
+            return OPENAI_VOICES.stream().map(v -> new ProviderVoiceDTO(v, v, "premade", null, null)).toList();
+        }
+        if (!"elevenlabs".equals(provideCode)) {
+            throw new RenException("Voice listing not available for this provider");
+        }
+        try {
+            HttpRequest request = buildElevenLabsVoicesRequest(cfg);
+            assertPublicUrl(request.uri().toString());
+            HttpResponse<String> response = httpClient.send(request,
+                    HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            int status = response.statusCode();
+            if (status < 200 || status >= 300) {
+                throw new RenException(trim("HTTP " + status + ": " + errorText(response.body())));
+            }
+            return parseElevenLabsVoices(response.body());
+        } catch (RenException e) {
+            throw e;
+        } catch (IllegalArgumentException e) {
+            throw new RenException(trim(e.getMessage()));
+        } catch (HttpTimeoutException e) {
+            throw new RenException("Timed out after " + TIMEOUT.toSeconds() + " s");
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RenException("Interrupted");
+        } catch (Exception e) {
+            throw new RenException(trim(StringUtils.defaultIfBlank(e.getMessage(), e.getClass().getSimpleName())));
+        }
+    }
+
+    HttpRequest buildElevenLabsVoicesRequest(JSONObject config) {
+        String apiKey = config.getStr("api_key", "").trim();
+        require(apiKey, "API key is required");
+        return HttpRequest.newBuilder(URI.create(elevenLabsBase("TTS", config) + "/voices"))
+                .timeout(TIMEOUT)
+                .header("xi-api-key", apiKey)
+                .GET()
+                .build();
+    }
+
+    static List<ProviderVoiceDTO> parseElevenLabsVoices(String body) {
+        List<ProviderVoiceDTO> result = new ArrayList<>();
+        JSONObject root = JSONUtil.parseObj(body);
+        JSONArray voices = root.getJSONArray("voices");
+        if (voices == null) {
+            return result;
+        }
+        for (Object item : voices) {
+            if (!(item instanceof JSONObject v) || StringUtils.isBlank(v.getStr("voice_id"))) {
+                continue;
+            }
+            JSONObject labels = v.getJSONObject("labels");
+            Map<String, Object> labelMap = labels == null ? null : new LinkedHashMap<>(labels);
+            result.add(new ProviderVoiceDTO(v.getStr("voice_id"), v.getStr("name"), v.getStr("category"),
+                    v.getStr("preview_url"), labelMap));
+        }
+        return result;
+    }
+
+    /** Best-effort delete of an ElevenLabs voice; returns false (and logs) on any failure. */
+    public boolean deleteElevenLabsVoice(String apiBase, String apiKey, String voiceId) {
+        if (StringUtils.isAnyBlank(apiKey, voiceId)) {
+            return false;
+        }
+        try {
+            HttpRequest request = buildElevenLabsDeleteRequest(apiBase, apiKey, voiceId);
+            assertPublicUrl(request.uri().toString());
+            HttpResponse<String> response = httpClient.send(request,
+                    HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                return true;
+            }
+            log.warn("ElevenLabs voice delete failed for {}: HTTP {} {}", voiceId, response.statusCode(),
+                    trim(errorText(response.body())));
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.warn("ElevenLabs voice delete interrupted for {}", voiceId);
+        } catch (Exception e) {
+            log.warn("ElevenLabs voice delete failed for {}: {}", voiceId, e.getMessage());
+        }
+        return false;
+    }
+
+    HttpRequest buildElevenLabsDeleteRequest(String apiBase, String apiKey, String voiceId) {
+        String base = stripTrailingSlash(StringUtils.defaultIfBlank(StringUtils.trim(apiBase), DEFAULT_ELEVENLABS_BASE));
+        return HttpRequest.newBuilder(URI.create(base + "/voices/" + URLEncoder.encode(voiceId, StandardCharsets.UTF_8)))
+                .timeout(TIMEOUT)
+                .header("xi-api-key", apiKey)
+                .DELETE()
+                .build();
     }
 
     /**

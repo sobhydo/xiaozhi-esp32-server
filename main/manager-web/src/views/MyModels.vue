@@ -58,7 +58,11 @@
               <div class="model-row__meta">
                 <span>{{ providerLabel(row) }}</span>
                 <span class="dot" aria-hidden="true">·</span>
-                <span class="mono" dir="ltr">{{ (row.configJson && row.configJson.model_name) || "—" }}</span>
+                <span class="mono" dir="ltr">{{ rowModel(row) }}</span>
+                <template v-if="activeType === 'TTS' && row.configJson && row.configJson.voice">
+                  <span class="dot" aria-hidden="true">·</span>
+                  <span class="mono" dir="ltr" :title="$t('myModels.defaultVoice')">{{ row.configJson.voice }}</span>
+                </template>
               </div>
             </div>
             <div class="model-row__side">
@@ -74,6 +78,9 @@
               <div class="model-row__actions">
                 <el-button size="small" :loading="testingId === row.id" @click="testRow(row)">
                   {{ $t("myModels.test") }}
+                </el-button>
+                <el-button v-if="activeType === 'TTS'" size="small" @click="openVoices(row)">
+                  {{ $t("myModels.voices") }}
                 </el-button>
                 <el-button size="small" @click="openEdit(row)">{{ $t("common.edit") }}</el-button>
                 <el-tooltip :content="$t('common.delete')" placement="top">
@@ -165,6 +172,30 @@
             <el-input v-model="form.baseUrl" dir="ltr" placeholder="https://api.example.com/v1" @input="clearTest" />
           </el-form-item>
 
+          <el-form-item v-if="activeType === 'ASR' && form.preset === 'elevenlabs'" :label="$t('myModels.language')">
+            <el-select v-model="form.languageCode" class="full">
+              <el-option v-for="lang in asrLanguages" :key="lang.value || 'auto'" :label="$t(lang.label)" :value="lang.value" />
+            </el-select>
+          </el-form-item>
+
+          <el-form-item v-if="activeType === 'TTS'" :label="$t('myModels.defaultVoice')" prop="voice">
+            <el-select
+              v-if="form.preset === 'openai'"
+              v-model="form.voice"
+              class="full"
+              filterable
+              allow-create
+              default-first-option
+              @change="clearTest"
+            >
+              <el-option v-for="name in openaiVoices" :key="name" :label="name" :value="name" />
+            </el-select>
+            <template v-else>
+              <el-input v-model="form.voice" dir="ltr" maxlength="50" @input="clearTest" />
+              <p class="field-hint">{{ $t("myModels.elevenlabsVoiceHint") }}</p>
+            </template>
+          </el-form-item>
+
           <el-form-item v-if="form.preset === 'claude'" :label="$t('myModels.effort')">
             <el-select v-model="form.effort" class="full">
               <el-option v-for="level in effortLevels" :key="level" :label="$t('myModels.effort_' + level)" :value="level" />
@@ -191,6 +222,8 @@
           </div>
         </el-form>
       </CustomDialog>
+
+      <MyModelVoicesDrawer :visible.sync="voicesVisible" :model="voicesModel" />
     </main>
     <el-footer>
       <version-footer />
@@ -202,6 +235,7 @@
 import Api from "@/apis/api";
 import CustomDialog from "@/components/CustomDialog.vue";
 import HeaderBar from "@/components/HeaderBar.vue";
+import MyModelVoicesDrawer from "@/components/MyModelVoicesDrawer.vue";
 import VersionFooter from "@/components/VersionFooter.vue";
 
 const OPENAI_BASE_URL = "https://api.openai.com/v1";
@@ -246,6 +280,57 @@ const COMPATIBLE_SERVICES = [
   { key: "custom", label: "myModels.serviceCustom", baseUrl: "", models: [] },
 ];
 
+// Speech presets: modelKey is the config field holding the model name, urlKey/url the fixed endpoint
+const ASR_PRESETS = [
+  {
+    key: "openai",
+    provideCode: "openai",
+    label: "myModels.providerOpenai",
+    modelKey: "model_name",
+    urlKey: "base_url",
+    url: "https://api.openai.com/v1/audio/transcriptions",
+    models: ["gpt-4o-mini-transcribe", "gpt-4o-transcribe", "whisper-1"],
+    defaults: { output_dir: "tmp/" },
+  },
+  {
+    key: "elevenlabs",
+    provideCode: "elevenlabs",
+    label: "myModels.providerElevenlabsScribe",
+    modelKey: "model_id",
+    models: ["scribe_v2"],
+    defaults: { language_code: "", output_dir: "tmp/" },
+  },
+];
+
+const OPENAI_VOICES = ["alloy", "ash", "ballad", "coral", "echo", "fable", "nova", "onyx", "sage", "shimmer", "verse",
+  "marin", "cedar"];
+const ELEVENLABS_DEFAULT_VOICE = "21m00Tcm4TlvDq8ikWAM"; // Rachel
+
+const TTS_PRESETS = [
+  {
+    key: "openai",
+    provideCode: "openai",
+    label: "myModels.providerOpenai",
+    modelKey: "model",
+    urlKey: "api_url",
+    url: "https://api.openai.com/v1/audio/speech",
+    models: ["gpt-4o-mini-tts", "tts-1", "tts-1-hd"],
+    defaultVoice: "alloy",
+    defaults: { speed: 1, output_dir: "tmp/" },
+  },
+  {
+    key: "elevenlabs",
+    provideCode: "elevenlabs",
+    label: "myModels.providerElevenlabs",
+    modelKey: "model_id",
+    models: ["eleven_flash_v2_5", "eleven_multilingual_v2", "eleven_v3"],
+    defaultVoice: ELEVENLABS_DEFAULT_VOICE,
+    defaults: { speed: 1, output_dir: "tmp/" },
+  },
+];
+
+const PRESETS = { LLM: LLM_PRESETS, ASR: ASR_PRESETS, TTS: TTS_PRESETS };
+
 const normalizeUrl = (url) => String(url || "").trim().replace(/\/+$/, "").toLowerCase();
 
 function emptyForm() {
@@ -259,6 +344,8 @@ function emptyForm() {
     modelName: "",
     baseUrl: "",
     effort: "low",
+    languageCode: "",
+    voice: "",
     displayName: "",
     isEnabled: 1,
     remark: "",
@@ -268,15 +355,24 @@ function emptyForm() {
 
 export default {
   name: "MyModels",
-  components: { HeaderBar, CustomDialog, VersionFooter },
+  components: { HeaderBar, CustomDialog, VersionFooter, MyModelVoicesDrawer },
   data() {
+    const queryType = String(this.$route.query.type || "").toUpperCase();
     return {
       modelTypes: [
         { value: "LLM", label: "myModels.typeLlm", enabled: true },
-        { value: "ASR", label: "myModels.typeAsr", enabled: false },
-        { value: "TTS", label: "myModels.typeTts", enabled: false },
+        { value: "ASR", label: "myModels.typeAsr", enabled: true },
+        { value: "TTS", label: "myModels.typeTts", enabled: true },
       ],
-      activeType: "LLM",
+      activeType: PRESETS[queryType] ? queryType : "LLM",
+      voicesVisible: false,
+      voicesModel: null,
+      openaiVoices: OPENAI_VOICES,
+      asrLanguages: [
+        { value: "", label: "myModels.languageAuto" },
+        { value: "en", label: "myModels.languageEnglish" },
+        { value: "ar", label: "myModels.languageArabic" },
+      ],
       models: [],
       providerCodes: null,
       loading: false,
@@ -301,15 +397,22 @@ export default {
         modelName: required("myModels.requiredModel"),
         baseUrl: required("myModels.requiredBaseUrl"),
         displayName: required("myModels.requiredName"),
+        voice: required("myModels.requiredVoice"),
       };
+    },
+    presets() {
+      return PRESETS[this.activeType] || LLM_PRESETS;
     },
     availablePresets() {
       // Show presets whose provider the backend allows; show all if the list is unknown
-      if (!this.providerCodes || !this.providerCodes.length) return LLM_PRESETS;
-      return LLM_PRESETS.filter((p) => this.providerCodes.includes(p.provideCode));
+      if (!this.providerCodes || !this.providerCodes.length) return this.presets;
+      return this.presets.filter((p) => this.providerCodes.includes(p.provideCode));
     },
     currentPreset() {
-      return LLM_PRESETS.find((p) => p.key === this.form.preset) || null;
+      return this.presets.find((p) => p.key === this.form.preset) || null;
+    },
+    isSpeech() {
+      return this.activeType === "ASR" || this.activeType === "TTS";
     },
     modelSuggestions() {
       if (!this.currentPreset) return [];
@@ -328,11 +431,19 @@ export default {
     selectType(type) {
       if (!type.enabled || this.activeType === type.value) return;
       this.activeType = type.value;
+      this.providerCodes = null;
+      this.models = [];
+      // Keep the tab in the URL so links back here (e.g. from Voice clone) land on it
+      if (String(this.$route.query.type || "").toUpperCase() !== type.value) {
+        this.$router.replace({ query: { ...this.$route.query, type: type.value.toLowerCase() } }).catch(() => {});
+      }
       this.loadProviders();
       this.loadModels();
     },
     loadProviders() {
-      Api.model.getUserModelProviders(this.activeType, ({ data }) => {
+      const type = this.activeType;
+      Api.model.getUserModelProviders(type, ({ data }) => {
+        if (type !== this.activeType) return;
         if (data && data.code === 0 && Array.isArray(data.data)) {
           this.providerCodes = data.data.map((p) => p.providerCode).filter(Boolean);
         }
@@ -340,7 +451,9 @@ export default {
     },
     loadModels() {
       this.loading = true;
-      Api.model.getUserModels(this.activeType, ({ data }) => {
+      const type = this.activeType;
+      Api.model.getUserModels(type, ({ data }) => {
+        if (type !== this.activeType) return;
         this.loading = false;
         if (data && data.code === 0) {
           this.models = Array.isArray(data.data) ? data.data : [];
@@ -353,6 +466,7 @@ export default {
     // ---- list helpers ----
     presetOf(configJson) {
       const config = configJson || {};
+      if (this.isSpeech) return { preset: config.type || "" };
       if (config.type === "claude") return { preset: "claude" };
       if (config.type === "gemini") return { preset: "gemini" };
       const url = normalizeUrl(config.base_url);
@@ -367,11 +481,24 @@ export default {
         const match = COMPATIBLE_SERVICES.find((s) => s.key === service);
         return match && match.name ? match.name : this.$t("myModels.providerCompatible");
       }
-      const found = LLM_PRESETS.find((p) => p.key === preset);
+      const found = this.presets.find((p) => p.key === preset);
       return found ? this.$t(found.label) : config.type || "—";
     },
     providerInitial(row) {
       return (this.providerLabel(row) || "?").trim().charAt(0).toUpperCase();
+    },
+    modelKeyOf(configJson) {
+      const config = configJson || {};
+      const preset = this.presets.find((p) => p.key === this.presetOf(config).preset);
+      return (preset && preset.modelKey) || "model_name";
+    },
+    rowModel(row) {
+      const config = row.configJson || {};
+      return config[this.modelKeyOf(config)] || config.model_name || "—";
+    },
+    openVoices(row) {
+      this.voicesModel = row;
+      this.voicesVisible = true;
     },
 
     // ---- dialog ----
@@ -394,9 +521,11 @@ export default {
         service: service || "custom",
         apiKey: config.api_key || "",
         savedKey: config.api_key || "",
-        modelName: config.model_name || "",
+        modelName: config[this.modelKeyOf(config)] || "",
         baseUrl: config.base_url || "",
         effort: config.effort || "low",
+        languageCode: config.language_code || "",
+        voice: config.voice || "",
         displayName: row.modelName || "",
         isEnabled: row.isEnabled === 0 ? 0 : 1,
         remark: row.remark || "",
@@ -408,11 +537,17 @@ export default {
       this.$nextTick(() => this.$refs.form && this.$refs.form.clearValidate());
     },
     choosePreset(key) {
-      const preset = LLM_PRESETS.find((p) => p.key === key);
+      const preset = this.presets.find((p) => p.key === key);
       if (!preset || this.form.preset === key) return;
       this.form.preset = key;
       this.form.provideCode = preset.provideCode;
-      if (key === "compatible") {
+      if (this.isSpeech) {
+        if (!this.form.id) {
+          this.form.voice = preset.defaultVoice || "";
+          this.form.languageCode = "";
+          this.setModel(preset.models[0] || "");
+        }
+      } else if (key === "compatible") {
         this.chooseService(this.form.service || "ifm");
       } else {
         this.form.baseUrl = preset.baseUrl || "";
@@ -449,6 +584,14 @@ export default {
       const config = { ...(preset.defaults || {}), ...(f.original || {}) };
       config.type = f.provideCode;
       config.api_key = f.apiKey.trim();
+      if (this.isSpeech) {
+        config[preset.modelKey || "model_name"] = String(f.modelName || "").trim();
+        if (preset.urlKey && !config[preset.urlKey]) config[preset.urlKey] = preset.url;
+        if (!config.output_dir) config.output_dir = "tmp/";
+        if (this.activeType === "ASR" && f.preset === "elevenlabs") config.language_code = f.languageCode || "";
+        if (this.activeType === "TTS") config.voice = String(f.voice || "").trim();
+        return config;
+      }
       config.model_name = String(f.modelName || "").trim();
       if (f.preset === "openai") {
         config.base_url = OPENAI_BASE_URL;

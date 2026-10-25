@@ -263,4 +263,6 @@ public interface ErrorCode {
 
     // Bring-your-own-key models
     int MODEL_NOT_ACCESSIBLE = 10205; // model belongs to another user
+    int VOICE_CLONE_IN_USE = 10206; // voice is used by an agent
+    int VOICE_LIMIT_REACHED = 10207; // too many voices / clone slots
 }

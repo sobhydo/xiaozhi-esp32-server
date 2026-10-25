@@ -155,14 +155,14 @@ public class ConfigServiceImpl implements ConfigService {
             if (StringUtils.isNotBlank(agent.getTtsLanguage())) {
                 language = agent.getTtsLanguage();
             } else if (StringUtils.isNotBlank(timbre.getLanguages())) {
-                language = timbre.getLanguages().split("、")[0].trim();
+                language = timbre.getLanguages().split("[、,，;；]")[0].trim();
             }
         } else {
             VoiceCloneEntity voice_print = cloneVoiceService.selectById(agent.getTtsVoiceId());
             if (voice_print != null) {
                 voice = voice_print.getVoiceId();
-                // 优先使用用户选择的语言，如果没有则使用默认值
-                language = StringUtils.isNotBlank(agent.getTtsLanguage()) ? agent.getTtsLanguage() : "普通话";
+                // Agent language first, else the clone's first language, else English
+                language = cloneLanguage(agent.getTtsLanguage(), voice_print.getLanguages());
             }
         }
         // 构建返回数据
@@ -550,5 +550,20 @@ public class ConfigServiceImpl implements ConfigService {
         }
         result.put("prompt", prompt);
         result.put("summaryMemory", summaryMemory);
+    }
+
+    /** Language for a cloned voice: the agent's TTS language, else the clone's first language, else English. */
+    static String cloneLanguage(String agentLanguage, String cloneLanguages) {
+        if (StringUtils.isNotBlank(agentLanguage)) {
+            return agentLanguage;
+        }
+        if (StringUtils.isNotBlank(cloneLanguages)) {
+            for (String part : cloneLanguages.split("[、；;,，]")) {
+                if (StringUtils.isNotBlank(part)) {
+                    return part.trim();
+                }
+            }
+        }
+        return "English";
     }
 }

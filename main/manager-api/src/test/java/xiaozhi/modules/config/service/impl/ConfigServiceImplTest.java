@@ -69,6 +69,15 @@ class ConfigServiceImplTest {
         assertEquals(List.of("first", "second"), features.get("labels"));
     }
 
+    @Test
+    void cloneLanguagePrefersAgentThenCloneThenEnglish() {
+        assertEquals("Arabic", ConfigServiceImpl.cloneLanguage("Arabic", "English, Arabic"));
+        assertEquals("English", ConfigServiceImpl.cloneLanguage(null, " English, Arabic"));
+        assertEquals("Arabic (UAE)", ConfigServiceImpl.cloneLanguage("", "Arabic (UAE)"));
+        assertEquals("English", ConfigServiceImpl.cloneLanguage(null, null));
+        assertEquals("English", ConfigServiceImpl.cloneLanguage(" ", ", ,"));
+    }
+
     private static SysParamsDTO parameter(String code, String value, String type) {
         SysParamsDTO parameter = new SysParamsDTO();
         parameter.setParamCode(code);

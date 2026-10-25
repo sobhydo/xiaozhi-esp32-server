@@ -13,8 +13,20 @@
             v-model="searchName" class="search-input" prefix-icon="el-icon-search"
             @keyup.enter.native="handleSearch" clearable />
           <el-button @click="handleSearch">{{ $t('voiceClone.search') }}</el-button>
+          <el-button v-if="ownModels.length" type="primary" icon="el-icon-plus" class="new-voice-btn" @click="openNewVoice()">
+            {{ $t('voiceClone.newVoice') }}
+          </el-button>
         </div>
       </header>
+
+      <!-- Self-service cloning needs one of the user's own ElevenLabs models -->
+      <div v-if="ownModelsLoaded && !ownModels.length" class="byok-hint" role="note">
+        <i class="el-icon-info" aria-hidden="true"></i>
+        <span>
+          {{ $t('voiceClone.byokHint') }}
+          <router-link :to="{ path: '/my-models', query: { type: 'tts' } }" class="byok-hint__link">{{ $t('header.myModels') }}</router-link>
+        </span>
+      </div>
 
       <section class="list-card">
         <div v-loading="loading" class="voice-clone-grid">
@@ -70,11 +82,15 @@
                 @click="handleEditButtonClick(item)">
                 {{ item.isEdit ? $t('button.save') : $t('common.edit') }}
               </el-button>
+              <el-button v-if="item.selfManaged" size="mini" type="text" class="row-action row-action--danger"
+                icon="el-icon-delete" :loading="item._deleting" @click="handleDelete(item)">
+                {{ $t('common.delete') }}
+              </el-button>
             </div>
           </article>
 
           <div v-if="!loading && voiceCloneList.length === 0" class="empty-state">
-            {{ $t('voiceClone.noVoiceCloneAssigned') }}
+            {{ ownModels.length ? $t('voiceClone.noVoicesYet') : $t('voiceClone.noVoiceCloneAssigned') }}
           </div>
         </div>
 
@@ -97,6 +113,35 @@
 
     <VoiceCloneDialog :visible.sync="cloneDialogVisible" :voiceCloneData="currentVoiceClone"
       @success="handleCloneSuccess" />
+
+    <CustomDialog
+      :visible.sync="newVoiceVisible"
+      :title="$t('voiceClone.newVoice')"
+      width="480px"
+      class="new-voice-dialog"
+      :confirm-loading="creating"
+      :cancel-text="$t('common.cancel')"
+      :confirm-text="$t('voiceClone.createVoice')"
+      @confirm="createVoice"
+    >
+      <p class="dialog-intro">{{ $t('voiceClone.newVoiceIntro') }}</p>
+      <el-form ref="newVoiceForm" :model="newVoice" :rules="newVoiceRules" label-position="top" class="new-voice-form"
+        @submit.native.prevent>
+        <el-form-item :label="$t('voiceClone.name')" prop="name">
+          <el-input v-model="newVoice.name" maxlength="64" :placeholder="$t('voiceClone.newVoiceNamePlaceholder')" />
+        </el-form-item>
+        <el-form-item :label="$t('voiceClone.elevenlabsModel')" prop="modelId">
+          <el-select v-model="newVoice.modelId" class="full">
+            <el-option v-for="m in ownModels" :key="m.id" :label="m.modelName" :value="m.id" />
+          </el-select>
+        </el-form-item>
+        <el-form-item :label="$t('voiceClone.languages')">
+          <el-select v-model="newVoice.languages" class="full" multiple filterable allow-create default-first-option>
+            <el-option v-for="lang in languageOptions" :key="lang.value" :label="$t(lang.label)" :value="lang.value" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+    </CustomDialog>
   </div>
 </template>
 
@@ -107,10 +152,11 @@ import VersionFooter from "@/components/VersionFooter.vue";
 import VoiceCloneDialog from "@/components/VoiceCloneDialog.vue";
 import CustomButton from "@/components/CustomButton.vue";
 import CustomPagination from "@/components/CustomPagination.vue";
+import CustomDialog from "@/components/CustomDialog.vue";
 import { formatDate } from "@/utils/format";
 
 export default {
-  components: { HeaderBar, VersionFooter, VoiceCloneDialog, CustomButton, CustomPagination },
+  components: { HeaderBar, VersionFooter, VoiceCloneDialog, CustomButton, CustomPagination, CustomDialog },
   data() {
     return {
       searchName: "",
@@ -128,13 +174,109 @@ export default {
         userId: null
       },
       currentAudio: null,
-      playingRowId: null
+      playingRowId: null,
+      // Self-service cloning on the user's own ElevenLabs key
+      ownModels: [],
+      ownModelsLoaded: false,
+      newVoiceVisible: false,
+      creating: false,
+      newVoice: { name: "", modelId: "", languages: ["English", "Arabic"] },
+      languageOptions: [
+        { value: "English", label: "myModels.languageEnglish" },
+        { value: "Arabic", label: "myModels.languageArabic" }
+      ]
     };
+  },
+  computed: {
+    newVoiceRules() {
+      return {
+        name: [{ required: true, whitespace: true, message: this.$t('voiceClone.nameRequired'), trigger: ["blur", "change"] }],
+        modelId: [{ required: true, message: this.$t('voiceClone.modelRequired'), trigger: "change" }]
+      };
+    }
   },
   created() {
     this.fetchVoiceCloneList();
+    this.fetchOwnModels();
   },
   methods: {
+    fetchOwnModels() {
+      Api.model.getUserModels("TTS", ({ data }) => {
+        if (data && data.code === 0 && Array.isArray(data.data)) {
+          this.ownModelsLoaded = true;
+          this.ownModels = data.data.filter((m) => m.configJson && m.configJson.type === "elevenlabs");
+          // Arriving from My models with ?modelId opens the dialog for that model
+          const modelId = this.$route.query.modelId;
+          if (modelId && this.ownModels.some((m) => m.id === modelId)) {
+            this.openNewVoice(modelId);
+          }
+        }
+      });
+    },
+    openNewVoice(modelId) {
+      const preferred = modelId || this.$route.query.modelId;
+      const match = this.ownModels.find((m) => m.id === preferred);
+      this.newVoice = {
+        name: "",
+        modelId: match ? match.id : (this.ownModels[0] ? this.ownModels[0].id : ""),
+        languages: ["English", "Arabic"]
+      };
+      this.newVoiceVisible = true;
+      this.$nextTick(() => this.$refs.newVoiceForm && this.$refs.newVoiceForm.clearValidate());
+    },
+    createVoice() {
+      if (this.creating) {
+        return;
+      }
+      this.$refs.newVoiceForm.validate((valid) => {
+        if (!valid) {
+          return;
+        }
+        const languages = this.newVoice.languages.map((l) => String(l).trim()).filter(Boolean);
+        const body = {
+          modelId: this.newVoice.modelId,
+          name: this.newVoice.name.trim(),
+          languages: (languages.length ? languages : ["English", "Arabic"]).join(", ")
+        };
+        this.creating = true;
+        Api.voiceClone.createOwnVoiceClone(body, ({ data }) => {
+          this.creating = false;
+          if (data && data.code === 0) {
+            this.newVoiceVisible = false;
+            this.$message.success({ message: this.$t('voiceClone.newVoiceCreated'), showClose: true });
+            this.currentPage = 1;
+            this.fetchVoiceCloneList();
+          } else {
+            this.$message.error({ message: (data && data.msg) || this.$t('voiceClone.addFailed'), showClose: true });
+          }
+        });
+      });
+    },
+    handleDelete(row) {
+      this.$confirm(this.$t('voiceClone.deleteVoiceConfirm', { name: row.name || row.id }), this.$t('common.delete'), {
+        confirmButtonText: this.$t('common.delete'),
+        cancelButtonText: this.$t('common.cancel'),
+        confirmButtonClass: "el-button--danger",
+        type: "warning"
+      }).then(() => {
+        if (this.playingRowId === row.id) {
+          this.stopCurrentAudio();
+        }
+        this.$set(row, '_deleting', true);
+        Api.voiceClone.deleteVoiceClone(row.id, ({ data }) => {
+          this.$set(row, '_deleting', false);
+          if (data && data.code === 0) {
+            this.$message.success({ message: this.$t('voiceClone.voiceDeleted'), showClose: true });
+            if (this.voiceCloneList.length === 1 && this.currentPage > 1) {
+              this.currentPage -= 1;
+            }
+            this.fetchVoiceCloneList();
+          } else {
+            this.$message.error({ message: (data && data.msg) || this.$t('voiceClone.deleteFailed'), showClose: true });
+          }
+        });
+      }).catch(() => {});
+    },
     getTooltipContent(row) {
       if (!row.hasVoice) {
         return this.$t('voiceClone.waitingUpload');
@@ -622,6 +764,104 @@ export default {
   }
 }
 
+.row-action--danger {
+  &:hover,
+  &:focus {
+    color: var(--x-danger-text);
+    background: var(--x-danger-bg);
+  }
+}
+
+.byok-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid var(--x-border);
+  border-radius: var(--x-radius-control);
+  background: var(--x-surface);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--x-text-secondary);
+
+  i {
+    flex-shrink: 0;
+    margin-top: 3px;
+    color: var(--x-text-muted);
+  }
+}
+
+.byok-hint__link {
+  margin-inline-start: 4px;
+  color: var(--x-text);
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+
+  &:hover,
+  &:focus-visible {
+    color: var(--x-ink-hover);
+  }
+}
+
+.dialog-intro {
+  margin: 0 0 16px;
+  word-break: normal;
+  overflow-wrap: break-word;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--x-text-muted);
+  text-align: start;
+}
+
+.new-voice-form {
+  text-align: start;
+
+  // Element positions tag close icons with physical offsets; mirror them for RTL
+  ::v-deep .el-select__tags .el-tag {
+    margin-block: 2px;
+    margin-inline: 6px 0;
+  }
+
+  ::v-deep .el-select__tags .el-tag__close.el-icon-close {
+    right: auto;
+    inset-inline-end: -7px;
+  }
+
+  ::v-deep .el-form-item {
+    margin-bottom: 16px;
+  }
+
+  ::v-deep .el-form-item__label {
+    padding-bottom: 4px;
+    line-height: 20px;
+    float: none;
+    display: block;
+    text-align: start;
+  }
+
+  ::v-deep .el-form-item.is-required:not(.is-no-asterisk) > .el-form-item__label::before {
+    display: none;
+  }
+}
+
+.full {
+  width: 100%;
+}
+
+.new-voice-dialog ::v-deep .el-dialog {
+  max-width: calc(100vw - 32px);
+}
+
+.new-voice-dialog ::v-deep .el-dialog__headerbtn {
+  right: auto;
+  inset-inline-end: 16px;
+}
+
+.new-voice-dialog ::v-deep .el-dialog__header {
+  padding-inline-end: 56px;
+}
+
 .empty-state {
   grid-column: 1 / -1;
   display: flex;
@@ -663,6 +903,11 @@ export default {
   .search-input {
     flex: 1;
     width: auto;
+  }
+
+  .new-voice-btn {
+    order: -1;
+    flex: 1 1 100%;
   }
 
   .voice-clone-grid {

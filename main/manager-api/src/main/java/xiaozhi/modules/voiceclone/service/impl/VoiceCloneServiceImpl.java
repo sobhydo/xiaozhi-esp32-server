@@ -24,15 +24,21 @@ import xiaozhi.common.constant.Constant;
 import xiaozhi.common.exception.ErrorCode;
 import xiaozhi.common.exception.RenException;
 import xiaozhi.common.page.PageData;
+import xiaozhi.common.redis.RedisKeys;
+import xiaozhi.common.redis.RedisUtils;
 import xiaozhi.common.service.impl.BaseServiceImpl;
 import xiaozhi.common.utils.ConvertUtils;
 import xiaozhi.common.utils.DateUtils;
+import xiaozhi.modules.agent.dao.AgentDao;
+import xiaozhi.modules.agent.entity.AgentEntity;
 import xiaozhi.modules.model.entity.ModelConfigEntity;
 import xiaozhi.modules.model.service.ModelConfigService;
+import xiaozhi.modules.model.service.impl.ModelConnectionTester;
 import xiaozhi.modules.sys.dao.SysUserDao;
 import xiaozhi.modules.sys.entity.SysUserEntity;
 import xiaozhi.modules.sys.service.SysUserService;
 import xiaozhi.modules.voiceclone.dao.VoiceCloneDao;
+import xiaozhi.modules.voiceclone.dto.VoiceCloneCreateDTO;
 import xiaozhi.modules.voiceclone.dto.VoiceCloneDTO;
 import xiaozhi.modules.voiceclone.dto.VoiceCloneResponseDTO;
 import xiaozhi.modules.voiceclone.entity.VoiceCloneEntity;
@@ -48,6 +54,15 @@ public class VoiceCloneServiceImpl extends BaseServiceImpl<VoiceCloneDao, VoiceC
     private final SysUserService sysUserService;
     private final SysUserDao sysUserDao;
     private final ObjectMapper objectMapper;
+    private final AgentDao agentDao;
+    private final RedisUtils redisUtils;
+    private final ModelConnectionTester connectionTester;
+
+    /** BYOK: self-managed clone slots per user. */
+    static final int MAX_OWN_SLOTS = 20;
+    /** Placeholder voice id until ElevenLabs returns the real one (column is nullable, not unique). */
+    static final String PENDING_VOICE_ID = "pending";
+    static final String DEFAULT_LANGUAGES = "English, Arabic";
 
     @Override
     public PageData<VoiceCloneEntity> page(Map<String, Object> params) {
@@ -134,7 +149,7 @@ public class VoiceCloneServiceImpl extends BaseServiceImpl<VoiceCloneDao, VoiceC
     public List<VoiceCloneEntity> getByUserId(Long userId) {
         QueryWrapper<VoiceCloneEntity> wrapper = new QueryWrapper<>();
         wrapper.eq("user_id", userId);
-        wrapper.orderByDesc("created_at");
+        wrapper.orderByDesc("create_date");
         return baseDao.selectList(wrapper);
     }
 
@@ -197,6 +212,16 @@ public class VoiceCloneServiceImpl extends BaseServiceImpl<VoiceCloneDao, VoiceC
         List<SysUserEntity> userList = sysUserDao.selectList(new QueryWrapper<SysUserEntity>().in("id", userIdList));
         Map<Long, String> userMap = userList.stream().collect(Collectors.toMap(SysUserEntity::getId, SysUserEntity::getUsername));
 
+        // BYOK: owner of each slot's model (null = system model)
+        Map<String, Long> modelOwners = new HashMap<>();
+        for (VoiceCloneEntity entity : entityList) {
+            String modelId = entity.getModelId();
+            if (StringUtils.isNotBlank(modelId) && !modelOwners.containsKey(modelId)) {
+                ModelConfigEntity model = modelConfigService.getModelByIdFromCache(modelId);
+                modelOwners.put(modelId, model == null ? null : model.getUserId());
+            }
+        }
+
         // 转换每个实体为DTO
         for (VoiceCloneEntity entity : entityList) {
             VoiceCloneResponseDTO dto = ConvertUtils.sourceToTarget(entity, VoiceCloneResponseDTO.class);
@@ -216,11 +241,90 @@ public class VoiceCloneServiceImpl extends BaseServiceImpl<VoiceCloneDao, VoiceC
 
             // 设置是否有音频数据
             dto.setHasVoice(entity.getVoice() != null);
+            dto.setSelfManaged(isSelfManaged(modelOwners.get(entity.getModelId()), entity.getUserId()));
 
             dtoList.add(dto);
         }
 
         return dtoList;
+    }
+
+    static boolean isSelfManaged(Long modelOwnerId, Long slotUserId) {
+        return modelOwnerId != null && modelOwnerId.equals(slotUserId);
+    }
+
+    @Override
+    public VoiceCloneResponseDTO createOwn(VoiceCloneCreateDTO dto, Long userId) {
+        if (userId == null) {
+            throw new RenException(ErrorCode.UNAUTHORIZED);
+        }
+        if (dto == null || StringUtils.isBlank(dto.getModelId())) {
+            throw new RenException(ErrorCode.VOICE_RESOURCE_PLATFORM_NAME_EMPTY);
+        }
+        if (StringUtils.isBlank(dto.getName())) {
+            throw new RenException(ErrorCode.VOICE_CLONE_NAME_NOT_NULL);
+        }
+        ModelConfigEntity model = modelConfigService.getModelByIdFromCache(dto.getModelId());
+        Map<String, Object> config = model == null ? null : model.getConfigJson();
+        if (model == null || !userId.equals(model.getUserId()) || !"TTS".equalsIgnoreCase(model.getModelType())
+                || config == null || !Constant.VOICE_CLONE_ELEVENLABS.equals(config.get("type"))) {
+            throw new RenException(ErrorCode.MODEL_NOT_ACCESSIBLE);
+        }
+        Long count = baseDao.selectCount(new QueryWrapper<VoiceCloneEntity>().eq("user_id", userId)
+                .inSql("model_id", "select id from ai_model_config where user_id = " + userId));
+        if (count != null && count >= MAX_OWN_SLOTS) {
+            throw new RenException(ErrorCode.VOICE_LIMIT_REACHED, String.valueOf(MAX_OWN_SLOTS));
+        }
+        VoiceCloneEntity entity = new VoiceCloneEntity();
+        entity.setModelId(dto.getModelId());
+        entity.setName(StringUtils.left(dto.getName().trim(), 64));
+        entity.setVoiceId(PENDING_VOICE_ID);
+        entity.setLanguages(StringUtils.left(
+                StringUtils.defaultIfBlank(StringUtils.trim(dto.getLanguages()), DEFAULT_LANGUAGES), 50));
+        entity.setUserId(userId);
+        entity.setTrainStatus(0);
+        baseDao.insert(entity);
+
+        VoiceCloneResponseDTO result = ConvertUtils.sourceToTarget(entity, VoiceCloneResponseDTO.class);
+        result.setModelName(model.getModelName());
+        result.setHasVoice(false);
+        result.setSelfManaged(true);
+        return result;
+    }
+
+    @Override
+    public void deleteOwn(String id, Long userId) {
+        if (StringUtils.isBlank(id)) {
+            throw new RenException(ErrorCode.IDENTIFIER_NOT_NULL);
+        }
+        VoiceCloneEntity entity = baseDao.selectById(id);
+        if (entity == null) {
+            throw new RenException(ErrorCode.VOICE_CLONE_RECORD_NOT_EXIST);
+        }
+        if (userId == null || !userId.equals(entity.getUserId())) {
+            throw new RenException(ErrorCode.VOICE_RESOURCE_NO_PERMISSION);
+        }
+        ModelConfigEntity model = modelConfigService.getModelByIdFromCache(entity.getModelId());
+        if (model == null || !userId.equals(model.getUserId())) {
+            // Admin-assigned slots stay admin-managed
+            throw new RenException(ErrorCode.MODEL_NOT_ACCESSIBLE);
+        }
+        List<AgentEntity> agents = agentDao.selectList(new QueryWrapper<AgentEntity>()
+                .select("id", "agent_name").eq("tts_voice_id", id));
+        if (agents != null && !agents.isEmpty()) {
+            String names = agents.stream().map(AgentEntity::getAgentName).collect(Collectors.joining("、"));
+            throw new RenException(ErrorCode.VOICE_CLONE_IN_USE, names);
+        }
+        Map<String, Object> config = model.getConfigJson();
+        if (Integer.valueOf(2).equals(entity.getTrainStatus()) && config != null
+                && Constant.VOICE_CLONE_ELEVENLABS.equals(config.get("type"))
+                && StringUtils.isNotBlank(entity.getVoiceId()) && !PENDING_VOICE_ID.equals(entity.getVoiceId())) {
+            // Best effort: the row goes even if ElevenLabs refuses
+            connectionTester.deleteElevenLabsVoice((String) config.get("api_base"), (String) config.get("api_key"),
+                    entity.getVoiceId());
+        }
+        baseDao.deleteById(id);
+        redisUtils.delete(RedisKeys.getTimbreNameById(id));
     }
 
     @Override
@@ -399,7 +503,14 @@ public class VoiceCloneServiceImpl extends BaseServiceImpl<VoiceCloneDao, VoiceC
         if (StringUtils.isBlank(apiKey)) {
             throw new RenException(ErrorCode.VOICE_CLONE_TRAINING_FAILED, "ElevenLabs API key is not set");
         }
-        String apiBase = StringUtils.defaultIfBlank((String) config.get("api_base"), "https://api.elevenlabs.io/v1");
+        String apiBase = StringUtils.defaultIfBlank((String) config.get("api_base"),
+                ModelConnectionTester.DEFAULT_ELEVENLABS_BASE);
+        try {
+            // BYOK: api_base may be user-supplied (SSRF guard)
+            ModelConnectionTester.assertPublicUrl(apiBase);
+        } catch (IllegalArgumentException e) {
+            throw new RenException(ErrorCode.VOICE_CLONE_TRAINING_FAILED, "api_base: " + e.getMessage());
+        }
         String voiceName = StringUtils.defaultIfBlank(entity.getName(), "Clone " + entity.getId());
 
         String boundary = "----XAgentBoundary" + System.nanoTime();
@@ -408,9 +519,11 @@ public class VoiceCloneServiceImpl extends BaseServiceImpl<VoiceCloneDao, VoiceC
         body.write(("--" + boundary + "\r\n"
                 + "Content-Disposition: form-data; name=\"name\"\r\n\r\n"
                 + voiceName + "\r\n").getBytes(utf8));
+        boolean mp3 = isMp3(entity.getVoice());
         body.write(("--" + boundary + "\r\n"
-                + "Content-Disposition: form-data; name=\"files\"; filename=\"sample.wav\"\r\n"
-                + "Content-Type: audio/wav\r\n\r\n").getBytes(utf8));
+                + "Content-Disposition: form-data; name=\"files\"; filename=\"sample." + (mp3 ? "mp3" : "wav")
+                + "\"\r\n"
+                + "Content-Type: " + (mp3 ? "audio/mpeg" : "audio/wav") + "\r\n\r\n").getBytes(utf8));
         body.write(entity.getVoice());
         body.write(("\r\n--" + boundary + "--\r\n").getBytes(utf8));
 
@@ -437,5 +550,22 @@ public class VoiceCloneServiceImpl extends BaseServiceImpl<VoiceCloneDao, VoiceC
         entity.setVoiceId(voiceId);
         entity.setTrainError("");
         baseDao.updateById(entity);
+    }
+
+    /**
+     * The sample's file name is not stored, so detect MP3 from its header ("ID3" tag or an MPEG frame sync);
+     * everything else (RIFF/WAVE) is sent as WAV.
+     */
+    static boolean isMp3(byte[] data) {
+        if (data == null || data.length < 3) {
+            return false;
+        }
+        if (data[0] == 'R' && data[1] == 'I' && data[2] == 'F') {
+            return false;
+        }
+        if (data[0] == 'I' && data[1] == 'D' && data[2] == '3') {
+            return true;
+        }
+        return (data[0] & 0xFF) == 0xFF && (data[1] & 0xE0) == 0xE0;
     }
 }

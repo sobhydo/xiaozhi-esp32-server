@@ -73,4 +73,10 @@ public interface ModelConfigService extends BaseService<ModelConfigEntity> {
      * BYOK: admin model endpoints only operate on system models (user_id IS NULL).
      */
     void assertSystemModel(String modelId);
+
+    /**
+     * BYOK: a voice id (ai_tts_voice or ai_voice_clone) must not belong to another user: a voice of a model
+     * owned by someone else, or a clone of another user, raises MODEL_NOT_ACCESSIBLE. Unknown ids are tolerated.
+     */
+    void assertVoiceUsable(String voiceId, Long ownerUserId);
 }
