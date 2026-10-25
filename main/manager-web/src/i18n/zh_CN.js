@@ -1776,6 +1776,7 @@ export default {
   // Own speech models, voices and self-service cloning (bring your own key, phase 2)
   'myModels.providerElevenlabs': "ElevenLabs",
   'myModels.providerElevenlabsScribe': "ElevenLabs Scribe",
+  'myModels.providerElevenlabsScribeRealtime': "ElevenLabs Scribe Realtime（实时，最快）",
   'myModels.language': "语言",
   'myModels.languageAuto': "自动识别",
   'myModels.languageEnglish': "英语",

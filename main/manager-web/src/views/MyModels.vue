@@ -172,7 +172,7 @@
             <el-input v-model="form.baseUrl" dir="ltr" placeholder="https://api.example.com/v1" @input="clearTest" />
           </el-form-item>
 
-          <el-form-item v-if="activeType === 'ASR' && form.preset === 'elevenlabs'" :label="$t('myModels.language')">
+          <el-form-item v-if="activeType === 'ASR' && asrHasLanguage" :label="$t('myModels.language')">
             <el-select v-model="form.languageCode" class="full">
               <el-option v-for="lang in asrLanguages" :key="lang.value || 'auto'" :label="$t(lang.label)" :value="lang.value" />
             </el-select>
@@ -300,7 +300,18 @@ const ASR_PRESETS = [
     models: ["scribe_v2"],
     defaults: { language_code: "", output_dir: "tmp/" },
   },
+  {
+    key: "elevenlabs_stream",
+    provideCode: "elevenlabs_stream",
+    label: "myModels.providerElevenlabsScribeRealtime",
+    modelKey: "model_id",
+    models: ["scribe_v2_realtime"],
+    defaults: { language_code: "", output_dir: "tmp/" },
+  },
 ];
+
+// ASR presets with a language select (empty = auto-detect)
+const ASR_LANGUAGE_PRESETS = ["elevenlabs", "elevenlabs_stream"];
 
 const OPENAI_VOICES = ["alloy", "ash", "ballad", "coral", "echo", "fable", "nova", "onyx", "sage", "shimmer", "verse",
   "marin", "cedar"];
@@ -410,6 +421,9 @@ export default {
     },
     currentPreset() {
       return this.presets.find((p) => p.key === this.form.preset) || null;
+    },
+    asrHasLanguage() {
+      return ASR_LANGUAGE_PRESETS.includes(this.form.preset);
     },
     isSpeech() {
       return this.activeType === "ASR" || this.activeType === "TTS";
@@ -588,7 +602,7 @@ export default {
         config[preset.modelKey || "model_name"] = String(f.modelName || "").trim();
         if (preset.urlKey && !config[preset.urlKey]) config[preset.urlKey] = preset.url;
         if (!config.output_dir) config.output_dir = "tmp/";
-        if (this.activeType === "ASR" && f.preset === "elevenlabs") config.language_code = f.languageCode || "";
+        if (this.activeType === "ASR" && ASR_LANGUAGE_PRESETS.includes(f.preset)) config.language_code = f.languageCode || "";
         if (this.activeType === "TTS") config.voice = String(f.voice || "").trim();
         return config;
       }

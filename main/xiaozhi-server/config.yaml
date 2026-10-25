@@ -601,7 +601,22 @@ ASR:
     # 热词定制文档地址：https://help.aliyun.com/zh/model-studio/custom-hot-words?
     # vocabulary_id: vocab-xxx-24ee19fa8cfb4d52902170a0xxxxxxxx  # 热词ID(可选)
     # language_hints: ["zh", "en"]  # 指定语言(可选)，支持zh、en、ja、yue、ko、de、fr、ru
-    output_dir: tmp/  
+    output_dir: tmp/
+  ElevenLabsStreamASR:
+    # ElevenLabs Scribe v2 Realtime streaming speech recognition (English, Arabic and 90+ languages)
+    # Audio is streamed while the user talks; the utterance is committed as soon as the local VAD
+    # detects end of speech, so the transcript is ready right when they stop.
+    # API key: https://elevenlabs.io/app/settings/api-keys
+    # Docs: https://elevenlabs.io/docs/api-reference/speech-to-text/v-1-speech-to-text-realtime
+    # Billed per second of streamed audio.
+    type: elevenlabs_stream
+    api_key: 你的ElevenLabs_API_Key
+    model_id: scribe_v2_realtime
+    # Empty = auto-detect; set e.g. "en" or "ar" to force one language
+    language_code: ""
+    # Optional: regional endpoint, e.g. https://api.eu.residency.elevenlabs.io (default: wss://api.elevenlabs.io/v1/speech-to-text/realtime)
+    base_url: ""
+    output_dir: tmp/
 VAD:
   SileroVAD:
     type: silero

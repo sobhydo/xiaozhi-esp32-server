@@ -8,6 +8,8 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpTimeoutException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -39,6 +41,8 @@ public class ModelConnectionTester {
     static final String DEFAULT_CLAUDE_BASE = "https://api.anthropic.com";
     static final String GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models/";
     public static final String DEFAULT_ELEVENLABS_BASE = "https://api.elevenlabs.io/v1";
+    static final String DEFAULT_SCRIBE_MODEL = "scribe_v2";
+    static final String DEFAULT_ELEVENLABS_VOICE = "21m00Tcm4TlvDq8ikWAM";
     /** OpenAI TTS voices (the API has no voice listing endpoint). */
     static final List<String> OPENAI_VOICES = List.of("alloy", "ash", "ballad", "coral", "echo", "fable", "nova",
             "onyx", "sage", "shimmer", "verse", "marin", "cedar");
@@ -145,29 +149,91 @@ public class ModelConnectionTester {
         }
     }
 
-    /** ASR/TTS: validate the key by listing models (no audio is generated, nothing is billed). */
+    /**
+     * ASR/TTS: make a tiny real request (0.5 s of silence to transcribe, or "Hi" to synthesize) so keys missing
+     * the speech permission fail here rather than on the device. Listing models passes with restricted keys.
+     */
     private HttpRequest buildSpeechRequest(String modelType, String provideCode, JSONObject config) {
         String apiKey = config.getStr("api_key", "").trim();
+        boolean asr = "ASR".equals(modelType);
         switch (provideCode) {
-            case "elevenlabs": {
+            case "elevenlabs":
+            case "elevenlabs_stream": {
                 require(apiKey, "API key is required");
-                return HttpRequest.newBuilder(URI.create(elevenLabsBase(modelType, config) + "/models"))
+                String base = elevenLabsBase(modelType, config);
+                if (asr) {
+                    // The realtime model only exists on the websocket API; the batch model checks the same permission
+                    String model = "elevenlabs_stream".equals(provideCode) ? DEFAULT_SCRIBE_MODEL
+                            : StringUtils.defaultIfBlank(config.getStr("model_id", "").trim(), DEFAULT_SCRIBE_MODEL);
+                    return multipartRequest(base + "/speech-to-text", "model_id", model)
+                            .header("xi-api-key", apiKey)
+                            .build();
+                }
+                String voice = StringUtils.defaultIfBlank(config.getStr("voice", "").trim(), DEFAULT_ELEVENLABS_VOICE);
+                JSONObject body = new JSONObject().set("text", "Hi").set("model_id",
+                        StringUtils.defaultIfBlank(config.getStr("model_id", "").trim(), "eleven_flash_v2_5"));
+                return HttpRequest.newBuilder(URI.create(base + "/text-to-speech/"
+                        + URLEncoder.encode(voice, StandardCharsets.UTF_8) + "?output_format=mp3_22050_32"))
                         .timeout(TIMEOUT)
                         .header("xi-api-key", apiKey)
-                        .GET()
+                        .header("Content-Type", "application/json")
+                        .POST(HttpRequest.BodyPublishers.ofString(body.toString(), StandardCharsets.UTF_8))
                         .build();
             }
             case "openai": {
                 require(apiKey, "API key is required");
-                return HttpRequest.newBuilder(URI.create(openAiSpeechBase(modelType, config) + "/models"))
+                String base = openAiSpeechBase(modelType, config);
+                if (asr) {
+                    String model = StringUtils.defaultIfBlank(config.getStr("model_name", "").trim(),
+                            "gpt-4o-mini-transcribe");
+                    return multipartRequest(base + "/audio/transcriptions", "model", model)
+                            .header("Authorization", "Bearer " + apiKey)
+                            .build();
+                }
+                JSONObject body = new JSONObject()
+                        .set("model", StringUtils.defaultIfBlank(config.getStr("model", "").trim(), "tts-1"))
+                        .set("input", "Hi")
+                        .set("voice", StringUtils.defaultIfBlank(config.getStr("voice", "").trim(), "alloy"));
+                return HttpRequest.newBuilder(URI.create(base + "/audio/speech"))
                         .timeout(TIMEOUT)
                         .header("Authorization", "Bearer " + apiKey)
-                        .GET()
+                        .header("Content-Type", "application/json")
+                        .POST(HttpRequest.BodyPublishers.ofString(body.toString(), StandardCharsets.UTF_8))
                         .build();
             }
             default:
                 return null;
         }
+    }
+
+    /** POST multipart/form-data with one text field and a 0.5 s silent 16 kHz mono WAV as "file". */
+    private static HttpRequest.Builder multipartRequest(String url, String field, String value) {
+        String boundary = "----xiaozhi" + System.nanoTime();
+        byte[] head = ("--" + boundary + "\r\nContent-Disposition: form-data; name=\"" + field + "\"\r\n\r\n" + value
+                + "\r\n--" + boundary + "\r\nContent-Disposition: form-data; name=\"file\"; filename=\"test.wav\"\r\n"
+                + "Content-Type: audio/wav\r\n\r\n").getBytes(StandardCharsets.UTF_8);
+        byte[] tail = ("\r\n--" + boundary + "--\r\n").getBytes(StandardCharsets.UTF_8);
+        byte[] wav = silentWav();
+        byte[] body = new byte[head.length + wav.length + tail.length];
+        System.arraycopy(head, 0, body, 0, head.length);
+        System.arraycopy(wav, 0, body, head.length, wav.length);
+        System.arraycopy(tail, 0, body, head.length + wav.length, tail.length);
+        return HttpRequest.newBuilder(URI.create(url))
+                .timeout(TIMEOUT)
+                .header("Content-Type", "multipart/form-data; boundary=" + boundary)
+                .POST(HttpRequest.BodyPublishers.ofByteArray(body));
+    }
+
+    static byte[] silentWav() {
+        int sampleRate = 16000;
+        int dataLen = sampleRate; // 0.5 s of 16-bit mono
+        ByteBuffer b = ByteBuffer.allocate(44 + dataLen).order(ByteOrder.LITTLE_ENDIAN);
+        b.put("RIFF".getBytes(StandardCharsets.US_ASCII)).putInt(36 + dataLen)
+                .put("WAVE".getBytes(StandardCharsets.US_ASCII))
+                .put("fmt ".getBytes(StandardCharsets.US_ASCII)).putInt(16).putShort((short) 1).putShort((short) 1)
+                .putInt(sampleRate).putInt(sampleRate * 2).putShort((short) 2).putShort((short) 16)
+                .put("data".getBytes(StandardCharsets.US_ASCII)).putInt(dataLen);
+        return b.array();
     }
 
     /**
@@ -317,8 +383,9 @@ public class ModelConnectionTester {
             throw new IllegalArgumentException("Invalid URL");
         }
         String scheme = StringUtils.lowerCase(uri.getScheme());
-        if (!"http".equals(scheme) && !"https".equals(scheme)) {
-            throw new IllegalArgumentException("URL must start with http:// or https://");
+        // ws/wss: streaming ASR endpoints
+        if (!"http".equals(scheme) && !"https".equals(scheme) && !"ws".equals(scheme) && !"wss".equals(scheme)) {
+            throw new IllegalArgumentException("URL must start with http://, https://, ws:// or wss://");
         }
         String host = uri.getHost();
         if (StringUtils.isBlank(host)) {

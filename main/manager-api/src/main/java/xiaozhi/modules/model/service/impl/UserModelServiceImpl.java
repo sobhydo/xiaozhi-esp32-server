@@ -46,7 +46,7 @@ public class UserModelServiceImpl implements UserModelService {
     /** Providers a regular user may add, per model type (upper case). */
     static final Map<String, Set<String>> ALLOWED_PROVIDERS = Map.of(
             "LLM", Set.of("openai", "gemini", "claude"),
-            "ASR", Set.of("openai", "elevenlabs"),
+            "ASR", Set.of("openai", "elevenlabs", "elevenlabs_stream"),
             "TTS", Set.of("openai", "elevenlabs"));
 
     static final int USER_MODEL_SORT = 1000;

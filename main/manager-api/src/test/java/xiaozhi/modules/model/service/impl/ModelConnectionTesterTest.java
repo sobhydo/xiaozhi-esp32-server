@@ -92,21 +92,30 @@ class ModelConnectionTesterTest {
     // ---- phase 2: ASR/TTS ----
 
     @Test
-    void elevenLabsSpeechTestsListModels() {
+    void elevenLabsSpeechTestsMakeTinyRealRequests() {
         HttpRequest tts = tester.buildRequest("TTS", "elevenlabs", new JSONObject().set("api_key", "xi"));
-        assertEquals("https://api.elevenlabs.io/v1/models", tts.uri().toString());
-        assertEquals("GET", tts.method());
+        assertEquals("https://api.elevenlabs.io/v1/text-to-speech/21m00Tcm4TlvDq8ikWAM?output_format=mp3_22050_32",
+                tts.uri().toString());
+        assertEquals("POST", tts.method());
         assertEquals("xi", tts.headers().firstValue("xi-api-key").orElse(""));
 
-        HttpRequest ttsBase = tester.buildRequest("TTS", "elevenlabs",
-                new JSONObject().set("api_key", "xi").set("api_base", "https://eu.elevenlabs.example/v1/"));
-        assertEquals("https://eu.elevenlabs.example/v1/models", ttsBase.uri().toString());
+        HttpRequest ttsBase = tester.buildRequest("TTS", "elevenlabs", new JSONObject().set("api_key", "xi")
+                .set("api_base", "https://eu.elevenlabs.example/v1/").set("voice", "abc"));
+        assertEquals("https://eu.elevenlabs.example/v1/text-to-speech/abc?output_format=mp3_22050_32",
+                ttsBase.uri().toString());
 
         HttpRequest asr = tester.buildRequest("ASR", "elevenlabs", new JSONObject().set("api_key", "xi")
                 .set("base_url", "https://api.elevenlabs.io/v1/speech-to-text"));
-        assertEquals("https://api.elevenlabs.io/v1/models", asr.uri().toString());
-        HttpRequest asrDefault = tester.buildRequest("ASR", "elevenlabs", new JSONObject().set("api_key", "xi"));
-        assertEquals("https://api.elevenlabs.io/v1/models", asrDefault.uri().toString());
+        assertEquals("https://api.elevenlabs.io/v1/speech-to-text", asr.uri().toString());
+        assertEquals("POST", asr.method());
+        assertTrue(asr.headers().firstValue("Content-Type").orElse("").startsWith("multipart/form-data; boundary="));
+        HttpRequest stream = tester.buildRequest("ASR", "elevenlabs_stream", new JSONObject().set("api_key", "xi")
+                .set("model_id", "scribe_v2_realtime"));
+        assertEquals("https://api.elevenlabs.io/v1/speech-to-text", stream.uri().toString());
+
+        byte[] wav = ModelConnectionTester.silentWav();
+        assertEquals(44 + 16000, wav.length);
+        assertEquals("RIFF", new String(wav, 0, 4, java.nio.charset.StandardCharsets.US_ASCII));
 
         ModelTestResultDTO noKey = tester.test("TTS", "elevenlabs", new JSONObject());
         assertFalse(noKey.isOk());
@@ -114,19 +123,20 @@ class ModelConnectionTesterTest {
     }
 
     @Test
-    void openAiSpeechTestsListModels() {
+    void openAiSpeechTestsMakeTinyRealRequests() {
         HttpRequest tts = tester.buildRequest("TTS", "openai", new JSONObject().set("api_key", "sk")
                 .set("api_url", "https://api.openai.com/v1/audio/speech"));
-        assertEquals("https://api.openai.com/v1/models", tts.uri().toString());
-        assertEquals("GET", tts.method());
+        assertEquals("https://api.openai.com/v1/audio/speech", tts.uri().toString());
+        assertEquals("POST", tts.method());
         assertEquals("Bearer sk", tts.headers().firstValue("Authorization").orElse(""));
 
         HttpRequest asr = tester.buildRequest("ASR", "openai", new JSONObject().set("api_key", "sk")
                 .set("base_url", "https://proxy.example/openai/v1/audio/transcriptions"));
-        assertEquals("https://proxy.example/openai/v1/models", asr.uri().toString());
+        assertEquals("https://proxy.example/openai/v1/audio/transcriptions", asr.uri().toString());
+        assertEquals("POST", asr.method());
 
         HttpRequest def = tester.buildRequest("ASR", "openai", new JSONObject().set("api_key", "sk"));
-        assertEquals("https://api.openai.com/v1/models", def.uri().toString());
+        assertEquals("https://api.openai.com/v1/audio/transcriptions", def.uri().toString());
     }
 
     @Test
