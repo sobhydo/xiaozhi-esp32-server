@@ -177,6 +177,11 @@ public interface Constant {
     String VOICE_CLONE_HUOSHAN_DOUBLE_STREAM = "huoshan_double_stream";
 
     /**
+     * ElevenLabs voice cloning (Instant Voice Cloning)
+     */
+    String VOICE_CLONE_ELEVENLABS = "elevenlabs";
+
+    /**
      * RAG配置类型
      */
     String RAG_CONFIG_TYPE = "RAG";

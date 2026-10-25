@@ -291,6 +291,8 @@ public class VoiceCloneServiceImpl extends BaseServiceImpl<VoiceCloneDao, VoiceC
             }
             if (Constant.VOICE_CLONE_HUOSHAN_DOUBLE_STREAM.equals(type)) {
                 huoshanClone(config, entity);
+            } else if (Constant.VOICE_CLONE_ELEVENLABS.equals(type)) {
+                elevenLabsClone(config, entity);
             }
         } catch (RenException re) {
             entity.setTrainStatus(3);
@@ -386,5 +388,54 @@ public class VoiceCloneServiceImpl extends BaseServiceImpl<VoiceCloneDao, VoiceC
             }
             throw new RenException(ErrorCode.VOICE_CLONE_RESPONSE_FORMAT_ERROR);
         }
+    }
+
+    /**
+     * Clone a voice with ElevenLabs Instant Voice Cloning.
+     * The slot's placeholder voice ID is replaced by the voice ID ElevenLabs returns.
+     */
+    private void elevenLabsClone(Map<String, Object> config, VoiceCloneEntity entity) throws Exception {
+        String apiKey = (String) config.get("api_key");
+        if (StringUtils.isBlank(apiKey)) {
+            throw new RenException(ErrorCode.VOICE_CLONE_TRAINING_FAILED, "ElevenLabs API key is not set");
+        }
+        String apiBase = StringUtils.defaultIfBlank((String) config.get("api_base"), "https://api.elevenlabs.io/v1");
+        String voiceName = StringUtils.defaultIfBlank(entity.getName(), "Clone " + entity.getId());
+
+        String boundary = "----XAgentBoundary" + System.nanoTime();
+        java.io.ByteArrayOutputStream body = new java.io.ByteArrayOutputStream();
+        java.nio.charset.Charset utf8 = java.nio.charset.StandardCharsets.UTF_8;
+        body.write(("--" + boundary + "\r\n"
+                + "Content-Disposition: form-data; name=\"name\"\r\n\r\n"
+                + voiceName + "\r\n").getBytes(utf8));
+        body.write(("--" + boundary + "\r\n"
+                + "Content-Disposition: form-data; name=\"files\"; filename=\"sample.wav\"\r\n"
+                + "Content-Type: audio/wav\r\n\r\n").getBytes(utf8));
+        body.write(entity.getVoice());
+        body.write(("\r\n--" + boundary + "--\r\n").getBytes(utf8));
+
+        HttpClient client = HttpClient.newHttpClient();
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(apiBase.replaceAll("/+$", "") + "/voices/add"))
+                .header("xi-api-key", apiKey)
+                .header("Content-Type", "multipart/form-data; boundary=" + boundary)
+                .POST(HttpRequest.BodyPublishers.ofByteArray(body.toByteArray()))
+                .build();
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() != 200) {
+            throw new RenException(ErrorCode.VOICE_CLONE_TRAINING_FAILED,
+                    "ElevenLabs " + response.statusCode() + ": " + response.body());
+        }
+        Map<String, Object> rsp = objectMapper.readValue(response.body(), new TypeReference<Map<String, Object>>() {
+        });
+        String voiceId = (String) rsp.get("voice_id");
+        if (StringUtils.isBlank(voiceId)) {
+            throw new RenException(ErrorCode.VOICE_CLONE_TRAINING_FAILED, "ElevenLabs returned no voice_id");
+        }
+        entity.setTrainStatus(2);
+        entity.setVoiceId(voiceId);
+        entity.setTrainError("");
+        baseDao.updateById(entity);
     }
 }
