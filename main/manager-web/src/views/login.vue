@@ -14,14 +14,17 @@
             <i class="el-icon-arrow-down" :class="{ 'rotate-down': languageDropdownVisible }" aria-hidden="true"></i>
           </button>
           <el-dropdown-menu slot="dropdown">
+            <el-dropdown-item @click.native="changeLanguage('en')">
+              {{ $t("language.en") }}
+            </el-dropdown-item>
+            <el-dropdown-item @click.native="changeLanguage('ar')">
+              {{ $t("language.ar") }}
+            </el-dropdown-item>
             <el-dropdown-item @click.native="changeLanguage('zh_CN')">
               {{ $t("language.zhCN") }}
             </el-dropdown-item>
             <el-dropdown-item @click.native="changeLanguage('zh_TW')">
               {{ $t("language.zhTW") }}
-            </el-dropdown-item>
-            <el-dropdown-item @click.native="changeLanguage('en')">
-              {{ $t("language.en") }}
             </el-dropdown-item>
             <el-dropdown-item @click.native="changeLanguage('de')">
               {{ $t("language.de") }}
@@ -31,9 +34,6 @@
             </el-dropdown-item>
             <el-dropdown-item @click.native="changeLanguage('pt_BR')">
               {{ $t("language.ptBR") }}
-            </el-dropdown-item>
-            <el-dropdown-item @click.native="changeLanguage('ar')">
-              {{ $t("language.ar") }}
             </el-dropdown-item>
           </el-dropdown-menu>
         </el-dropdown>

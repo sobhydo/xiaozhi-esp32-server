@@ -153,13 +153,13 @@ export default {
       settingsOpen: false,
       isChangePasswordDialogVisible: false,
       languages: [
+        { value: "en", label: "language.en" },
+        { value: "ar", label: "language.ar" },
         { value: "zh_CN", label: "language.zhCN" },
         { value: "zh_TW", label: "language.zhTW" },
-        { value: "en", label: "language.en" },
         { value: "de", label: "language.de" },
         { value: "vi", label: "language.vi" },
         { value: "pt_BR", label: "language.ptBR" },
-        { value: "ar", label: "language.ar" },
       ],
       settingsItems: [
         { key: "params", path: "/params-management", label: "header.paramManagement" },

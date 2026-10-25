@@ -1242,10 +1242,14 @@ export default {
       validVoices.forEach((voice) => {
         this.splitVoiceLanguages(voice).forEach((language) => allLanguages.add(language));
       });
-      const languageOptions = Array.from(allLanguages).map((language) => ({
-        value: language,
-        label: language
-      }));
+      const languageRank = (language) => (/english/i.test(language) ? 0 : /arabic/i.test(language) ? 1 : 2);
+      const languageOptions = Array.from(allLanguages)
+        .map((language, index) => ({ language, index }))
+        .sort((a, b) => languageRank(a.language) - languageRank(b.language) || a.index - b.index)
+        .map(({ language }) => ({
+          value: language,
+          label: language
+        }));
       const languageExists = (language) => language
         && languageOptions.some((option) => option.value === language);
       const preferredVoiceId = options.preferredVoiceId || this.form.ttsVoiceId;
