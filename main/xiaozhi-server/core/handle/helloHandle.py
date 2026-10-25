@@ -1,7 +1,6 @@
 import time
 import json
 import uuid
-import random
 import asyncio
 from typing import TYPE_CHECKING
 
@@ -11,25 +10,16 @@ from core.utils.dialogue import Message
 from core.utils.util import audio_to_data, audio_file_to_wav_bytes
 from core.providers.tts.dto.dto import SentenceType
 from core.utils.wakeup_word import WakeupWordsConfig
+from core.utils.spoken_text import text as spoken_text, asset as spoken_asset, random_text
 from core.handle.sendAudioHandle import sendAudioMessage, send_tts_message
 from core.utils.util import remove_punctuation_and_length, opus_datas_to_wav_bytes
 from core.providers.tools.device_mcp import MCPClient, send_mcp_initialize_message
 
 TAG = __name__
 
+# Wake reply phrases live in core/utils/spoken_text.py ("wakeup_responses"), per language
 WAKEUP_CONFIG = {
     "refresh_time": 10,
-    "responses": [
-        "我一直都在呢，您请说。",
-        "在的呢，请随时吩咐我。",
-        "来啦来啦，请告诉我吧。",
-        "您请说，我正听着。",
-        "请您讲话，我准备好了。",
-        "请您说出指令吧。",
-        "我认真听着呢，请讲。",
-        "请问您需要什么帮助？",
-        "我在这里，等候您的指令。",
-    ],
 }
 
 # 创建全局的唤醒词配置管理器
@@ -99,9 +89,9 @@ async def checkWakeupWords(conn: "ConnectionHandler", text):
     if not response or not response.get("file_path"):
         response = {
             "voice": "default",
-            "file_path": "config/assets/wakeup_words_short.wav",
+            "file_path": spoken_asset(conn, "wakeup_words_short.wav"),
             "time": 0,
-            "text": "我在这里哦！",
+            "text": spoken_text(conn, "wakeup_reply"),
         }
 
     # 获取音频数据
@@ -136,7 +126,7 @@ async def wakeupWordsResponse(conn: "ConnectionHandler"):
             return
 
         # 从预定义回复列表中随机选择一个回复
-        result = random.choice(WAKEUP_CONFIG["responses"])
+        result = random_text(conn, "wakeup_responses")
         if not result or len(result) == 0:
             return
 

@@ -74,7 +74,10 @@ def test_wakeup_cache_accepts_retained_files_and_opus_frames(
 
     response = wakeup_cache.get_wakeup_response(tts.voice)
     assert response is not None
-    assert response["text"] in helloHandle.WAKEUP_CONFIG["responses"]
+    from core.utils.spoken_text import MESSAGES
+
+    # No agent config on this connection, so the reply is in the default language.
+    assert response["text"] in MESSAGES["wakeup_responses"]["en"]
     with wave.open(response["file_path"], "rb") as audio:
         assert audio.getnchannels() == 1
         assert audio.getsampwidth() == 2

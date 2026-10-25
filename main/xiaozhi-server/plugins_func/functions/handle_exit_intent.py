@@ -1,4 +1,5 @@
 from plugins_func.register import register_function, ToolType, ActionResponse, Action
+from core.utils.spoken_text import text as spoken_text
 from config.logger import setup_logging
 from typing import TYPE_CHECKING
 
@@ -34,12 +35,12 @@ def handle_exit_intent(conn: "ConnectionHandler", say_goodbye: str | None = None
     # 处理退出意图
     try:
         if say_goodbye is None:
-            say_goodbye = "再见，祝您生活愉快！"
+            say_goodbye = spoken_text(conn, "goodbye_default")
         if not conn.close_after_chat:
             conn.close_after_chat = True
         logger.bind(tag=TAG).info(f"退出意图已处理:{say_goodbye}")
         return ActionResponse(
-            action=Action.RESPONSE, result="退出意图已处理", response=say_goodbye
+            action=Action.RESPONSE, result=spoken_text(conn, "exit_handled"), response=say_goodbye
         )
     except Exception as e:
         logger.bind(tag=TAG).error(f"处理退出意图错误: {e}")

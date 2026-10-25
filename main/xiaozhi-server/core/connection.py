@@ -45,6 +45,7 @@ from core.utils.prompt_manager import PromptManager
 from core.utils.voiceprint_provider import VoiceprintProvider
 from core.utils.util import get_system_error_response
 from core.utils import textUtils
+from core.utils.spoken_text import text as spoken_text
 
 
 TAG = __name__
@@ -567,7 +568,7 @@ class ConnectionHandler:
                     {
                         "type": "server",
                         "status": "success",
-                        "message": "服务器重启中...",
+                        "message": spoken_text(self, "server_restarting"),
                         "content": {"action": "restart"},
                     }
                 )
@@ -692,40 +693,41 @@ class ConnectionHandler:
 
         # 示例1：direct_answer（回复内容写在 response 参数里，无需递归）
         da_tc_id = "fewshot_da_001"
-        self.dialogue.put(Message(role="user", content="给我讲个故事吧", is_temporary=True))
+        self.dialogue.put(Message(role="user", content=spoken_text(self, "fewshot_story_user"), is_temporary=True))
         self.dialogue.put(Message(
             role="assistant",
             tool_calls=[{
                 "id": da_tc_id,
-                "function": {"arguments": '{"response": "好呀，你想听什么类型的呀？童话、冒险还是搞笑的？选一个我给你开讲~"}', "name": "direct_answer"},
+                "function": {"arguments": json.dumps({"response": spoken_text(self, "fewshot_story_reply")}, ensure_ascii=False), "name": "direct_answer"},
                 "type": "function", "index": 0,
             }],
             is_temporary=True,
         ))
         self.dialogue.put(Message(
             role="tool", tool_call_id=da_tc_id,
-            content="已直接回复", is_temporary=True,
+            content=spoken_text(self, "fewshot_direct_answered"), is_temporary=True,
         ))
 
         # 示例2：真实工具调用（handle_exit_intent）
         if "handle_exit_intent" in tool_names:
             tc_id = "fewshot_exit_001"
-            self.dialogue.put(Message(role="user", content="拜拜", is_temporary=True))
+            goodbye = spoken_text(self, "goodbye")
+            self.dialogue.put(Message(role="user", content=spoken_text(self, "fewshot_bye_user"), is_temporary=True))
             self.dialogue.put(Message(
                 role="assistant",
                 tool_calls=[{
                     "id": tc_id,
-                    "function": {"arguments": '{"say_goodbye": "再见，下次再聊~"}', "name": "handle_exit_intent"},
+                    "function": {"arguments": json.dumps({"say_goodbye": goodbye}, ensure_ascii=False), "name": "handle_exit_intent"},
                     "type": "function", "index": 0,
                 }],
                 is_temporary=True,
             ))
             self.dialogue.put(Message(
                 role="tool", tool_call_id=tc_id,
-                content="退出意图已处理", is_temporary=True,
+                content=spoken_text(self, "exit_handled"), is_temporary=True,
             ))
             self.dialogue.put(Message(
-                role="assistant", content="再见，下次再聊~", is_temporary=True,
+                role="assistant", content=goodbye, is_temporary=True,
             ))
 
         self.logger.bind(tag=TAG).debug("已注入工具调用 few-shot 示例")
@@ -1088,7 +1090,11 @@ class ConnectionHandler:
             self.dialogue.put(
                 Message(
                     role="user",
-                    content="[系统提示] 已达到最大工具调用次数限制，请你基于目前已经获取的所有信息，直接给出最终答案。不要再尝试调用任何工具。",
+                    content=(
+                        "[System notice] The maximum number of tool calls has been reached. "
+                        "Using all the information gathered so far, give your final answer directly. "
+                        "Do not try to call any more tools. Reply in the user's language."
+                    ),
                 )
             )
 
@@ -1361,7 +1367,7 @@ class ConnectionHandler:
                         )
                         # 超时时返回错误响应，避免整个流程卡死
                         tool_results.append((
-                            ActionResponse(action=Action.ERROR, result="哎呀，网络遇到点问题，请稍后再试下！"),
+                            ActionResponse(action=Action.ERROR, result=spoken_text(self, "network_error")),
                             tool_call_data
                         ))
                         # 上报工具调用错误

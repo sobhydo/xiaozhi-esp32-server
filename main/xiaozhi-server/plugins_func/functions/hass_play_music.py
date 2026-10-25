@@ -2,6 +2,7 @@ import httpx
 from config.logger import setup_logging
 from plugins_func.functions.hass_init import initialize_hass_handler
 from plugins_func.register import register_function, ToolType, ActionResponse, Action
+from core.utils.spoken_text import text as spoken_text
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -40,12 +41,12 @@ async def hass_play_music(conn: "ConnectionHandler", entity_id="", media_content
     try:
         result = await handle_hass_play_music(conn, entity_id, media_content_id)
         return ActionResponse(
-            action=Action.RECORD, result="指令已接收", response=result
+            action=Action.RECORD, result=spoken_text(conn, "command_received"), response=result
         )
     except Exception as e:
         logger.bind(tag=TAG).error(f"处理音乐意图错误: {e}")
         return ActionResponse(
-            action=Action.RESPONSE, result=str(e), response="播放音乐时出错了"
+            action=Action.RESPONSE, result=str(e), response=spoken_text(conn, "music_error")
         )
 
 
@@ -63,6 +64,6 @@ async def handle_hass_play_music(
         response = await client.post(url, headers=headers, json=data)
 
     if response.status_code == 200:
-        return f"正在播放{media_content_id}的音乐"
+        return spoken_text(conn, "hass_music_playing", media=media_content_id)
     else:
-        return f"音乐播放失败，错误码: {response.status_code}"
+        return spoken_text(conn, "hass_music_failed", code=response.status_code)

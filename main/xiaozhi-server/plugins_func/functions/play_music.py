@@ -7,6 +7,7 @@ import traceback
 from pathlib import Path
 from core.providers.tts.dto.dto import TTSMessageDTO, SentenceType, ContentType
 from plugins_func.register import register_function, ToolType, ActionResponse, Action
+from core.utils.spoken_text import text as spoken_text, random_text
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -43,12 +44,14 @@ async def play_music(conn: "ConnectionHandler", song_name: str):
         )
         await handle_music_command(conn, music_intent)
         return ActionResponse(
-            action=Action.RECORD, result="指令已接收", response="正在为您播放音乐"
+            action=Action.RECORD,
+            result=spoken_text(conn, "command_received"),
+            response=spoken_text(conn, "music_playing"),
         )
     except Exception as e:
         conn.logger.bind(tag=TAG).error(f"处理音乐意图错误: {e}")
         return ActionResponse(
-            action=Action.RESPONSE, result=str(e), response="播放音乐时出错了"
+            action=Action.RESPONSE, result=str(e), response=spoken_text(conn, "music_error")
         )
 
 
@@ -151,21 +154,11 @@ async def handle_music_command(conn: "ConnectionHandler", text):
     return True
 
 
-def _get_random_play_prompt(song_name):
+def _get_random_play_prompt(conn: "ConnectionHandler", song_name):
     """生成随机播放引导语"""
     # 移除文件扩展名
     clean_name = os.path.splitext(song_name)[0]
-    prompts = [
-        f"正在为您播放，《{clean_name}》",
-        f"请欣赏歌曲，《{clean_name}》",
-        f"即将为您播放，《{clean_name}》",
-        f"现在为您带来，《{clean_name}》",
-        f"让我们一起聆听，《{clean_name}》",
-        f"接下来请欣赏，《{clean_name}》",
-        f"此刻为您献上，《{clean_name}》",
-    ]
-    # 直接使用random.choice，不设置seed
-    return random.choice(prompts)
+    return random_text(conn, "music_play_prompts", song=clean_name)
 
 
 async def play_local_music(conn: "ConnectionHandler", specific_file=None):
@@ -192,7 +185,7 @@ async def play_local_music(conn: "ConnectionHandler", specific_file=None):
         if not os.path.exists(music_path):
             conn.logger.bind(tag=TAG).error(f"选定的音乐文件不存在: {music_path}")
             return
-        text = _get_random_play_prompt(selected_music)
+        text = _get_random_play_prompt(conn, selected_music)
         conn.tts.store_tts_text(conn.sentence_id, text)
         # conn.dialogue.put(Message(role="assistant", content=text))
 

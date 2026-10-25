@@ -12,6 +12,7 @@ from plugins_func.register import Action, ActionResponse
 from core.handle.sendAudioHandle import send_stt_message
 from core.handle.reportHandle import enqueue_tool_report
 from core.utils.util import remove_punctuation_and_length
+from core.utils.spoken_text import text as spoken_text
 from core.providers.tts.dto.dto import TTSMessageDTO, SentenceType
 
 TAG = __name__
@@ -178,8 +179,9 @@ async def process_intent_result(
                     ).result(timeout=tool_call_timeout)
                 except Exception as e:
                     conn.logger.bind(tag=TAG).error(f"工具调用失败: {e}")
+                    timeout_text = spoken_text(conn, "tool_timeout")
                     result = ActionResponse(
-                        action=Action.ERROR, result="工具调用超时，请一会再试下哈", response="工具调用超时，请一会再试下哈"
+                        action=Action.ERROR, result=timeout_text, response=timeout_text
                     )
 
                 # 上报工具调用结果

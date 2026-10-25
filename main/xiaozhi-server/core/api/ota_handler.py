@@ -360,11 +360,11 @@ class OTAHandler(BaseHandler):
             # use websocket port for websocket URL
             websocket_port = int(server_config.get("port", 8000))
             websocket_url = self._get_websocket_url(local_ip, websocket_port)
-            message = f"OTA接口运行正常，向设备发送的websocket地址是：{websocket_url}"
+            message = f"OTA endpoint is running. WebSocket address sent to devices: {websocket_url}"
             response = web.Response(text=message, content_type="text/plain")
         except Exception as e:
             self.logger.bind(tag=TAG).error(f"OTA GET请求异常: {e}")
-            response = web.Response(text="OTA接口异常", content_type="text/plain")
+            response = web.Response(text="OTA endpoint error", content_type="text/plain")
         finally:
             self._add_cors_headers(response)
             return response

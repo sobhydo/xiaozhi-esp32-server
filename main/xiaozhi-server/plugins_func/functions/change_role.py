@@ -1,4 +1,5 @@
 from plugins_func.register import register_function, ToolType, ActionResponse, Action
+from core.utils.spoken_text import text as spoken_text
 from config.logger import setup_logging
 from typing import TYPE_CHECKING
 
@@ -49,10 +50,10 @@ def change_role(conn: "ConnectionHandler", role: str, role_name: str):
     """切换角色"""
     if role not in prompts:
         return ActionResponse(
-            action=Action.RESPONSE, result="切换角色失败", response="不支持的角色"
+            action=Action.RESPONSE, result="切换角色失败", response=spoken_text(conn, "role_unsupported")
         )
     new_prompt = prompts[role].replace("{{assistant_name}}", role_name)
     conn.change_system_prompt(new_prompt)
     logger.bind(tag=TAG).info(f"准备切换角色:{role},角色名字:{role_name}")
-    res = f"切换角色成功,我是{role}{role_name}"
+    res = spoken_text(conn, "role_switched", role=role, role_name=role_name)
     return ActionResponse(action=Action.RESPONSE, result="切换角色已处理", response=res)

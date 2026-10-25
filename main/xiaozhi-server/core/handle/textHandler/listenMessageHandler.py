@@ -14,6 +14,7 @@ from core.handle.sendAudioHandle import send_stt_message, send_tts_message
 from core.handle.textMessageHandler import TextMessageHandler
 from core.handle.textMessageType import TextMessageType
 from core.utils.util import remove_punctuation_and_length
+from core.utils.spoken_text import text as spoken_text
 from core.providers.tts.dto.dto import ContentType, TTSMessageDTO, SentenceType
 
 
@@ -106,8 +107,9 @@ class ListenTextMessageHandler(TextMessageHandler):
                 elif is_wakeup_words:
                     conn.just_woken_up = True
                     # 上报纯文字数据（复用ASR上报功能，但不提供音频数据）
-                    enqueue_asr_report(conn, "嘿，你好呀", [])
-                    await startToChat(conn, "嘿，你好呀")
+                    greeting = spoken_text(conn, "wake_greeting")
+                    enqueue_asr_report(conn, greeting, [])
+                    await startToChat(conn, greeting)
                 else:
                     conn.just_woken_up = True
                     # 上报纯文字数据（复用ASR上报功能，但不提供音频数据）
