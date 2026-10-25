@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from core.connection import ConnectionHandler
+from core.utils import turn_timing
 from core.utils.util import audio_to_data
 from core.utils.spoken_text import text as spoken_text, asset as spoken_asset
 from core.handle.abortHandle import handleAbortMessage
@@ -42,6 +43,7 @@ async def resume_vad_detection(conn: "ConnectionHandler"):
 
 
 async def startToChat(conn: "ConnectionHandler", text):
+    turn_timing.mark(conn, "text")
     # 检查输入是否是JSON格式（包含说话人信息）
     speaker_name = None
     actual_text = text

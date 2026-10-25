@@ -6,6 +6,7 @@ from typing import Dict, Any, TYPE_CHECKING
 if TYPE_CHECKING:
     from core.connection import ConnectionHandler
 
+from core.utils import turn_timing
 from core.utils.dialogue import Message
 from core.providers.asr.dto.dto import InterfaceType
 from core.handle.receiveAudioHandle import startToChat
@@ -42,6 +43,7 @@ class ListenTextMessageHandler(TextMessageHandler):
                 return
 
             conn.client_voice_stop = True
+            turn_timing.start(conn)
             if conn.asr.interface_type == InterfaceType.STREAM:
                 # 流式模式下，发送结束请求
                 asyncio.create_task(conn.asr._send_stop_request())

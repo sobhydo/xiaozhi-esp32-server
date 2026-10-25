@@ -44,7 +44,7 @@ from config.manage_api_client import DeviceNotFoundException, DeviceBindExceptio
 from core.utils.prompt_manager import PromptManager
 from core.utils.voiceprint_provider import VoiceprintProvider
 from core.utils.util import get_system_error_response
-from core.utils import textUtils
+from core.utils import textUtils, turn_timing
 from core.utils.spoken_text import text as spoken_text
 
 
@@ -1162,6 +1162,7 @@ class ConnectionHandler:
             for response in llm_responses:
                 if self.client_abort:
                     break
+                turn_timing.mark(self, "llm_first")
                 if self.intent_type == "function_call" and functions is not None:
                     content, tools_call = response
                     if "content" in response:

@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from core.connection import ConnectionHandler
-from core.utils import textUtils
+from core.utils import textUtils, turn_timing
 from core.utils.util import audio_to_data
 from core.providers.tts.dto.dto import SentenceType
 from core.utils.audioRateController import AudioRateController
@@ -24,6 +24,7 @@ async def sendAudioMessage(conn: "ConnectionHandler", sentenceType, audios, text
         return
 
     if conn.tts.tts_audio_first_sentence:
+        turn_timing.mark(conn, "audio_first")
         conn.logger.bind(tag=TAG).info(f"发送第一段语音: {text}")
         conn.tts.tts_audio_first_sentence = False
 

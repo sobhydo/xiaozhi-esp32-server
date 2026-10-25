@@ -4,6 +4,7 @@ import numpy as np
 import onnxruntime
 from config.logger import setup_logging
 from core.providers.vad.base import VADProviderBase
+from core.utils import turn_timing
 
 TAG = __name__
 logger = setup_logging()
@@ -107,6 +108,7 @@ class VADProvider(VADProviderBase):
                     stop_duration = time.time() * 1000 - conn.vad_last_voice_time
                     if stop_duration >= self.silence_threshold_ms:
                         conn.client_voice_stop = True
+                        turn_timing.start(conn, conn.vad_last_voice_time / 1000)
                 if client_have_voice:
                     conn.client_have_voice = True
                     conn.vad_last_voice_time = time.time() * 1000
