@@ -16,6 +16,8 @@ THINKING_DISABLED_DOMAINS = {
     "bigmodel.cn": {"thinking": {"type": "disabled"}},
     "moonshot.cn": {"thinking": {"type": "disabled"}},
     "volces.com": {"thinking": {"type": "disabled"}},
+    # MBZUAI IFM (K2 Horizon, Jais 3): reasoning defaults to high; keep voice replies quick
+    "ifm.ai": {"reasoning_effort": "low"},
 }
 
 
