@@ -70,7 +70,7 @@ public class ModelConfigServiceImpl extends BaseServiceImpl<ModelConfigDao, Mode
                         .eq("is_enabled", 1)
                         .like(StringUtils.isNotBlank(modelName), "model_name", modelName)
                         .select("id", "model_name", "user_id", "sort"));
-        return sortSystemFirst(entities).stream().map(item -> {
+        return sortOwnFirst(entities).stream().map(item -> {
             ModelBasicInfoDTO dto = new ModelBasicInfoDTO();
             dto.setId(item.getId());
             dto.setModelName(item.getModelName());
@@ -89,7 +89,7 @@ public class ModelConfigServiceImpl extends BaseServiceImpl<ModelConfigDao, Mode
                         .like(StringUtils.isNotBlank(modelName), "model_name", modelName)
                         .select("id", "model_name", "config_json", "user_id", "sort"));
 
-        return sortSystemFirst(entities).stream().map(item -> {
+        return sortOwnFirst(entities).stream().map(item -> {
             LlmModelBasicInfoDTO dto = new LlmModelBasicInfoDTO();
             dto.setId(item.getId());
             dto.setModelName(item.getModelName());
@@ -110,14 +110,15 @@ public class ModelConfigServiceImpl extends BaseServiceImpl<ModelConfigDao, Mode
     }
 
     /** BYOK: system models first (by sort), then the user's own models by name. */
-    private static List<ModelConfigEntity> sortSystemFirst(List<ModelConfigEntity> entities) {
+    /** The user's own models first (by name), then system models (by sort). */
+    private static List<ModelConfigEntity> sortOwnFirst(List<ModelConfigEntity> entities) {
         Comparator<ModelConfigEntity> systemOrder = Comparator.comparing(ModelConfigEntity::getSort,
                 Comparator.nullsLast(Comparator.naturalOrder()));
         Comparator<ModelConfigEntity> ownOrder = Comparator.comparing(
                 e -> StringUtils.defaultString(e.getModelName()), String.CASE_INSENSITIVE_ORDER);
         List<ModelConfigEntity> sorted = new ArrayList<>();
-        entities.stream().filter(e -> e.getUserId() == null).sorted(systemOrder).forEach(sorted::add);
         entities.stream().filter(e -> e.getUserId() != null).sorted(ownOrder).forEach(sorted::add);
+        entities.stream().filter(e -> e.getUserId() == null).sorted(systemOrder).forEach(sorted::add);
         return sorted;
     }
 

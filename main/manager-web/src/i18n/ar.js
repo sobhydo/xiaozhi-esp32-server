@@ -445,7 +445,7 @@ export default {
   'device.bindWithCode': 'الربط برمز تحقق من 6 أرقام',
   'device.manualAdd': 'إضافة يدوية',
   'device.unbind': 'إلغاء الربط',
-  'device.deviceThemeGeneration': 'إنشاء سمة الجهاز',
+  'device.deviceThemeGeneration': 'تخصيص الجهاز',
   'device.toolCall': 'استدعاء الأدوات',
   'device.selectAtLeastOne': 'يرجى تحديد سجل واحد على الأقل',
   'device.confirmBatchUnbind': 'هل تريد بالتأكيد إلغاء ربط {count} من الأجهزة المحددة؟',

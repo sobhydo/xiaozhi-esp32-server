@@ -1140,9 +1140,9 @@ export default {
         }, handleFailure);
       });
     },
-    // The user's own models (bring your own key) are listed after system models; the sort is stable
-    ownedModelsLast(options) {
-      return options.slice().sort((a, b) => Number(!!a.owned) - Number(!!b.owned));
+    // The user's own models (bring your own key) are listed before system models; the sort is stable
+    ownedModelsFirst(options) {
+      return options.slice().sort((a, b) => Number(!!b.owned) - Number(!!a.owned));
     },
     fetchModelOptions() {
       this.models.forEach((model) => {
@@ -1152,7 +1152,7 @@ export default {
               this.$set(
                 this.modelOptions,
                 model.type,
-                this.ownedModelsLast(
+                this.ownedModelsFirst(
                   data.data.map((item) => ({
                     value: item.id,
                     label: item.modelName,
@@ -1183,7 +1183,7 @@ export default {
                 });
                 this.llmModeTypeMap.set(item.id, item.type);
               });
-              this.$set(this.modelOptions, model.type, this.ownedModelsLast(LLMdata));
+              this.$set(this.modelOptions, model.type, this.ownedModelsFirst(LLMdata));
             } else {
               this.$message.error(data.msg || i18n.t("roleConfig.fetchModelsFailed"));
             }

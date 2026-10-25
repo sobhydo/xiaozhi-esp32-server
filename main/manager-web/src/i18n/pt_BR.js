@@ -499,7 +499,7 @@ export default {
   'device.bindWithCode': 'Vincular com Código de 6 Dígitos',
   'device.manualAdd': 'Adicionar Manualmente',
   'device.unbind': 'Desvincular',
-  'device.deviceThemeGeneration': 'Geração de tema do dispositivo',
+  'device.deviceThemeGeneration': 'Personalização do dispositivo',
   'device.toolCall': 'Chamada de Ferramenta',
   'device.selectAtLeastOne': 'Por favor, selecione pelo menos um registro',
   'device.confirmBatchUnbind': 'Tem certeza de que deseja desvincular {count} dispositivos selecionados?',
