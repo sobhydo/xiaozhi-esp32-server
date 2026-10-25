@@ -31,6 +31,13 @@ Vue.config.productionTip = false
 // Register Service Worker
 registerServiceWorker();
 
+// Sync the token from localStorage into the store at startup, so the first request after
+// the route guard passes does not go out without an Authorization header (401 -> login)
+const cachedToken = localStorage.getItem('token')
+if (cachedToken) {
+  store.commit('setToken', cachedToken)
+}
+
 // Create Vue instance
 new Vue({
   router,

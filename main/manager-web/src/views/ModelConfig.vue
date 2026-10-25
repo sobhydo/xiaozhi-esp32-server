@@ -595,6 +595,7 @@ export default {
 }
 
 .type-tab {
+  flex-shrink: 0;
   min-height: 38px;
   padding: 8px 10px;
   border: 0;

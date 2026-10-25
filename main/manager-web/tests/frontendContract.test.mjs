@@ -14,6 +14,10 @@ const functionDialogSource = await readFile(
   new URL('../src/components/FunctionDialog.vue', import.meta.url),
   'utf8',
 );
+const modelConfigSource = await readFile(
+  new URL('../src/views/ModelConfig.vue', import.meta.url),
+  'utf8',
+);
 
 test('address-book permission state consistently uses the target device MAC', () => {
   assert.match(
@@ -64,6 +68,23 @@ test('correct-word pagination maps the UI page size to the backend limit query',
     /new URLSearchParams\(\{\s*page: params\.page,\s*limit: params\.pageSize\s*\}\)/,
   );
   assert.doesNotMatch(correctWordApiSource, /pageSize: params\.pageSize/);
+});
+
+test('model type list stays fully reachable on short screens', () => {
+  // Base rules only (media-query overrides follow later in the file)
+  const listStyles = modelConfigSource.match(/\n\.type-list\s*\{([^}]*)\}/)?.[1];
+  const tabStyles = modelConfigSource.match(/\n\.type-tab\s*\{([^}]*)\}/)?.[1];
+
+  assert.ok(listStyles, 'model type list should define its layout');
+  assert.ok(tabStyles, 'model type tabs should define their layout');
+  assert.match(listStyles, /display:\s*flex;/);
+  assert.match(listStyles, /flex-direction:\s*column;/);
+  assert.match(listStyles, /box-sizing:\s*border-box;/);
+  assert.match(tabStyles, /flex-shrink:\s*0;/);
+
+  // The page scrolls as a whole; a viewport-height cap on the list or page would clip it on short screens
+  assert.doesNotMatch(listStyles, /height:\s*calc\([^)]*vh/);
+  assert.doesNotMatch(modelConfigSource, /\.page\s*\{[^}]*height:\s*calc\([^)]*vh/);
 });
 
 test('function dialog footer stays above the expanding MCP tools section', () => {
